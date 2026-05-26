@@ -1,7 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 
 app = FastAPI()
+
+hit_count = 0
 
 RESTAURANTS = [
     {
@@ -93,10 +95,18 @@ HTML_PAGE = """<!doctype html>
 
 
 @app.get("/restaurants")
-async def get_restaurants():
+async def get_restaurants(request: Request):
+    global hit_count
+    hit_count += 1
+    client_ip = request.client.host if request.client else "unknown"
+    print(f"[{hit_count}] {client_ip} -> /restaurants", flush=True)
     return {"restaurants": RESTAURANTS}
 
 
 @app.get("/", response_class=HTMLResponse)
-async def home():
-    return HTMLResponse(HTML_PAGE.replace("__COUNT__", "0"))
+async def home(request: Request):
+    global hit_count
+    hit_count += 1
+    client_ip = request.client.host if request.client else "unknown"
+    print(f"[{hit_count}] {client_ip} -> /", flush=True)
+    return HTMLResponse(HTML_PAGE.replace("__COUNT__", str(hit_count)))

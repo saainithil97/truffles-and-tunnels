@@ -14,7 +14,11 @@ Companion artifacts for the 20-minute demo described in
 ## One-time setup
 
 ```bash
-# Python deps
+# Create and activate a virtual environment for Python deps
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Python deps (inside the venv)
 pip install -r requirements.txt
 
 # Cloudflare quick-tunnel (primary)
@@ -26,7 +30,16 @@ brew install ngrok
 ngrok config add-authtoken <your-token>   # only required for ngrok
 ```
 
+The venv lives in `.venv/` and is gitignored. **Activate it in every
+new terminal** you open for this demo:
+
+```bash
+source .venv/bin/activate
+```
+
 ## Running the demo
+
+Activate the venv in each terminal first (`source .venv/bin/activate`).
 
 ### Act A — Hello World (localhost)
 
@@ -77,7 +90,7 @@ In Chrome:
 
 ## Pre-session checklist (run earlier in the day)
 
-- [ ] `pip install -r requirements.txt` succeeds.
+- [ ] `.venv` exists and `pip install -r requirements.txt` succeeds inside it.
 - [ ] `python3 hello.py` runs and serves at `http://localhost:8000/`.
 - [ ] `uvicorn server:app ...` runs and serves cards at
       `http://localhost:8000/`.
@@ -93,12 +106,13 @@ In Chrome:
 
 ## Notes for the live session
 
-- Each page load fires **two** requests: one for `/` (HTML) and one for
-  `/restaurants` (the JS fetch). The on-page "You are visitor #N"
-  counter therefore advances by 2 per visit (odd numbers for first-time
-  visitors). Expect ~260 on the counter with 130 students. This is
-  actually a useful teaching beat: *"see, each page load is two
-  requests — one for the page, one for the data."*
+- Each page load fires **two** requests: one for `/` (HTML) and one
+  for `/restaurants` (the JS fetch). Only the `/` handler increments
+  the visitor counter, so the on-page "You are visitor #N" tracks
+  unique page loads. The terminal log still shows **two lines per
+  visit** with the same counter number — a useful teaching beat:
+  *"each page load is actually two requests — one for the page, one
+  for the data."*
 
 ## Deflection lines for off-topic questions
 

@@ -97,7 +97,6 @@ HTML_PAGE = """<!doctype html>
 @app.get("/restaurants")
 async def get_restaurants(request: Request):
     global hit_count
-    hit_count += 1
     client_ip = request.client.host if request.client else "unknown"
     print(f"[{hit_count}] {client_ip} -> /restaurants", flush=True)
     return {"restaurants": RESTAURANTS}

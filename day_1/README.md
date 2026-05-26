@@ -91,6 +91,15 @@ In Chrome:
       Network tab in case the live page misbehaves.
 - [ ] Display sleep / Caffeinate enabled for the session duration.
 
+## Notes for the live session
+
+- Each page load fires **two** requests: one for `/` (HTML) and one for
+  `/restaurants` (the JS fetch). The on-page "You are visitor #N"
+  counter therefore advances by 2 per visit (odd numbers for first-time
+  visitors). Expect ~260 on the counter with 130 students. This is
+  actually a useful teaching beat: *"see, each page load is two
+  requests — one for the page, one for the data."*
+
 ## Deflection lines for off-topic questions
 
 - HTTPS / TLS, HTTP methods, status codes, REST, request headers — all

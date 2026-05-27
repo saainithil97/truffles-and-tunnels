@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Swiggy search — React (same features, declarative)</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem; background: #fff7ed; }
+    h1 { font-size: 1.4rem; }
+    input { width: 100%; padding: .6rem .8rem; font-size: 1rem; border: 2px solid #fb923c; border-radius: 8px; box-sizing: border-box; }
+    ul { list-style: none; padding: 0; margin-top: 1rem; }
+    li { display: flex; gap: .8rem; align-items: center; padding: .7rem .9rem; margin-bottom: .5rem; background: #fff; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    .emoji { font-size: 1.8rem; }
+    .name { font-weight: 600; }
+    .meta { color: #666; font-size: .85rem; }
+    mark { background: #fde047; border-radius: 3px; padding: 0 1px; }
+    .empty { color: #b45309; font-style: italic; padding: 1rem 0; }
+    .spinner { margin: 1rem auto; width: 28px; height: 28px; border: 3px solid #fed7aa; border-top-color: #ea580c; border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+
+  <!-- React, ReactDOM and Babel are vendored locally so this page runs offline
+       straight from file://  (no server, no build step). -->
+  <script src="vendor/react.development.js"></script>
+  <script src="vendor/react-dom.development.js"></script>
+  <script src="vendor/babel.min.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- JSX lives INLINE so file:// doesn't try to fetch an external script. -->
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const RESTAURANTS = [
+      {id:1,name:"Meghana Foods",cuisines:"Biryani, Andhra",rating:4.3,deliveryTime:40,costForTwo:500,emoji:"🍛"},
+      {id:2,name:"Truffles",cuisines:"American, Burgers",rating:4.5,deliveryTime:35,costForTwo:600,emoji:"🍔"},
+      {id:3,name:"Empire Restaurant",cuisines:"North Indian, Kebabs",rating:4.1,deliveryTime:30,costForTwo:450,emoji:"🍢"},
+      {id:4,name:"Pizza Hut",cuisines:"Pizza, Italian",rating:3.9,deliveryTime:45,costForTwo:700,emoji:"🍕"},
+      {id:5,name:"Corner House",cuisines:"Desserts, Ice Cream",rating:4.6,deliveryTime:25,costForTwo:350,emoji:"🍨"},
+      {id:6,name:"A2B",cuisines:"South Indian, Sweets",rating:4.2,deliveryTime:30,costForTwo:300,emoji:"🍲"},
+      {id:7,name:"Leon Grill",cuisines:"Shawarma, Rolls",rating:4.0,deliveryTime:35,costForTwo:400,emoji:"🌯"},
+      {id:8,name:"Burger King",cuisines:"Burgers, Fast Food",rating:4.1,deliveryTime:30,costForTwo:400,emoji:"🍔"},
+      {id:9,name:"Mainland China",cuisines:"Chinese, Asian",rating:4.4,deliveryTime:50,costForTwo:900,emoji:"🥡"},
+      {id:10,name:"Keventers",cuisines:"Beverages, Milkshakes",rating:4.3,deliveryTime:20,costForTwo:250,emoji:"🥤"},
+      {id:11,name:"Sip & Bite",cuisines:"Cafe, Snacks",rating:3.8,deliveryTime:40,costForTwo:350,emoji:"☕"},
+      {id:12,name:"Nandhana Palace",cuisines:"Andhra, Biryani",rating:4.2,deliveryTime:45,costForTwo:550,emoji:"🍛"},
+      {id:13,name:"Faasos",cuisines:"Wraps, Rolls",rating:4.0,deliveryTime:30,costForTwo:300,emoji:"🌯"},
+      {id:14,name:"Domino's Pizza",cuisines:"Pizza, Italian",rating:4.0,deliveryTime:30,costForTwo:500,emoji:"🍕"},
+      {id:15,name:"Ovenstory Pizza",cuisines:"Pizza, Gourmet",rating:4.1,deliveryTime:40,costForTwo:600,emoji:"🍕"},
+    ];
+
+    const STORAGE_KEY = "swiggy:lastSearch";
+
+    // (2) Highlight: split the name around the match and return JSX —
+    //     no string surgery, no escaping. React handles the text safely.
+    function highlightName(name, q) {
+      if (!q) return name;
+      const idx = name.toLowerCase().indexOf(q.toLowerCase());
+      if (idx === -1) return name;
+      return (
+        <>
+          {name.slice(0, idx)}
+          <mark>{name.slice(idx, idx + q.length)}</mark>
+          {name.slice(idx + q.length)}
+        </>
+      );
+    }
+
+    function RestaurantCard({ r, query }) {
+      // Demo 6 will use this log: the component re-runs on every keystroke,
+      // but the vDOM diff decides whether the real DOM actually changes.
+      console.log("render RestaurantCard:", r.name);
+      return (
+        <li>
+          <span className="emoji">{r.emoji}</span>
+          <span>
+            <span className="name">{highlightName(r.name, query)}</span>
+            <div className="meta">{r.cuisines} · ⭐ {r.rating} · {r.deliveryTime} min</div>
+          </span>
+        </li>
+      );
+    }
+
+    function App() {
+      // The whole UI is just three pieces of STATE…
+      const [query, setQuery]     = useState(() => {
+        try { return localStorage.getItem(STORAGE_KEY) || ""; } catch (e) { return ""; }
+      });
+      const [loading, setLoading] = useState(false);
+      const [results, setResults] = useState(RESTAURANTS);
+
+      // (4) remember the last search — declare the effect, React runs it.
+      useEffect(() => {
+        try { localStorage.setItem(STORAGE_KEY, query); } catch (e) {}
+      }, [query]);
+
+      // (3) "loading" then filter, debounced — describe it once, React cleans
+      //     up the previous timer for us via the returned function.
+      useEffect(() => {
+        setLoading(true);
+        const t = setTimeout(() => {
+          const q = query.toLowerCase();
+          setResults(RESTAURANTS.filter(r => r.name.toLowerCase().includes(q)));
+          setLoading(false);
+        }, 350);
+        return () => clearTimeout(t);
+      }, [query]);
+
+      // …and the render just DESCRIBES what the screen should look like for
+      // the current state. No show/hide, no classList, no manual sync.
+      return (
+        <div>
+          <h1>🍴 Swiggy — find a restaurant</h1>
+          <input
+            type="text"
+            placeholder="Search restaurants…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          {loading && <div className="spinner" />}
+          {!loading && results.length === 0 && (
+            <p className="empty">No restaurants match your search. 😕</p>
+          )}
+          {!loading && (
+            <ul>
+              {results.map(r => (
+                <RestaurantCard key={r.id} r={r} query={query} />
+              ))}
+            </ul>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>

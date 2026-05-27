@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Swiggy search — vanilla, full (the tangle)</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem; background: #fff7ed; }
+    h1 { font-size: 1.4rem; }
+    input { width: 100%; padding: .6rem .8rem; font-size: 1rem; border: 2px solid #fb923c; border-radius: 8px; box-sizing: border-box; }
+    ul { list-style: none; padding: 0; margin-top: 1rem; }
+    li { display: flex; gap: .8rem; align-items: center; padding: .7rem .9rem; margin-bottom: .5rem; background: #fff; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    .emoji { font-size: 1.8rem; }
+    .name { font-weight: 600; }
+    .meta { color: #666; font-size: .85rem; }
+    /* (1) substring highlight */
+    mark { background: #fde047; border-radius: 3px; padding: 0 1px; }
+    /* (2) "no results" message */
+    #empty { display: none; color: #b45309; font-style: italic; padding: 1rem 0; }
+    #empty.show { display: block; }
+    /* (3) loading spinner */
+    #spinner { display: none; margin: 1rem auto; width: 28px; height: 28px; border: 3px solid #fed7aa; border-top-color: #ea580c; border-radius: 50%; animation: spin .7s linear infinite; }
+    #spinner.show { display: block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <h1>🍴 Swiggy — find a restaurant</h1>
+  <input id="search" type="text" placeholder="Search restaurants…" />
+  <div id="spinner"></div>
+  <p id="empty">No restaurants match your search. 😕</p>
+  <ul id="list"></ul>
+
+  <script>
+    // SAME app as vanilla-simple — then the PM piled on FOUR requirements:
+    //   (1) a "no results" message
+    //   (2) highlight the matching substring in the name
+    //   (3) a loading spinner (pretend each search hits a server)
+    //   (4) remember the last search in localStorage
+    // Watch how every one of them means MORE manual DOM juggling.
+    const restaurants = [
+      {id:1,name:"Meghana Foods",cuisines:"Biryani, Andhra",rating:4.3,deliveryTime:40,costForTwo:500,emoji:"🍛"},
+      {id:2,name:"Truffles",cuisines:"American, Burgers",rating:4.5,deliveryTime:35,costForTwo:600,emoji:"🍔"},
+      {id:3,name:"Empire Restaurant",cuisines:"North Indian, Kebabs",rating:4.1,deliveryTime:30,costForTwo:450,emoji:"🍢"},
+      {id:4,name:"Pizza Hut",cuisines:"Pizza, Italian",rating:3.9,deliveryTime:45,costForTwo:700,emoji:"🍕"},
+      {id:5,name:"Corner House",cuisines:"Desserts, Ice Cream",rating:4.6,deliveryTime:25,costForTwo:350,emoji:"🍨"},
+      {id:6,name:"A2B",cuisines:"South Indian, Sweets",rating:4.2,deliveryTime:30,costForTwo:300,emoji:"🍲"},
+      {id:7,name:"Leon Grill",cuisines:"Shawarma, Rolls",rating:4.0,deliveryTime:35,costForTwo:400,emoji:"🌯"},
+      {id:8,name:"Burger King",cuisines:"Burgers, Fast Food",rating:4.1,deliveryTime:30,costForTwo:400,emoji:"🍔"},
+      {id:9,name:"Mainland China",cuisines:"Chinese, Asian",rating:4.4,deliveryTime:50,costForTwo:900,emoji:"🥡"},
+      {id:10,name:"Keventers",cuisines:"Beverages, Milkshakes",rating:4.3,deliveryTime:20,costForTwo:250,emoji:"🥤"},
+      {id:11,name:"Sip & Bite",cuisines:"Cafe, Snacks",rating:3.8,deliveryTime:40,costForTwo:350,emoji:"☕"},
+      {id:12,name:"Nandhana Palace",cuisines:"Andhra, Biryani",rating:4.2,deliveryTime:45,costForTwo:550,emoji:"🍛"},
+      {id:13,name:"Faasos",cuisines:"Wraps, Rolls",rating:4.0,deliveryTime:30,costForTwo:300,emoji:"🌯"},
+      {id:14,name:"Domino's Pizza",cuisines:"Pizza, Italian",rating:4.0,deliveryTime:30,costForTwo:500,emoji:"🍕"},
+      {id:15,name:"Ovenstory Pizza",cuisines:"Pizza, Gourmet",rating:4.1,deliveryTime:40,costForTwo:600,emoji:"🍕"},
+    ];
+
+    const input   = document.getElementById("search");
+    const list    = document.getElementById("list");
+    const empty    = document.getElementById("empty");
+    const spinner = document.getElementById("spinner");
+
+    let searchTimer = null;   // we have to track the debounce timer by hand…
+    const STORAGE_KEY = "swiggy:lastSearch";
+
+    // Escape user input before we shove it into innerHTML (the highlight in (2)
+    // builds HTML by hand, so we have to defend against breaking the markup).
+    function escapeHtml(s) {
+      return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    // (2) Highlight: find the query inside the name and wrap it in <mark>.
+    // Pure string surgery — index math, slicing, manual case handling.
+    function highlight(name, q) {
+      const safe = escapeHtml(name);
+      if (!q) return safe;
+      const lower = name.toLowerCase();
+      const idx = lower.indexOf(q.toLowerCase());
+      if (idx === -1) return safe;
+      // we matched against the RAW name, but must slice the ESCAPED string…
+      // close enough for the demo: re-escape each slice so indexes line up.
+      const before = escapeHtml(name.slice(0, idx));
+      const match   = escapeHtml(name.slice(idx, idx + q.length));
+      const after   = escapeHtml(name.slice(idx + q.length));
+      return before + "<mark>" + match + "</mark>" + after;
+    }
+
+    // The one function that has to keep FOUR pieces of UI in sync by hand.
+    function render(items, q) {
+      // toggle the spinner OFF (we're done "loading")
+      spinner.classList.remove("show");
+
+      list.innerHTML = "";   // wipe and rebuild every time
+
+      // (1) no-results message — manually show/hide, and remember to clear it
+      //     again the moment results come back, or it sticks around forever.
+      if (items.length === 0) {
+        empty.classList.add("show");
+      } else {
+        empty.classList.remove("show");
+      }
+
+      for (const r of items) {
+        const li = document.createElement("li");
+        li.innerHTML =
+          `<span class="emoji">${r.emoji}</span>` +
+          `<span><span class="name">${highlight(r.name, q)}</span>` +
+          `<div class="meta">${r.cuisines} · ⭐ ${r.rating} · ${r.deliveryTime} min</div></span>`;
+        list.appendChild(li);
+      }
+    }
+
+    // Pretend the search hits a server: show spinner, wait, THEN render.
+    function runSearch(q) {
+      // (3) spinner ON, and we must hide the stale list/empty-message so they
+      //     don't flash underneath the spinner. More manual toggling.
+      spinner.classList.add("show");
+      empty.classList.remove("show");
+      list.innerHTML = "";
+
+      // (4) remember the last search
+      try { localStorage.setItem(STORAGE_KEY, q); } catch (e) { /* ignore */ }
+
+      // debounce: cancel the in-flight "request" if they keep typing, or two
+      // results races finish out of order and the wrong list wins.
+      if (searchTimer) clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        const filtered = restaurants.filter(r =>
+          r.name.toLowerCase().includes(q.toLowerCase())
+        );
+        render(filtered, q);
+      }, 350);
+    }
+
+    input.addEventListener("input", () => runSearch(input.value));
+
+    // (4) on load, restore the last search AND re-run it so the list matches.
+    //     Easy to forget the "re-run" half and ship a box that shows old text
+    //     over the full list.
+    window.addEventListener("DOMContentLoaded", () => {
+      let saved = "";
+      try { saved = localStorage.getItem(STORAGE_KEY) || ""; } catch (e) {}
+      input.value = saved;
+      if (saved) {
+        runSearch(saved);
+      } else {
+        render(restaurants, "");   // and remember the spinner is OFF here…
+      }
+    });
+  </script>
+</body>
+</html>

@@ -23,8 +23,9 @@ goal.
 - Students participate with near-zero friction: open a link / enter a code,
   pick a nickname, go.
 - Anonymous Q&A queue the tutor can work through live.
-- Lightweight Good/Bad/Ugly feedback that nudges students into those three
-  lenses, with tutor-authored quick-pick options for those who won't type.
+- Lightweight Keep/Drop/Crank feedback that nudges students into those three
+  action-oriented lenses (Keep = do this again, Drop = lose this, Crank = turn
+  this up), with tutor-authored quick-pick options for those who won't type.
 - Robust enough to not break live in front of a class on flaky college wifi.
 
 ## Non-goals (deferred to later iterations)
@@ -75,11 +76,11 @@ goal.
   - **QuestionUpvote** — `id, question_id, device_uuid`. Unique on
     `(question_id, device_uuid)` → one upvote per device.
 - **FeedbackOption** — tutor-authored quick-pick, per lens, configured before
-  the session. `id, session_id, lens ('good'|'bad'|'ugly'), label, position`.
+  the session. `id, session_id, lens ('keep'|'drop'|'crank'), label, position`.
 - **Feedback** — one participant's submission.
   `id, session_id, device_uuid, created_at`. Unique on
   `(session_id, device_uuid)`; editable until session ends.
-  - **FeedbackEntry** — `id, feedback_id, lens ('good'|'bad'|'ugly'), option_id (nullable), free_text (nullable)`.
+  - **FeedbackEntry** — `id, feedback_id, lens ('keep'|'drop'|'crank'), option_id (nullable), free_text (nullable)`.
     A submission can carry selected chips and/or free text per lens.
 
 ## Identity & dedup
@@ -137,8 +138,9 @@ model. Out of scope for MVP.
    tally fill in → **Close** (reveals correct answer / final distribution,
    locks responses, updates leaderboard) → **Next**.
 5. Work the Q&A queue alongside (mark answered, sort by upvotes).
-6. **End teaching** → flip session to `feedback`; students see the Good/Bad/Ugly
-   screen. Review aggregated chips + free-text columns. **End** the session.
+6. **End teaching** → flip session to `feedback`; students see the
+   Keep/Drop/Crank screen. Review aggregated chips + free-text columns. **End**
+   the session.
 
 ### Student — participate
 1. Open link / enter code → enter a nickname (stored on device for the session).

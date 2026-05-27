@@ -2,6 +2,11 @@ from fastapi.testclient import TestClient
 
 import server
 
+# The app.js route has a deliberate demo delay (see server.APP_JS_DELAY_SECONDS).
+# Disable it here so the suite stays fast — the delay is a teaching device, not
+# behaviour under test.
+server.APP_JS_DELAY_SECONDS = 0
+
 client = TestClient(server.app)
 
 

@@ -41,6 +41,13 @@ uvicorn server:app --host 127.0.0.1 --port 8000 --reload
 Open `http://localhost:8000/`. The terminal logs every request the browser
 makes — the same set you'll see in DevTools.
 
+**Deliberate `app.js` delay.** The server stalls `/app.js` by **3 seconds** (a
+teaching device — see `APP_JS_DELAY_SECONDS` in `server.py`) so the "pretty ≠
+working" beat is visible even on a fast localhost: the card paints, you click
+Like, nothing happens, then it comes alive when the script lands. Tune or
+disable it: `APP_JS_DELAY_SECONDS=5 uvicorn server:app ...` (or `=0` to turn it
+off).
+
 ## Demo flow
 
 ### 0. Slido shock (before opening anything)
@@ -76,7 +83,9 @@ staged render, now slow enough to *see*:
 2. **styles snap in** (FOUC resolves; the system font swaps to Poppins) →
 3. the **image fills in** last →
 4. the **Like button comes alive** once `app.js` lands — click it *before* JS
-   arrives and nothing happens; click after and the count ticks up.
+   arrives and nothing happens; click after and the count ticks up. (The
+   deliberate 3-second `app.js` delay makes this beat land even without
+   throttling.)
 
 ## Pre-session checklist (run earlier in the day)
 

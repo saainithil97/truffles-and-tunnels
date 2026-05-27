@@ -63,7 +63,11 @@ Plus a bonus beat: the browser auto-requests `/favicon.ico` — a 7th request
   unstyled content).
 - **Interactivity arrives last** (`app.js`): the card can *look* finished while
   still not being clickable, because the JS hasn't landed yet. "Pretty ≠
-  working."
+  working." Because `app.js` is tiny and loads almost instantly even on Slow 3G,
+  the server applies a **deliberate artificial delay** to `/app.js` only
+  (`APP_JS_DELAY_SECONDS`, default 3s) so this beat is visible on a fast
+  connection — the card paints, the Like button does nothing for a few seconds,
+  then comes alive when the script finally arrives.
 - **The image is heavy on purpose** (~300–500 KB): so it is visibly the *last*
   thing to fill in on Slow 3G, after text and styles are already there.
 

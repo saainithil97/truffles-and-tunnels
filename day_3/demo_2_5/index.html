@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Swiggy — Preferences &amp; Checkout</title>
+    <!-- Read the saved theme and apply it before paint, so a reload never flashes light. -->
+    <script>
+      try {
+        if (localStorage.getItem("swiggy:theme") === "dark") {
+          document.documentElement.setAttribute("data-theme", "dark");
+        }
+      } catch (e) {}
+    </script>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <span class="logo">🛵 Swiggy</span>
+      <span class="tagline">Preferences &amp; Checkout</span>
+    </header>
+
+    <main class="page">
+      <!-- localStorage demo: a UI preference only the browser cares about. -->
+      <section class="card" aria-labelledby="prefs-title">
+        <h1 id="prefs-title">Preferences</h1>
+        <p class="muted">Saved in <code>localStorage</code> as <code>swiggy:theme</code>.</p>
+        <label class="toggle">
+          <input type="checkbox" id="dark-toggle" />
+          <span>🌙 Dark mode</span>
+        </label>
+        <p class="hint">
+          Survives reload, new tabs, even a browser restart — until you clear it.
+        </p>
+      </section>
+
+      <!-- sessionStorage demo: state that should outlive a refresh but not the tab. -->
+      <section class="card" aria-labelledby="checkout-title">
+        <h2 id="checkout-title">Checkout</h2>
+        <p class="muted">Step saved in <code>sessionStorage</code> as <code>swiggy:checkoutStep</code>.</p>
+
+        <ol class="steps" id="steps">
+          <li data-step="1">📍 Address</li>
+          <li data-step="2">💳 Payment</li>
+          <li data-step="3">✅ Confirm</li>
+        </ol>
+
+        <p class="step-label">Step <span id="step-num">1</span> of 3 — <span id="step-name">Address</span></p>
+
+        <div class="actions">
+          <button id="back-btn" type="button">← Back</button>
+          <button id="next-btn" type="button" class="primary">Next →</button>
+        </div>
+        <p class="hint">
+          Survives a reload. Open this same URL in a <strong>new tab</strong> and it starts over.
+        </p>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

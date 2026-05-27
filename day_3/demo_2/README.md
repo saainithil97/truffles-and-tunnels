@@ -34,6 +34,20 @@ Open `http://localhost:8000/` in Chrome. Have DevTools ready (`Cmd+Opt+I`).
 Answer is no — but make them commit to an answer first. This forces the
 HTML-vs-DOM distinction into the open.
 
+### 0.5. DevTools tour (2 minutes, first time through)
+
+Before mutating anything, orient them on the tabs they'll live in all session.
+Open DevTools (`Cmd+Opt+I`) and name each one in a sentence:
+
+- **Elements** — the live DOM tree (today's star).
+- **Console** — run JavaScript against the page.
+- **Network** — every request (you just used this in Demo 1).
+- **Application** — storage and cache.
+- **Performance** — profiling, for later.
+
+> "Think of DevTools as a doctor's instruments — each tab is a different vital
+> sign of the page."
+
 ### 1. The hook — call back to Demo 1's Like button
 
 On the card, click **❤️ Like** a few times. The on-screen count climbs to, say,
@@ -115,6 +129,21 @@ $0.remove()
 
 College websites work too, but their markup is unpredictable — Wikipedia is the
 reliable default.
+
+### 6.5. Semantic HTML (60-second addition)
+
+While you're in the **Elements** tab on Wikipedia, scroll the tree and point out
+the named elements: `<nav>`, `<main>`, `<article>`, `<header>`, `<footer>` —
+that `<header>` you just removed was one of them.
+
+> "These aren't just for tidiness. Screen readers for blind users navigate a
+> page *by* these landmarks — 'jump to main', 'jump to navigation.' Search
+> engines use them to understand structure. You could build the whole page out
+> of `<div>`s and it'd look identical — but you'd throw all of that away. Using
+> the right element costs you nothing."
+
+(Our own Swiggy card already does this — the card is a `<main>`, the name is an
+`<h1>`.)
 
 ### 7. Reframe (and defuse "is this hacking?")
 

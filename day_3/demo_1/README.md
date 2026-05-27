@@ -1,7 +1,7 @@
 # Day 3, Demo 1 — "What just happened?" (The request lifecycle)
 
 Companion artifacts for the first demo of Day 3. Full design:
-`docs/superpowers/specs/2026-05-27-day3-request-lifecycle-design.md`.
+`../docs/superpowers/specs/2026-05-27-day3-request-lifecycle-design.md`.
 
 A single Swiggy restaurant card (Meghana Foods, reused from Day 1) whose every
 resource is a separate file — so DevTools' Network tab reveals the real request

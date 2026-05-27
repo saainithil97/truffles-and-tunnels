@@ -13,6 +13,10 @@ stays on the course spine — the Swiggy restaurant card from Day 1.
   live DOM. View Source (what the server sent) vs the Elements tab (the live
   object the browser built), proven by mutating the DOM from the console while
   the source stays frozen — then vandalizing a real site for fun.
+- **[Demo 3 — "Why order matters"](demo_3/README.md)** — render blocking. The
+  same page served three ways (blocking `<head>` script, `<head>` + `defer`,
+  end-of-`<body>`); Slow 3G makes the cost of script placement impossible to
+  miss.
 
 ## Design docs
 

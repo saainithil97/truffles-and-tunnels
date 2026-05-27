@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JSX → createElement → object (the virtual DOM)</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; background: #fff7ed; }
+    h1 { font-size: 1.4rem; }
+    h2 { font-size: 1rem; color: #9a3412; margin-top: 1.6rem; }
+    .card { display: flex; gap: .8rem; align-items: center; padding: .8rem 1rem; background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.1); max-width: 360px; }
+    .emoji { font-size: 2rem; }
+    .name { font-weight: 600; }
+    .meta { color: #666; font-size: .85rem; }
+    pre { background: #1f2937; color: #e5e7eb; padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: .82rem; line-height: 1.5; }
+    .hint { color: #b45309; font-size: .9rem; }
+    code { background: #fde68a; padding: 0 3px; border-radius: 3px; }
+  </style>
+
+  <!-- Vendored locally so this runs offline from file://. -->
+  <script src="vendor/react.development.js"></script>
+  <script src="vendor/react-dom.development.js"></script>
+  <script src="vendor/babel.min.js"></script>
+</head>
+<body>
+  <h1>🍴 What JSX actually compiles to</h1>
+  <p class="hint">
+    Open the <strong>Console</strong> (Cmd+Opt+I). The React element object is
+    logged there — expand it to see it's just plain data: a tree of
+    <code>{ type, props }</code>.
+  </p>
+
+  <h2>1. The rendered card (this is JSX in action)</h2>
+  <div id="root"></div>
+
+  <h2>2. The same card, three ways</h2>
+  <pre id="progression"></pre>
+
+  <script type="text/babel">
+    const restaurant = { name: "Meghana Foods", cuisines: "Biryani, Andhra", rating: 4.3, emoji: "🍛" };
+
+    // ---- JSX --------------------------------------------------------------
+    // This is what you WRITE. It looks like HTML but it's JavaScript.
+    function RestaurantCard({ r }) {
+      return (
+        <div className="card">
+          <span className="emoji">{r.emoji}</span>
+          <span>
+            <span className="name">{r.name}</span>
+            <div className="meta">{r.cuisines} · ⭐ {r.rating}</div>
+          </span>
+        </div>
+      );
+    }
+
+    // ---- createElement ----------------------------------------------------
+    // Babel COMPILES the JSX above into React.createElement(...) calls.
+    // This hand-written version is exactly what the <RestaurantCard> JSX
+    // becomes — same output, no JSX sugar.
+    function RestaurantCardCompiled({ r }) {
+      return React.createElement(
+        "div",
+        { className: "card" },
+        React.createElement("span", { className: "emoji" }, r.emoji),
+        React.createElement(
+          "span",
+          null,
+          React.createElement("span", { className: "name" }, r.name),
+          React.createElement("div", { className: "meta" }, r.cuisines, " · ⭐ ", r.rating)
+        )
+      );
+    }
+
+    // Render the JSX version to the page.
+    ReactDOM.createRoot(document.getElementById("root")).render(
+      <RestaurantCard r={restaurant} />
+    );
+
+    // ---- the plain object -------------------------------------------------
+    // createElement RETURNS a plain JavaScript object. THIS is a node of the
+    // virtual DOM — just data in memory. Cheap to create, cheap to diff.
+    const element = React.createElement("div", { className: "card" }, restaurant.emoji);
+    console.log("👇 A React element is just a plain object — expand it:");
+    console.log(element);
+    // Looks roughly like:
+    //   { type: 'div', props: { className: 'card', children: '🍛' }, ... }
+
+    // Show the three forms side by side on the page.
+    document.getElementById("progression").textContent =
+`// 1. JSX — what you write
+<div className="card">
+  <span className="emoji">🍛</span>
+</div>
+
+// 2. createElement — what Babel compiles it to
+React.createElement(
+  "div",
+  { className: "card" },
+  React.createElement("span", { className: "emoji" }, "🍛")
+)
+
+// 3. The plain object it returns — a node of the Virtual DOM
+{
+  type: "div",
+  props: {
+    className: "card",
+    children: { type: "span", props: { className: "emoji", children: "🍛" } }
+  }
+}
+
+// A whole TREE of these objects is the virtual DOM:
+// just data in memory, cheap to create and to diff.`;
+  </script>
+</body>
+</html>

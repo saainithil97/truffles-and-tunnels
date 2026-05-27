@@ -11,7 +11,9 @@
     likes += 1;
     count.textContent = String(likes);
     button.classList.add("is-liked");
-    // The button's first child is the leading text node ("🤍 Like ").
-    button.firstChild.textContent = "❤ Liked ";
+    // The button's first child is the leading text node (the "🤍 Like " text,
+    // plus the surrounding whitespace from the HTML). The count <span> is the
+    // next sibling, so replacing this text node leaves the count intact.
+    button.firstChild.textContent = "❤️ Liked ";
   });
 })();

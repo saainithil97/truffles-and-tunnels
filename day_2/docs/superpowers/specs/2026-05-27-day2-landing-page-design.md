@@ -102,6 +102,15 @@ The substance of the session. Two artifacts to build in students' heads: the
 Framing: *"You don't need all seven. A great landing page usually nails one or
 two hard and keeps the rest clean. Find your lane."*
 
+**Two teaching aids in this folder make the lanes concrete:**
+- `lanes-gallery.html` — a reference page with one live, labeled mini-example per
+  lane. Open it to *show* students what each lane looks like (useful for those who
+  can't picture "motion" or "interactivity" on a page). It shows all seven loudly
+  on purpose — say out loud that a real page leads with ONE.
+- `index.html` (the AskBoard page) models the opposite discipline: it leads with
+  copy + clean layout and adds only *restrained* Interactivity and Motion where
+  they serve the product. The contrast between the two pages **is** the lesson.
+
 **Landing page anatomy** (the "keep the rest clean" checklist):
 - A **headline**: what it is + who it's for.
 - A one-line **subhead**.
@@ -165,7 +174,11 @@ day_2/
 ├── index.html              # The real Q&A app's landing page — the instructor's
 │                           #   actual product, the "target" the demo builds
 │                           #   toward and an example for students to study.
-│                           #   Static, inline CSS.
+│                           #   Inline CSS + a small inline script (tasteful
+│                           #   upvote interactivity + motion).
+├── lanes-gallery.html      # Teaching aid: one live, labeled mini-example per
+│                           #   strength lane, shown in Act 1 so students can
+│                           #   picture each lane concretely.
 ├── README.md               # Instructor runbook: prerequisites, exact git /
 │                           #   GitHub / Vercel steps, pre-session checklist,
 │                           #   risks + fallbacks.
@@ -184,10 +197,14 @@ the README rather than as its own file.
 ### `index.html` shape
 
 A polished-but-simple single-page landing page for the **Q&A app**, with inline
-CSS, demonstrating the anatomy checklist: headline, subhead, hero block, a
-benefits section, a credibility line, and one CTA. It is a real artifact — the
-landing page for the tool the instructor dogfoods. Clean enough to look
-intentional, simple enough that a second-year can read every line.
+CSS and a small inline script, demonstrating the anatomy checklist: headline,
+subhead, hero block, a benefits section, a credibility line, and one CTA. It also
+models *restrained* use of two further lanes: the hero question-board mock has
+working upvote buttons (Interactivity — a visitor feels the product's core
+action), and the hero rises in on load with a CTA hover-lift (Motion, guarded by
+`prefers-reduced-motion`). It is a real artifact — the landing page for the tool
+the instructor dogfoods. Clean enough to look intentional, simple enough that a
+second-year can read every line.
 
 ### `student-guide.md` shape
 

@@ -455,3 +455,18 @@ are real content, not plan gaps.
 list and anatomy checklist are identical in the spec, README, and student guide;
 the git/Vercel command sequence matches between README (demo) and student guide
 (homework).
+
+---
+
+## Post-plan additions
+
+After this plan executed, two enhancements were made (outside the original three
+tasks) and are reflected in the spec:
+
+1. **`day_2/lanes-gallery.html`** — a teaching aid with one live, labeled
+   mini-example per strength lane, so students can picture each lane concretely.
+   Referenced from the runbook's Act 1.
+2. **`day_2/index.html` enhanced** — the hero question-board mock gained working
+   upvote buttons (Interactivity) and the hero gained a subtle rise-in + CTA
+   hover-lift (Motion, guarded by `prefers-reduced-motion`). The page still leads
+   with copy + clean layout; the additions are deliberately restrained.

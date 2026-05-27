@@ -37,12 +37,19 @@ log when it starts and finishes.
 
 ### 0. Slido (before anything)
 
-> "You have a 500 KB JavaScript file. Where do you put the `<script>` tag —
-> head or end of body — and why?"
+> "You have a **500 KB JavaScript** file and a **50 KB CSS** file. Which one
+> should you worry about more for page-load speed?"
+
+A trick question — most will pick the bigger file (JS). The payoff lands in
+section 4.5: the *tiny* CSS blocks rendering of the **entire page**, while the
+big JS can be deferred out of the critical path. Don't reveal it yet; let them
+sit on the wrong intuition until the CSS-blocking beat.
 
 ### 1. Version A — blocking in the head
 
-Turn on **Slow 3G** (DevTools → Network → throttling). Load
+Frame it with the old interview question — *"where do you put a `<script>` tag,
+head or end of body, and why?"* — then show them. Turn on **Slow 3G** (DevTools
+→ Network → throttling). Load
 `http://localhost:8000/version-a.html`. The page is **blank for several
 seconds** — the browser hit the `<script>` in `<head>`, **stopped parsing**,
 downloaded it (slow on 3G), ran the 2-second loop — then the whole page appears
@@ -67,6 +74,38 @@ A plain `<script>` blocks because it might modify the DOM mid-parse (classically
 "download in parallel, but don't execute until the HTML is fully parsed."
 (`async` is the cousin: download in parallel, run as soon as it arrives, order
 not guaranteed — for independent scripts like analytics.)
+
+### 4.5. CSS is render-blocking too (2-minute addition — answers the Slido)
+
+Now pay off the Slido. **CSS also blocks rendering**, but for a different reason
+than a script:
+
+> "The browser *could* paint the raw, unstyled HTML while it waits for the CSS —
+> but you'd see a flash of ugly unstyled text, then everything would snap into
+> place. So instead the browser holds the paint until the CSS arrives. That's
+> why a tiny stylesheet matters: a 50 KB CSS file blocks the **whole page** from
+> appearing, while a 500 KB script can be pushed out of the way with `defer`.
+> Size isn't the whole story — *what blocks what* is."
+
+Tie it straight back to Demo 1: that's exactly the FOUC beat — the bare text
+that showed before `style.css` landed on Slow 3G.
+
+### 4.6. Fonts block text too (1-minute addition — FOUT vs FOIT)
+
+Reload **Demo 1's card** (`http://localhost:8000/` on the Demo 1 server) on Slow
+3G and watch the heading: it first appears in the **system font**, then **swaps**
+to Poppins once the font file lands. That swap is **FOUT** — Flash of Unstyled
+Text — and it happens because Demo 1's font URL ends in `&display=swap`.
+
+> "Fonts are yet another resource the browser needs before text is *final*. With
+> `display=swap` you get FOUT — readable fallback text that swaps when the font
+> arrives. The alternative is **FOIT** — Flash of *Invisible* Text — where the
+> browser hides the text until the font loads, and you stare at a blank space
+> that suddenly pops in. That's the gap you've all seen on slow sites."
+
+(Optional live edit: in `demo_1/index.html`, comment out the
+`fonts.googleapis.com` `<link>`, reload — the card renders in the system font;
+restore it and the Poppins swap returns.)
 
 ### 5. Tie back to Demo 1
 

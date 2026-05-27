@@ -78,7 +78,7 @@ requests" thread), but serves resources as **separate static files**.
 | `index.html` | The restaurant card markup. References the external CSS, JS, image, and Google Font in `<head>`/`<body>`. |
 | `style.css` | External styles — card layout, image framing, the `font-family` that uses the Google Font. Render-blocking in `<head>`. |
 | `app.js` | Adds the **"❤ liked" counter** — a button + count, in-memory, increments on click. Wired so that on Slow 3G the card looks done but is not clickable until JS lands. |
-| `<dish image>` | A real food/restaurant image, ~300–500 KB on purpose. **Generated locally** (stylized, not copyrighted) — no licensing concern and offline-safe. |
+| `meghana-biryani.jpg` | A real biryani photo, ~300–500 KB on purpose. **Downloaded once from Wikimedia Commons and served locally** (Hyderabadi Dum Biryani by Mahi Tatavarty, CC BY-SA 4.0). Local serving keeps the clean 6-request waterfall and is offline-safe; attribution is recorded in the README. |
 | `requirements.txt` | `fastapi`, `uvicorn`. |
 | `README.md` | Run steps, pre-session checklist, the Slido beat, and the demo script. |
 
@@ -109,7 +109,12 @@ requests" thread), but serves resources as **separate static files**.
 - **External Google Font** — for the chained, cross-origin teaching beat.
   Mitigate live-internet risk with a pre-session checklist item and a fallback
   screenshot of the waterfall.
-- **Generated local image** — stylized, offline-safe, no licensing concern.
+- **Real biryani photo, served locally** — downloaded once from Wikimedia
+  Commons (Hyderabadi Dum Biryani by Mahi Tatavarty, CC BY-SA 4.0), committed
+  into the repo and served by our own server. More appetising than a generated
+  image, while staying offline-safe and keeping the clean 6-request waterfall
+  (no extra cross-origin/live dependency from hotlinking). Attribution recorded
+  in the README.
 - **Meghana Foods (Biryani)** card, reused from Day 1.
 - Spec lives in `day_3/docs/superpowers/specs/`, matching the Day 1/Day 2
   per-day convention.

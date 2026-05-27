@@ -14,8 +14,8 @@ waterfall. The page is bait; **the Network tab is the demo.**
 - `style.css` — external, render-blocking styles (causes the FOUC beat).
 - `app.js` — the in-memory "❤ Like" counter (the "not clickable until JS lands"
   beat).
-- `meghana-biryani.jpg` — a generated ~300–500 KB image (the "fills in last"
-  beat).
+- `meghana-biryani.jpg` — a real ~300–500 KB biryani photo (the "fills in last"
+  beat). See **Image credit** below.
 - `server.py` — FastAPI app that serves the files and logs every request to the
   terminal.
 - `test_server.py` — pytest coverage for routing, content-types, and logging.
@@ -95,3 +95,10 @@ staged render, now slow enough to *see*:
 - This is a **local, screen-shared** demo — no public tunnel (unlike Day 1).
 - The terminal request log mirrors the Network tab: a nice beat — "the server
   answered every one of these."
+
+## Image credit
+
+`meghana-biryani.jpg` — "Hyderabadi Dum Biryani" by **Mahi Tatavarty**, from
+Wikimedia Commons, licensed **CC BY-SA 4.0**. EXIF stripped and re-saved; not
+otherwise modified.
+<https://commons.wikimedia.org/wiki/File:%22Hyderabadi_Dum_Biryani%22.jpg>

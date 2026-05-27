@@ -3,7 +3,9 @@
 **Audience:** ~130 second-year CS students, remote over video call.
 **Format:** Hybrid. The instructor demos the full flow live; students build and
 deploy their *own* landing page afterward as homework, using the session as the
-template.
+template. The instructor's demo product is the **real Q&A app** they're building
+to run this very workshop (the course's spine project, dogfooded). Students
+build a landing page for a product idea of their *own*.
 **Slot:** The full 60 minutes (extendable). Day 2's main event — no separate
 case study attached.
 **Single sentence the session answers:** *"You understand how the web works —
@@ -55,7 +57,7 @@ every time the page improves. The loop is the spine.
 | **0. Ship nothing, publicly** | ~10 min | `git init` → commits → push to GitHub → import to Vercel → live URL showing a one-line `index.html` | git, commit, repo, push, deploy. "It's live — and it's empty. Now let's make it worth visiting." |
 | **1. What makes a page good?** | ~15–20 min | 3–4 curated landing pages; each nails ONE thing → strength lanes → the anatomy checklist | Build taste. "Pick your lane; keep the rest clean." |
 | **2. Build yours with AI** | ~12 min | A chat AI → a complete `index.html`; iterate by asking for changes | AI drafts fast; *your judgment* (Act 1) shapes it. |
-| **3. Push it live** | ~10 min | Replace placeholder with the AI page, `git commit`, `git push` → Vercel auto-redeploys → refresh the real page (loop reused 2–3× for tweaks) | The loop pays off. Closing bridge to the movie app. |
+| **3. Push it live** | ~10 min | Replace placeholder with the AI page, `git commit`, `git push` → Vercel auto-redeploys → refresh the real page (loop reused 2–3× for tweaks) | The loop pays off. Closing bridge to building the Q&A app. |
 
 ### Act 0 — Ship nothing, publicly (~10 min)
 
@@ -120,7 +122,9 @@ for the instructor to swap in personal favorites:
 ### Act 2 — Build yours with AI (~12 min)
 
 One tool, kept simple: a free chat AI (Claude or ChatGPT). No other tools
-mentioned, to avoid confusing 130 remote students.
+mentioned, to avoid confusing 130 remote students. In the live demo the product
+is the **Q&A app** (the instructor's real tool); students will swap in their own
+product when they do this as homework.
 
 Steps:
 1. Write a prompt describing the product, the chosen strength lane, and "output
@@ -148,8 +152,9 @@ Steps:
    shipping feels like."*
 
 **Closing bridge:** *"You've shipped a page that's yours. Next session we start
-the real project — a movie discovery app — with a proper framework and a PRD.
-Same deploy loop you just learned, more power behind it."*
+building the real thing — this Q&A app, the one I'll actually use to collect
+your questions in this workshop — with a proper framework and a spec. Same
+deploy loop you just learned, more power behind it."*
 
 ## Artifacts in the repo (`day_2/`)
 
@@ -157,9 +162,10 @@ Mirrors Day 1's structure.
 
 ```
 day_2/
-├── index.html              # Reference landing page for a fictional product —
-│                           #   the "target" the demo builds toward and an
-│                           #   example for students to study. Static, inline CSS.
+├── index.html              # The real Q&A app's landing page — the instructor's
+│                           #   actual product, the "target" the demo builds
+│                           #   toward and an example for students to study.
+│                           #   Static, inline CSS.
 ├── README.md               # Instructor runbook: prerequisites, exact git /
 │                           #   GitHub / Vercel steps, pre-session checklist,
 │                           #   risks + fallbacks.
@@ -177,9 +183,10 @@ the README rather than as its own file.
 
 ### `index.html` shape
 
-A polished-but-simple single-page landing page for a fictional product, with
-inline CSS, demonstrating the anatomy checklist: headline, subhead, hero block,
-a benefits section, a credibility line, and one CTA. Clean enough to look
+A polished-but-simple single-page landing page for the **Q&A app**, with inline
+CSS, demonstrating the anatomy checklist: headline, subhead, hero block, a
+benefits section, a credibility line, and one CTA. It is a real artifact — the
+landing page for the tool the instructor dogfoods. Clean enough to look
 intentional, simple enough that a second-year can read every line.
 
 ### `student-guide.md` shape
@@ -204,8 +211,8 @@ The self-sufficient homework handout (students follow this without live help):
 3. Have a chat-AI tab open and a tested prompt ready (don't compose it live cold).
 4. Bookmark the 3–4 curated example landing pages; confirm they still load and
    still demonstrate their tagged lane.
-5. Decide the fictional product used in the live build so the narration is
-   smooth.
+5. The demo product is the Q&A app; have its one-line pitch and chosen strength
+   lane ready so the narration is smooth.
 6. Disable display sleep for the session duration.
 
 ## Risks and mitigations
@@ -222,9 +229,9 @@ The self-sufficient homework handout (students follow this without live help):
 ## Success criteria
 
 The session is a success if a representative student, doing the homework, can:
-> *Build a static landing page for a product idea — leading clearly with one
-> strength they chose — and deploy it to a public Vercel URL, then change it,
-> push, and watch it redeploy.*
+> *Build a static landing page for a product idea of their own — leading clearly
+> with one strength they chose — and deploy it to a public Vercel URL, then
+> change it, push, and watch it redeploy.*
 
 And can explain the loop in their own words: *"I commit my changes, push to
 GitHub, and Vercel puts the new version live automatically."*
@@ -233,6 +240,7 @@ GitHub, and Vercel puts the new version live automatically."*
 
 - Feedback forms, databases, APIs (the "real product" backend).
 - Analytics / observability — knowing if anyone is visiting (later session).
-- Next.js, the app router, rendering strategies — starts Day 3 with the movie
-  discovery app.
+- Next.js, the app router, rendering strategies — starts Day 3 with the Q&A app.
+- The Q&A feature itself (submit, upvote, store, display questions) — the API +
+  database + observability arc, built across Days 3–7.
 - Custom domains, environment variables, preview deployments, CI/CD.

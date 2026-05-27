@@ -13,14 +13,30 @@
   .eyebrow { font-size:.8rem; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); font-weight:700; }
   h1 { font-size:2.6rem; line-height:1.1; margin:.6rem 0 1rem; letter-spacing:-.02em; }
   .sub { font-size:1.2rem; color:var(--muted); max-width:34rem; margin:0 auto 2rem; }
-  .cta { display:inline-block; background:var(--accent); color:#fff; text-decoration:none; font-weight:600; padding:.8rem 1.5rem; border-radius:8px; }
-  .cta:hover { filter:brightness(.95); }
+  .cta { display:inline-block; background:var(--accent); color:#fff; text-decoration:none; font-weight:600; padding:.8rem 1.5rem; border-radius:8px; transition:transform .15s ease, box-shadow .15s ease, filter .15s ease; }
+  .cta:hover { filter:brightness(.97); transform:translateY(-2px); box-shadow:0 8px 18px rgba(58,109,240,.25); }
   .board { margin:3rem auto 0; max-width:30rem; text-align:left; border:1px solid var(--line); border-radius:12px; padding:.5rem; box-shadow:0 10px 30px rgba(20,23,26,.06); }
   .q { display:flex; align-items:center; gap:.9rem; padding:.85rem 1rem; border-bottom:1px solid var(--line); }
   .q:last-child { border-bottom:0; }
-  .votes { flex:0 0 auto; text-align:center; min-width:2.6rem; border:1px solid var(--line); border-radius:8px; padding:.3rem 0; font-weight:700; }
-  .votes span { display:block; font-size:.65rem; color:var(--muted); font-weight:600; }
+  .vote { flex:0 0 auto; display:flex; flex-direction:column; align-items:center; min-width:2.8rem; border:1px solid var(--line); border-radius:8px; padding:.3rem 0; background:#fff; color:var(--ink); font:inherit; cursor:pointer; transition:border-color .15s ease, background .15s ease, transform .1s ease; }
+  .vote .arrow { font-size:.7rem; line-height:1; color:var(--muted); }
+  .vote .count { font-weight:700; }
+  .vote .lbl { font-size:.65rem; color:var(--muted); font-weight:600; }
+  .vote:hover { border-color:var(--accent); }
+  .vote:active { transform:scale(.96); }
+  .vote[aria-pressed="true"] { border-color:var(--accent); background:#eef2ff; }
+  .vote[aria-pressed="true"] .arrow, .vote[aria-pressed="true"] .count { color:var(--accent); }
   .qtext { font-size:.97rem; }
+  @keyframes riseIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
+  .hero > * { animation:riseIn .7s ease both; }
+  .hero > *:nth-child(2) { animation-delay:.08s; }
+  .hero > *:nth-child(3) { animation-delay:.16s; }
+  .hero > *:nth-child(4) { animation-delay:.24s; }
+  .hero > *:nth-child(5) { animation-delay:.32s; }
+  @media (prefers-reduced-motion: reduce) {
+    .hero > *, .cta { animation:none !important; transition:none; }
+    .cta:hover { transform:none; box-shadow:none; }
+  }
   section.benefits { padding:4rem 0; border-top:1px solid var(--line); }
   .benefits h2 { text-align:center; font-size:1.5rem; margin:0 0 2.5rem; }
   .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:2rem; }
@@ -39,10 +55,10 @@
     <p class="sub">AskBoard is a live question board for talks, classes, and workshops. Your audience asks, everyone upvotes, and you answer what the room actually wants to know.</p>
     <a class="cta" href="#start">Start your board</a>
 
-    <div class="board" aria-hidden="true">
-      <div class="q"><div class="votes">42<span>votes</span></div><div class="qtext">Will the recording be shared afterwards?</div></div>
-      <div class="q"><div class="votes">31<span>votes</span></div><div class="qtext">How is this different from just using a Google Form?</div></div>
-      <div class="q"><div class="votes">18<span>votes</span></div><div class="qtext">Can questions stay anonymous?</div></div>
+    <div class="board">
+      <div class="q"><button class="vote" aria-pressed="false" aria-label="Upvote this question"><span class="arrow">▲</span><span class="count">42</span><span class="lbl">votes</span></button><div class="qtext">Will the recording be shared afterwards?</div></div>
+      <div class="q"><button class="vote" aria-pressed="false" aria-label="Upvote this question"><span class="arrow">▲</span><span class="count">31</span><span class="lbl">votes</span></button><div class="qtext">How is this different from just using a Google Form?</div></div>
+      <div class="q"><button class="vote" aria-pressed="false" aria-label="Upvote this question"><span class="arrow">▲</span><span class="count">18</span><span class="lbl">votes</span></button><div class="qtext">Can questions stay anonymous?</div></div>
     </div>
   </header>
 
@@ -62,5 +78,16 @@
     <a class="cta" href="#start">Start your board</a>
   </footer>
 </div>
+<script>
+  // Interactivity: let a visitor feel the product's core action — upvotes toggle and re-count.
+  for (const btn of document.querySelectorAll('.board .vote')) {
+    const count = btn.querySelector('.count');
+    btn.addEventListener('click', () => {
+      const voted = btn.getAttribute('aria-pressed') === 'true';
+      btn.setAttribute('aria-pressed', String(!voted));
+      count.textContent = parseInt(count.textContent, 10) + (voted ? -1 : 1);
+    });
+  }
+</script>
 </body>
 </html>

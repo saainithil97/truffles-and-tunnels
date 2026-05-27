@@ -78,6 +78,11 @@ Strength lanes (each student leads with ONE): **Design, Copy, Layout, Motion,
 Interactivity, Storytelling, Personality/Humor.** Framing: *"Nail one or two
 hard, keep the rest clean."*
 
+Open `lanes-gallery.html` here to **show** each lane as a live mini-example —
+useful for students who can't yet picture what "motion" or "interactivity" looks
+like on a page. (It's a teaching reference, not a template — note out loud that a
+real page leads with ONE lane, unlike this gallery which shows all seven.)
+
 Anatomy checklist: headline (what + who for) · one-line subhead · a hero visual
 · value/benefits · a hint of credibility · one clear call-to-action.
 

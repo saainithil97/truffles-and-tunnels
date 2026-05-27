@@ -87,13 +87,53 @@ staged render, now slow enough to *see*:
    deliberate 3-second `app.js` delay makes this beat land even without
    throttling.)
 
+### 3. The cache reveal
+
+Switch throttling back to **No Throttling**. Reload **normally** (`Cmd+R`, *not*
+a hard refresh). Watch the waterfall: `style.css`, `app.js`, the image, and the
+font now say **`(disk cache)`** with **0ms** load times. Half the waterfall just
+vanished.
+
+> "Your browser remembered. The server told it 'you can reuse these for the next
+> hour' — that's the `Cache-Control: max-age=3600` header we send — and the
+> browser listened. The HTML document still re-downloads because we mark it
+> `no-cache`; that's why it's only *half* the waterfall."
+
+Click `/style.css` → **Headers** tab to show the `Cache-Control` line the server
+sent. Then open **Application → Cache Storage** / **Disk Cache** to show where it
+lives.
+
+Now the kicker: tick **"Disable cache"** (top of the Network tab) and reload.
+Everything re-downloads — the cache is bypassed.
+
+> "This checkbox is why developers sometimes see different things than users.
+> You've had it on by default while building, so you've been re-downloading
+> everything every time. Your users haven't."
+
+Untick it afterward so the cache beat stays repeatable.
+
+### 4. Responsive design (60-second addition)
+
+Toggle **Device Mode** (the phone/tablet icon, top-left of DevTools) while the
+card is open. Switch between a phone viewport (e.g. **iPhone SE, 375px**) and a
+desktop width. The card is a **fixed 360px** — on the phone it sits edge-to-edge
+with no breathing room (and narrower than ~360px it overflows horizontally),
+while on desktop it floats centered in a sea of whitespace.
+
+> "Same HTML, same CSS — only the viewport changed, and the layout already
+> strains. This is why responsive design exists: your page has to work on a
+> 360px phone *and* a 1440px monitor. We'll cover *how* later."
+
 ## Pre-session checklist (run earlier in the day)
 
 - [ ] `.venv` exists and `pip install -r requirements.txt` succeeds inside it.
-- [ ] `python -m pytest test_server.py -v` passes (5 tests).
+- [ ] `python -m pytest test_server.py -v` passes (7 tests).
 - [ ] `uvicorn server:app ...` runs; card renders at `http://localhost:8000/`.
 - [ ] Network tab shows the 6 requests (+ favicon) on reload.
 - [ ] Slow 3G throttling produces the visible staged render.
+- [ ] Second normal reload shows the assets as `(disk cache)` / 0ms; "Disable
+      cache" makes them re-download. Practised once.
+- [ ] Device Mode toggle switches the card between phone and desktop viewports.
 - [ ] External Google Font loads (needs live internet). **Save a fallback
       screenshot of the waterfall** in case Google is flaky.
 - [ ] google.com Network-tab reveal practised once; screenshot saved as backup.

@@ -83,12 +83,26 @@ async function main() {
 
   // 3. Recursively copy demo_5 and demo_6 into public/live-demos/, excluding
   //    README.md and __pycache__ etc.
+  //
+  //    IMPORTANT: only delete-and-replace the destination if the source exists.
+  //    On Vercel CLI deploys the upload context is just site/, so ../day_3 isn't
+  //    on the build machine — if we deleted dest first we'd wipe the committed
+  //    snapshot and serve empty 404s. When source is missing, leave the
+  //    committed copy in place.
   const staticDemos = ["demo_5", "demo_6"];
   const skipNames = new Set(["README.md", "__pycache__", ".DS_Store"]);
   for (const id of staticDemos) {
     const src = path.join(day3Src, id);
     const dest = path.join(liveDemosDir, id);
-    // Clean dest first to avoid stale files lingering between runs.
+    try {
+      await fs.access(src);
+    } catch {
+      console.log(
+        `[copy-content] ${id}: source missing (../day_3/${id}) — leaving committed snapshot in place`
+      );
+      continue;
+    }
+    // Source exists — regenerate from it.
     await fs.rm(dest, { recursive: true, force: true });
     try {
       await copyDirRecursive(src, dest, {

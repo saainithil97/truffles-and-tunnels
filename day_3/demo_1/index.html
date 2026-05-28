@@ -13,12 +13,12 @@
 
   <!-- Request #2: our own stylesheet. Render-blocking — on Slow 3G the text
        shows in a plain system font until this arrives, then snaps into style. -->
-  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <main class="card">
     <!-- Request #4: the heavy image — the last thing to fill in on Slow 3G. -->
-    <img class="card__img" src="/meghana-biryani.jpg"
+    <img class="card__img" src="meghana-biryani.jpg"
          alt="Meghana Foods biryani" width="600" height="400" />
     <div class="card__body">
       <h1 class="card__name">Meghana Foods</h1>
@@ -33,6 +33,6 @@
   </main>
 
   <!-- Request #3: the behavior. Until this lands, the Like button does nothing. -->
-  <script src="/app.js" defer></script>
+  <script src="app.js" defer></script>
 </body>
 </html>

@@ -19,11 +19,11 @@
     <code>&lt;script&gt;</code> tag sits. Turn on <strong>Slow 3G</strong>
     (DevTools → Network → throttling) and load each:</p>
   <ul>
-    <li><a href="/version-a.html">Version A</a> — blocking script in
+    <li><a href="version-a.html">Version A</a> — blocking script in
       <code>&lt;head&gt;</code>. Page stays blank until the script loads and runs.</li>
-    <li><a href="/version-b.html">Version B</a> — <code>&lt;head&gt;</code> script
+    <li><a href="version-b.html">Version B</a> — <code>&lt;head&gt;</code> script
       with <code>defer</code>. Renders immediately; the script runs after parsing.</li>
-    <li><a href="/version-c.html">Version C</a> — plain script at the end of
+    <li><a href="version-c.html">Version C</a> — plain script at the end of
       <code>&lt;body&gt;</code>. Renders first, then freezes while the script runs.</li>
   </ul>
   <p>Open the Console to see <code>slow.js</code> log when it starts and finishes.</p>

@@ -42,7 +42,7 @@ You write a description. Babel turns it into function calls. Those calls return 
 
 ```mermaid
 flowchart LR
-  A["JSX<br/>&lt;Card name='...' /&gt;"] --> B["Babel transform"]
+  A["JSX source<br/>(Card name='...' /)"] --> B["Babel transform"]
   B --> C["React.createElement(Card, {name: '...'})"]
   C --> D["Plain JS object<br/>{type, props, children}"]
   D --> E["Tree of objects<br/>(virtual DOM)"]

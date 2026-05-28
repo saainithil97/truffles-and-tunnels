@@ -50,7 +50,7 @@ sequenceDiagram
     participant G as Google Fonts
     B->>S: GET / (HTML)
     S-->>B: index.html
-    Note over B: Parse HTML, find &lt;link&gt; and &lt;script&gt;
+    Note over B: Parse HTML, find link and script tags
     par CSS, JS, image, fonts kick off in parallel
         B->>S: GET /style.css
         S-->>B: style.css

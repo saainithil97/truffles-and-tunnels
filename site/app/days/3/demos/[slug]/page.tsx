@@ -8,8 +8,11 @@ import {
   findDay3Item,
   type Demo,
 } from "@/lib/curriculum";
+import { parseMarkdown } from "@/lib/markdown";
 import { Markdown } from "@/components/Markdown";
 import { DemoFrame } from "@/components/DemoFrame";
+import { PipFrame } from "@/components/PipFrame";
+import { SectionDeck } from "@/components/SectionDeck";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,56 +38,74 @@ export default async function DemoPage({
   const item = findDay3Item(slug);
   if (!item || slug === "verbal-segments") notFound();
 
-  const markdown = readMarkdown(item.contentFile);
+  const markdown = readMarkdownSource(item.contentFile);
+  const { intro, sections } = parseMarkdown(markdown);
   const iframeUrl = resolveIframeUrl(item);
   const { prev, next } = neighborSlugs(slug);
 
   return (
-    <div className="-mx-4 sm:-mx-6 lg:-mx-8">
-      <div className="px-4 sm:px-6 lg:px-8">
-        <Breadcrumb className="mb-4">
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink render={<Link href="/" />}>Home</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink render={<Link href="/days/3" />}>Day 3</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>{item.shortTitle}</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
+    <div className="mx-auto max-w-4xl">
+      {/* Breadcrumb */}
+      <Breadcrumb className="mb-4">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink render={<Link href="/" />}>Home</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink render={<Link href="/days/3" />}>Day 3</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>{item.shortTitle}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
 
-        <header className="border-b border-border pb-5">
-          <div className="text-xs font-semibold uppercase tracking-wide text-primary">
-            Day 3 · {item.shortTitle}
-          </div>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-            {item.title}
-          </h1>
-          <p className="mt-3 max-w-3xl text-muted-foreground">{item.summary}</p>
-        </header>
-      </div>
-
-      <div className="mt-6 grid grid-cols-1 gap-6 px-4 sm:px-6 lg:grid-cols-[1.1fr_1fr] lg:gap-8 lg:px-8">
-        {/* Left: live demo */}
-        <div className="lg:sticky lg:top-4 lg:self-start">
-          <DemoPanel item={item} iframeUrl={iframeUrl} />
+      {/* Title block */}
+      <header className="border-b border-border pb-5">
+        <div className="font-mono text-xs font-semibold uppercase tracking-wider text-primary">
+          Day 3 · {item.shortTitle}
         </div>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+          {item.title}
+        </h1>
+        <p className="mt-3 max-w-3xl text-base text-muted-foreground">
+          {item.summary}
+        </p>
+      </header>
 
-        {/* Right: content */}
-        <article className="min-w-0">
-          <div className="markdown min-w-0">
-            <Markdown source={markdown} />
+      {/* Intro paragraph(s) — always visible above the deck */}
+      {intro && (
+        <section className="mt-6">
+          <div className="markdown text-base">
+            <Markdown source={intro} />
           </div>
-        </article>
-      </div>
+        </section>
+      )}
+
+      {/* Inline "demo status" callout for runbook-only and not-yet-deployed
+          demos. The PipFrame overlay only shows when there's something to
+          actually iframe. */}
+      <DemoStatusCallout item={item} iframeUrl={iframeUrl} />
+
+      {/* Section deck — paginates Setup / Concepts / Diagrams / Takeaways. */}
+      {sections.length > 0 && (
+        <div className="mt-8">
+          <SectionDeck sections={sections} />
+        </div>
+      )}
+
+      {/* If the README has no H2 sections (unlikely after the rewrite, but
+          robust), fall back to rendering it as one long page. */}
+      {sections.length === 0 && (
+        <div className="markdown mt-8">
+          <Markdown source={markdown} />
+        </div>
+      )}
 
       {/* Prev / Next footer */}
-      <div className="mt-10 border-t border-border px-4 py-4 sm:px-6 lg:px-8">
+      <div className="mt-12 border-t border-border pt-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             {prev ? (
@@ -129,11 +150,19 @@ export default async function DemoPage({
           </div>
         </div>
       </div>
+
+      {/* Floating PIP iframe overlay. Only rendered when there's a real iframe
+          to show; runbook-only and undeployed demos get the inline callout. */}
+      {iframeUrl && (
+        <PipFrame title={`Live demo · ${item.shortTitle}`}>
+          <DemoFrame item={item} initialUrl={iframeUrl} />
+        </PipFrame>
+      )}
     </div>
   );
 }
 
-function readMarkdown(relPath: string): string {
+function readMarkdownSource(relPath: string): string {
   const abs = path.join(process.cwd(), "content", relPath);
   try {
     return fs.readFileSync(abs, "utf8");
@@ -150,26 +179,31 @@ function resolveIframeUrl(item: Demo): string | null {
   return null;
 }
 
-function DemoPanel({ item, iframeUrl }: { item: Demo; iframeUrl: string | null }) {
+function DemoStatusCallout({
+  item,
+  iframeUrl,
+}: {
+  item: Demo;
+  iframeUrl: string | null;
+}) {
   if (item.kind === "runbook-only") {
     return (
-      <Card className="border-dashed">
-        <CardContent className="space-y-2">
+      <Card className="mt-6 border-dashed">
+        <CardContent className="flex flex-wrap items-center gap-3">
           <Badge variant="outline" className="uppercase tracking-wide">
             No iframe for this one
           </Badge>
-          <p className="text-sm text-muted-foreground">
+          <p className="min-w-0 text-sm text-muted-foreground">
             {item.runbookHint ??
-              "This demo runs in DevTools or against a real site — follow the runbook on the right."}
+              "This demo runs in DevTools or against a real site — follow the runbook below."}
           </p>
         </CardContent>
       </Card>
     );
   }
-
   if (item.kind === "nextjs-separate" && !iframeUrl) {
     return (
-      <Card className="border-dashed">
+      <Card className="mt-6 border-dashed">
         <CardContent className="space-y-2">
           <Badge variant="outline" className="uppercase tracking-wide">
             Demo not yet deployed
@@ -185,15 +219,27 @@ function DemoPanel({ item, iframeUrl }: { item: Demo; iframeUrl: string | null }
             </code>{" "}
             on this site to embed it here.
           </p>
-          {item.iframeNote && (
-            <p className="text-xs text-muted-foreground">{item.iframeNote}</p>
-          )}
         </CardContent>
       </Card>
     );
   }
-
-  return <DemoFrame item={item} initialUrl={iframeUrl!} />;
+  // Embedded demo with a working iframe URL — surface a tiny hint about the
+  // floating PIP window.
+  return (
+    <Card className="mt-6 border-primary/30 bg-primary/5">
+      <CardContent className="flex flex-wrap items-center gap-3">
+        <Badge className="uppercase tracking-wide">Live demo open</Badge>
+        <p className="min-w-0 text-sm text-foreground/80">
+          The Swiggy demo is floating in a movable picture-in-picture window —
+          drag it by the title bar, resize from the bottom-right corner, or
+          snap it to any corner with the buttons in its header.{" "}
+          {item.iframeNote && (
+            <span className="text-muted-foreground">💡 {item.iframeNote}</span>
+          )}
+        </p>
+      </CardContent>
+    </Card>
+  );
 }
 
 // Flatten day3Parts -> ordered slug list, skipping verbal-segments (no detail page).

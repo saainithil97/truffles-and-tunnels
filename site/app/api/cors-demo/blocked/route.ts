@@ -6,8 +6,12 @@
 // from JS by the browser, producing the classic red CORS error.
 //
 // Pair with /api/cors-demo/allowed to show the difference.
-
-export const dynamic = "force-static";
+//
+// We deliberately do NOT use `force-static` here — Vercel's static-asset CDN
+// adds Access-Control-Allow-Origin: * to static responses by default, which
+// would defeat the whole demo. By keeping this dynamic, only the headers we
+// explicitly set make it onto the wire.
+export const dynamic = "force-dynamic";
 
 export function GET() {
   return new Response(

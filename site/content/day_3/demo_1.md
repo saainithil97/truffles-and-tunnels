@@ -1,0 +1,153 @@
+# Day 3, Demo 1 — "What just happened?" (The request lifecycle)
+
+Companion artifacts for the first demo of Day 3. Full design:
+`../docs/superpowers/specs/2026-05-27-day3-request-lifecycle-design.md`.
+
+A single Swiggy restaurant card (Meghana Foods, reused from Day 1) whose every
+resource is a separate file — so DevTools' Network tab reveals the real request
+waterfall. The page is bait; **the Network tab is the demo.**
+
+## What's here
+
+- `index.html` — the card markup, referencing the external CSS, JS, image, and
+  an external Google Font.
+- `style.css` — external, render-blocking styles (causes the FOUC beat).
+- `app.js` — the in-memory "❤ Like" counter (the "not clickable until JS lands"
+  beat).
+- `meghana-biryani.jpg` — a real ~300–500 KB biryani photo (the "fills in last"
+  beat). See **Image credit** below.
+- `server.py` — FastAPI app that serves the files and logs every request to the
+  terminal.
+- `test_server.py` — pytest coverage for routing, content-types, and logging.
+- `requirements.txt` — `fastapi`, `uvicorn`, `httpx`, `pytest`.
+
+## One-time setup
+
+```bash
+cd day_3
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+`.venv/` is gitignored. **Activate it in every new terminal** (`source .venv/bin/activate`).
+
+## Running the demo
+
+```bash
+uvicorn server:app --host 127.0.0.1 --port 8000 --reload
+```
+
+Open `http://localhost:8000/`. The terminal logs every request the browser
+makes — the same set you'll see in DevTools.
+
+**Deliberate `app.js` delay.** The server stalls `/app.js` by **3 seconds** (a
+teaching device — see `APP_JS_DELAY_SECONDS` in `server.py`) so the "pretty ≠
+working" beat is visible even on a fast localhost: the card paints, you click
+Like, nothing happens, then it comes alive when the script lands. Tune or
+disable it: `APP_JS_DELAY_SECONDS=5 uvicorn server:app ...` (or `=0` to turn it
+off).
+
+## Demo flow
+
+### 0. Slido shock (before opening anything)
+
+> "How many network requests does it take to load **google.com**'s homepage?"
+
+Students guess 5–10. The real answer is **50–70+**. Reveal it live: open
+`https://www.google.com`, DevTools → Network → reload, read the request count
+at the bottom of the panel.
+
+### 1. The waterfall
+
+Open `http://localhost:8000/`. DevTools (`Cmd+Opt+I`) → **Network** tab →
+reload. Walk it:
+
+- **6 requests** for this tiny card:
+  1. `/` (HTML) 2. `/style.css` 3. `/app.js` 4. `/meghana-biryani.jpg`
+  5. the font **CSS** from `fonts.googleapis.com`
+  6. the font **file** from `fonts.gstatic.com`
+- Point out which start in **parallel** vs. which **wait**: request #6 (the font
+  file) can't start until #5 (the font CSS) tells the browser it exists — one
+  request *causes* another.
+- #5 and #6 are **cross-origin** — different domains than ours.
+- There's also a **`/favicon.ico`** request nobody asked for — the browser asks
+  on its own (it 404s; we don't ship one).
+
+### 2. The Slow 3G reveal
+
+DevTools → Network → throttling dropdown → **Slow 3G** → reload. Narrate the
+staged render, now slow enough to *see*:
+
+1. **bare unstyled text** first (HTML parsed, `style.css` not here yet) →
+2. **styles snap in** (FOUC resolves; the system font swaps to Poppins) →
+3. the **image fills in** last →
+4. the **Like button comes alive** once `app.js` lands — click it *before* JS
+   arrives and nothing happens; click after and the count ticks up. (The
+   deliberate 3-second `app.js` delay makes this beat land even without
+   throttling.)
+
+### 3. The cache reveal
+
+Switch throttling back to **No Throttling**. Reload **normally** (`Cmd+R`, *not*
+a hard refresh). Watch the waterfall: `style.css`, `app.js`, the image, and the
+font now say **`(disk cache)`** with **0ms** load times. Half the waterfall just
+vanished.
+
+> "Your browser remembered. The server told it 'you can reuse these for the next
+> hour' — that's the `Cache-Control: max-age=3600` header we send — and the
+> browser listened. The HTML document still re-downloads because we mark it
+> `no-cache`; that's why it's only *half* the waterfall."
+
+Click `/style.css` → **Headers** tab to show the `Cache-Control` line the server
+sent. Then open **Application → Cache Storage** / **Disk Cache** to show where it
+lives.
+
+Now the kicker: tick **"Disable cache"** (top of the Network tab) and reload.
+Everything re-downloads — the cache is bypassed.
+
+> "This checkbox is why developers sometimes see different things than users.
+> You've had it on by default while building, so you've been re-downloading
+> everything every time. Your users haven't."
+
+Untick it afterward so the cache beat stays repeatable.
+
+### 4. Responsive design (60-second addition)
+
+Toggle **Device Mode** (the phone/tablet icon, top-left of DevTools) while the
+card is open. Switch between a phone viewport (e.g. **iPhone SE, 375px**) and a
+desktop width. The card is a **fixed 360px** — on the phone it sits edge-to-edge
+with no breathing room (and narrower than ~360px it overflows horizontally),
+while on desktop it floats centered in a sea of whitespace.
+
+> "Same HTML, same CSS — only the viewport changed, and the layout already
+> strains. This is why responsive design exists: your page has to work on a
+> 360px phone *and* a 1440px monitor. We'll cover *how* later."
+
+## Pre-session checklist (run earlier in the day)
+
+- [ ] `.venv` exists and `pip install -r requirements.txt` succeeds inside it.
+- [ ] `python -m pytest test_server.py -v` passes (7 tests).
+- [ ] `uvicorn server:app ...` runs; card renders at `http://localhost:8000/`.
+- [ ] Network tab shows the 6 requests (+ favicon) on reload.
+- [ ] Slow 3G throttling produces the visible staged render.
+- [ ] Second normal reload shows the assets as `(disk cache)` / 0ms; "Disable
+      cache" makes them re-download. Practised once.
+- [ ] Device Mode toggle switches the card between phone and desktop viewports.
+- [ ] External Google Font loads (needs live internet). **Save a fallback
+      screenshot of the waterfall** in case Google is flaky.
+- [ ] google.com Network-tab reveal practised once; screenshot saved as backup.
+- [ ] Display sleep / Caffeinate enabled for the session duration.
+
+## Notes for the live session
+
+- This is a **local, screen-shared** demo — no public tunnel (unlike Day 1).
+- The terminal request log mirrors the Network tab: a nice beat — "the server
+  answered every one of these."
+
+## Image credit
+
+`meghana-biryani.jpg` — "Hyderabadi Dum Biryani" by **Mahi Tatavarty**, from
+Wikimedia Commons, licensed **CC BY-SA 4.0**. EXIF stripped and re-saved; not
+otherwise modified.
+<https://commons.wikimedia.org/wiki/File:%22Hyderabadi_Dum_Biryani%22.jpg>

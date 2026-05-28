@@ -33,7 +33,12 @@ body {
   color: #1f2937;
   font-size: 1rem;
   line-height: 1.7;
-  max-width: 70ch;
+}
+
+/* Tighter spacing for headings inside the demo page right-column (callout-y feel) */
+.markdown h2:first-child,
+.markdown h3:first-child {
+  margin-top: 0;
 }
 
 .markdown > * + * {

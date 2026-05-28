@@ -89,8 +89,29 @@ async function main() {
   //    on the build machine — if we deleted dest first we'd wipe the committed
   //    snapshot and serve empty 404s. When source is missing, leave the
   //    committed copy in place.
-  const staticDemos = ["demo_5", "demo_6"];
-  const skipNames = new Set(["README.md", "__pycache__", ".DS_Store"]);
+  // Every demo that has browser-runnable assets in day_3/<id>/ — i.e. an
+  // index.html plus any HTML/CSS/JS/image siblings. The prebuild also explicitly
+  // strips Python files (server.py, test_server.py, requirements.txt) and venv
+  // dirs since those don't belong on the static CDN.
+  const staticDemos = [
+    "demo_1",
+    "demo_2_5",
+    "demo_3",
+    "demo_4",
+    "demo_5",
+    "demo_6",
+    "demo_10",
+  ];
+  const skipNames = new Set([
+    "README.md",
+    "__pycache__",
+    ".pytest_cache",
+    ".venv",
+    ".DS_Store",
+    "requirements.txt",
+    "server.py",
+    "test_server.py",
+  ]);
   for (const id of staticDemos) {
     const src = path.join(day3Src, id);
     const dest = path.join(liveDemosDir, id);

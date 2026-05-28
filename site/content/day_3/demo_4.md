@@ -1,131 +1,146 @@
-# Day 3, Demo 4 — "The expensive DOM" (Layout, reflow, and paint)
+# Demo 4 — The expensive DOM
 
-Companion artifacts for the fourth demo of Day 3. Full design:
-`../docs/superpowers/specs/2026-05-28-day3-demo4-layout-paint-design.md`.
+Five hundred Swiggy restaurant tiles. Two buttons that resize every tile to the exact same look. The visual result is identical — the timing badge is not. One path is sometimes 50–100x slower than the other, and the only difference is *how* you ask the browser to do the work. That gap is where most "why is my page janky" stories live, and it's the same problem React was built to hide from you.
 
-Changing the DOM isn't free. Every time you move or resize an element, the
-browser has to **recompute layout** (where everything sits — "reflow") and
-**repaint** the affected pixels. Do it once and nobody notices. Do it 500 times
-in a loop, reading layout in between, and you get **layout thrash** — the
-browser reflowing over and over because you keep asking. That's the real reason
-hand-rolled DOM updates get slow at scale, and **the core problem React was
-built to solve**: updating a complex UI efficiently is hard when done manually.
-(Not "HTML is hard to write" — it's "keeping the screen in sync without
-thrashing is hard.")
+## Setup
 
-The page has **500 restaurant tiles** and two buttons that resize them to the
-*same look* — one tile-by-tile, one in a single pass — with on-screen timings so
-the contrast is quantitative and repeatable.
+The iframe on the left is the whole demo.
 
-## What's here
+1. Click **Resize each (slow)**. Read the ms in the timing badge.
+2. Click **Reset**.
+3. Click **Resize all (batched / fast)**. Read the ms again.
+4. Compare. The ratio is the lesson — your exact numbers will vary by machine.
 
-- `index.html` — the controls, the two timing readouts, and an empty grid that
-  `app.js` fills with 500 tiles.
-- `style.css` — the grid + tile styles, and a single `.grid.big` rule that's the
-  whole "fast" path (CSS resizes every tile from one class toggle).
-- `app.js` — builds the 500 tiles; the **slow** handler loops over every tile
-  writing inline sizes *and reading `offsetWidth`* each iteration (forcing a
-  synchronous reflow 500 times); the **fast** handler toggles one class. Both
-  timed with `performance.now()`.
-- `server.py` — FastAPI static server that logs every request (Demo 1/3 pattern).
-- `test_server.py` — pytest (serving + content-types + logging).
-- `requirements.txt` — `fastapi`, `uvicorn`, `httpx`, `pytest`.
+**For the brave** — open DevTools → **Performance** tab → record a ~3 second profile around each click. You'll see the slow click smear the timeline with hundreds of tiny purple **Layout** bars and green **Paint** bars. The fast click shows one of each. Bonus: DevTools → `Cmd+Shift+P` → "Show Rendering" → enable **Paint flashing** to literally see green flashes wherever the browser repaints.
 
-## Setup & run
+**Or run it locally:**
 
 ```bash
 cd day_3/demo_4
-python3 -m venv .venv && source .venv/bin/activate   # first time only
-pip install -r requirements.txt                       # first time only
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
 uvicorn server:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-Open `http://localhost:8000/`.
+## Concepts
 
-## Demo flow
+**The rendering pipeline.** When pixels change on screen, the browser runs a sequence: your **JS** runs, then **Style** is recomputed, then **Layout** figures out where every box sits, then **Paint** fills in pixels, then **Composite** stitches the layers together. Cheap edits (a color change) skip layout. Anything that affects size or position has to redo layout *and* paint.
 
-### 0. Slido (before anything)
+**Reading layout is not free.** Properties like `offsetWidth`, `offsetHeight`, `getBoundingClientRect()`, and `clientTop` look innocent, but they force the browser to give you an *honest, up-to-date* answer. If you have unflushed style writes pending, the browser must run layout *right now* to answer you. That's called a **forced synchronous layout** or **reflow**.
 
-> "You need to update **100 list items** on screen. Do you (A) update them one
-> by one, or (B) rebuild the whole list as HTML and replace it all at once?"
+**Layout thrashing.** Write a style, read a layout property, write, read, write, read — in a loop. Each read forces a reflow because each write invalidated layout. 500 tiles → 500 full-grid reflows. The slow button does exactly this (peek at `app.js` — the `tile.offsetWidth;` line on its own is the culprit).
 
-Let them vote. The answer is **B** — one layout pass instead of 100 — but hold
-the twist for the end (section 5): B is faster yet *loses scroll position,
-focus, and in-progress animations*. That tension is exactly what the virtual DOM
-resolves, and it's the bridge to Demo 6.
+**The fix is batching.** Do all your reads first, then all your writes (or, better, change one class on the parent and let CSS do it). The browser is *already* trying to batch DOM mutations for you; your job is to stop interrupting it.
 
-### 1. Turn on Paint flashing
+**This is why React exists.** React's render phase computes the next UI in memory, then the commit phase applies the changes in one well-ordered pass. You never accidentally interleave reads and writes, because you're not touching the DOM directly. Demo 6 will make that concrete.
 
-DevTools → `Cmd+Shift+P` → "Show Rendering" → enable **Paint flashing**.
-Interact with any page (scroll, hover a button) — the **green flashes** are
-repaints. Now they can *see* paint happen.
+## Diagrams
 
-### 2. Resize each (slow), while recording
+The rendering pipeline — and which stages each path triggers per click:
 
-Open `http://localhost:8000/`. Open the **Performance** tab and start recording
-(`Cmd+E`). Click **"Resize each (slow)"**. Stop the recording.
+```mermaid
+flowchart LR
+    JS[JS<br/>your handler]
+    Style[Style<br/>recalc]
+    Layout[Layout<br/>reflow]
+    Paint[Paint<br/>pixels]
+    Composite[Composite<br/>layers]
 
-- Point at the timeline: a long stripe of alternating **Layout → Paint → Layout
-  → Paint** bars — purple/green, over and over.
-- Read the on-page number: tens to hundreds of **ms** for one button click.
+    JS --> Style --> Layout --> Paint --> Composite
 
-> "That's 500 individual layout recalculations. Each time we change one tile's
-> size *and then read its width*, the browser can't be lazy — it has to reflow
-> the whole grid right now to give us an honest answer, *then* we change the
-> next tile and ask again. Write, reflow, write, reflow… 500 times. That's
-> layout thrash."
+    classDef slow fill:#fc8019,stroke:#cc5200,color:#fff;
+    classDef cheap fill:#f5f5f5,stroke:#a3a3a3,color:#222;
+    class Layout,Paint slow;
+    class JS,Style,Composite cheap;
+```
 
-### 3. Resize all (batched / fast)
+Slow click = this pipeline runs **~500 times** in one handler. Fast click = it runs **once**.
 
-Click **Reset**, then **"Resize all (batched / fast)"** (record it too if you
-like).
+Layout thrashing vs batched writes (each tick is one DOM operation, time flows left to right):
 
-- The tiles grow to the exact same size — but the timing readout is a tiny
-  fraction of the slow one, and the timeline shows **one** Layout and **one**
-  Paint.
+<svg width="600" height="220" viewBox="0 0 600 220" xmlns="http://www.w3.org/2000/svg" font-family="ui-sans-serif" font-size="12">
+  <text x="0" y="16" font-weight="700" fill="#222">Slow: read, write, read, write, read, write…</text>
+  <text x="0" y="34" fill="#a3a3a3">Each write invalidates layout. Each read forces a reflow. 500 reflows.</text>
+  <line x1="0" y1="68" x2="600" y2="68" stroke="#a3a3a3" stroke-width="1"/>
+  <g>
+    <rect x="5"   y="48" width="14" height="20" fill="#a3a3a3"/>
+    <rect x="22"  y="48" width="14" height="20" fill="#fc8019"/>
+    <rect x="39"  y="48" width="14" height="20" fill="#a3a3a3"/>
+    <rect x="56"  y="48" width="14" height="20" fill="#fc8019"/>
+    <rect x="73"  y="48" width="14" height="20" fill="#a3a3a3"/>
+    <rect x="90"  y="48" width="14" height="20" fill="#fc8019"/>
+    <rect x="107" y="48" width="14" height="20" fill="#a3a3a3"/>
+    <rect x="124" y="48" width="14" height="20" fill="#fc8019"/>
+    <rect x="141" y="48" width="14" height="20" fill="#a3a3a3"/>
+    <rect x="158" y="48" width="14" height="20" fill="#fc8019"/>
+    <rect x="175" y="48" width="14" height="20" fill="#a3a3a3"/>
+    <rect x="192" y="48" width="14" height="20" fill="#fc8019"/>
+    <rect x="209" y="48" width="14" height="20" fill="#a3a3a3"/>
+    <rect x="226" y="48" width="14" height="20" fill="#fc8019"/>
+    <rect x="243" y="48" width="14" height="20" fill="#a3a3a3"/>
+    <rect x="260" y="48" width="14" height="20" fill="#fc8019"/>
+    <rect x="277" y="48" width="14" height="20" fill="#a3a3a3"/>
+    <rect x="294" y="48" width="14" height="20" fill="#fc8019"/>
+    <rect x="311" y="48" width="14" height="20" fill="#a3a3a3"/>
+    <rect x="328" y="48" width="14" height="20" fill="#fc8019"/>
+    <rect x="345" y="48" width="14" height="20" fill="#a3a3a3"/>
+    <rect x="362" y="48" width="14" height="20" fill="#fc8019"/>
+    <rect x="379" y="48" width="14" height="20" fill="#a3a3a3"/>
+    <rect x="396" y="48" width="14" height="20" fill="#fc8019"/>
+    <rect x="413" y="48" width="14" height="20" fill="#a3a3a3"/>
+    <rect x="430" y="48" width="14" height="20" fill="#fc8019"/>
+    <rect x="447" y="48" width="14" height="20" fill="#a3a3a3"/>
+    <rect x="464" y="48" width="14" height="20" fill="#fc8019"/>
+    <rect x="481" y="48" width="14" height="20" fill="#a3a3a3"/>
+    <rect x="498" y="48" width="14" height="20" fill="#fc8019"/>
+    <rect x="515" y="48" width="14" height="20" fill="#a3a3a3"/>
+    <rect x="532" y="48" width="14" height="20" fill="#fc8019"/>
+    <rect x="549" y="48" width="14" height="20" fill="#a3a3a3"/>
+    <rect x="566" y="48" width="14" height="20" fill="#fc8019"/>
+    <rect x="583" y="48" width="14" height="20" fill="#a3a3a3"/>
+  </g>
 
-> "Same visual result. We toggled a single class on the container and let CSS
-> resize all 500 tiles in one pass — one layout, one paint. The browser batches
-> work *for* us as long as we don't keep interrupting it to read layout."
+  <text x="0" y="116" font-weight="700" fill="#222">Fast: read, read, read │ write, write, write</text>
+  <text x="0" y="134" fill="#a3a3a3">All reads first, then all writes. One reflow at the end.</text>
+  <line x1="0" y1="168" x2="600" y2="168" stroke="#a3a3a3" stroke-width="1"/>
+  <g>
+    <rect x="5"   y="148" width="14" height="20" fill="#a3a3a3"/>
+    <rect x="22"  y="148" width="14" height="20" fill="#a3a3a3"/>
+    <rect x="39"  y="148" width="14" height="20" fill="#a3a3a3"/>
+    <rect x="56"  y="148" width="14" height="20" fill="#a3a3a3"/>
+    <rect x="73"  y="148" width="14" height="20" fill="#a3a3a3"/>
+    <rect x="90"  y="148" width="14" height="20" fill="#a3a3a3"/>
+    <rect x="107" y="148" width="14" height="20" fill="#a3a3a3"/>
+    <rect x="124" y="148" width="14" height="20" fill="#a3a3a3"/>
+    <rect x="141" y="148" width="14" height="20" fill="#a3a3a3"/>
+  </g>
+  <line x1="290" y1="142" x2="290" y2="174" stroke="#222" stroke-width="1" stroke-dasharray="3,3"/>
+  <text x="294" y="144" fill="#222">flush</text>
+  <g>
+    <rect x="310" y="148" width="14" height="20" fill="#fc8019"/>
+    <rect x="327" y="148" width="14" height="20" fill="#fc8019"/>
+    <rect x="344" y="148" width="14" height="20" fill="#fc8019"/>
+    <rect x="361" y="148" width="14" height="20" fill="#fc8019"/>
+    <rect x="378" y="148" width="14" height="20" fill="#fc8019"/>
+    <rect x="395" y="148" width="14" height="20" fill="#fc8019"/>
+    <rect x="412" y="148" width="14" height="20" fill="#fc8019"/>
+    <rect x="429" y="148" width="14" height="20" fill="#fc8019"/>
+    <rect x="446" y="148" width="14" height="20" fill="#fc8019"/>
+  </g>
 
-### 4. The takeaway
+  <g transform="translate(0,196)">
+    <rect x="0" y="0" width="14" height="14" fill="#a3a3a3"/>
+    <text x="20" y="11" fill="#222">read (offsetWidth, getBoundingClientRect, …)</text>
+    <rect x="300" y="0" width="14" height="14" fill="#fc8019"/>
+    <text x="320" y="11" fill="#222">write (style change)</text>
+  </g>
+</svg>
 
-Both buttons end in the identical picture; only the *method* differs, and the
-numbers are not close. Manually keeping a complex UI in sync — touching elements
-one at a time — is how real apps get slow.
+## Takeaways
 
-> "This is the core problem React was built to solve. Not 'HTML is hard to
-> write' — it's 'updating a complex UI efficiently, without thrashing layout, is
-> hard to do by hand.'"
-
-### 5. Pay off the Slido (forward-ref to Demo 6)
-
-Back to the vote. **B** (rebuild and replace) wins on raw speed — one layout pass
-beats 100. *But*: blow away the list and rebuild it and you've **lost the user's
-scroll position, the input they had focused, any animation mid-flight**. So the
-honest answer is "B is faster but naïve replacement breaks the experience."
-
-> "What you actually want is to compute the *new* list, diff it against the old
-> one, and touch only the handful of nodes that truly changed — getting B's
-> single-pass speed without throwing away A's state. That diffing is the
-> **virtual DOM**. We'll see it in Demo 6."
-
-## Pre-session checklist
-
-- [ ] `.venv` exists and `pip install -r requirements.txt` succeeds.
-- [ ] `python -m pytest -q` passes (7 tests).
-- [ ] `uvicorn server:app ...` runs; the 500-tile grid renders at
-      `http://localhost:8000/`.
-- [ ] Paint flashing enabled once and the green repaints confirmed.
-- [ ] Clicked **Resize each (slow)** — readout is clearly large (tens–hundreds
-      of ms) and the Performance timeline shows repeated Layout/Paint bars.
-- [ ] Clicked **Reset** then **Resize all (batched)** — same final look, far
-      smaller readout, a single Layout/Paint. Contrast practised once.
-- [ ] Display sleep / Caffeinate enabled for the session duration.
-
-## Notes for the live session
-
-- Exact ms vary by machine; the **ratio** (slow ≫ fast) is the point, not the
-  absolute numbers. Run it once on the demo machine so you know your figures.
-- If the slow click feels too quick to narrate, click it twice — or mention the
-  grid could be scaled past 500. Don't push so high the tab hangs.
+- **Treat `offsetHeight`, `offsetWidth`, and `getBoundingClientRect()` as expensive.** They look like reads. They're really "flush any pending layout and reply."
+- **Batch your reads, then your writes.** Inside one handler, never interleave the two — that's the whole game.
+- **One class toggle on a parent beats 500 inline style writes.** Let CSS fan out the change in a single pass.
+- **The Performance tab is your X-ray.** Long stripes of purple Layout bars in one handler = layout thrash, every time.
+- **This is exactly what React's render phase does for you.** It computes the new tree, then commits in one ordered pass. You stop thrashing without thinking about it.
+- **The ratio matters, not the absolute number.** A slow click might be 30 ms on a fast laptop and 500 ms on a cheap phone. The fast click stays small on both. That's the cliff your users actually feel.

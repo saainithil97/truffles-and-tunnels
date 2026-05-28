@@ -2,21 +2,33 @@
 // All day/demo metadata lives here so pages stay declarative.
 
 export type DemoKind =
-  | "python-server"
-  | "static-html"
-  | "runbook-only"
-  | "nextjs-separate";
+  | "embedded" // iframe lives at /live-demos/<id>/ or a public URL
+  | "runbook-only" // demo is performed against a real site / in DevTools, no iframe
+  | "nextjs-separate"; // separate Vercel deployment, URL via env var
 
 export type Demo = {
   id: string;
   slug: string; // URL slug under /days/3/demos/<slug>
-  title: string; // H1 from the demo README (quoted name)
+  shortTitle: string; // shown on cards and breadcrumb (e.g. "Demo 1 — Request lifecycle")
+  title: string; // full page H1
   summary: string; // one-line description shown on cards + demo page
   readmeSourcePath: string; // path relative to repo root, used by the prebuild copier
   contentFile: string; // file inside site/content/ to read at runtime
   kind: DemoKind;
-  htmlEntries?: string[]; // for static-html demos: HTML files served from /live-demos/<id>/
-  liveDemoBase?: string; // public path prefix for static demos
+
+  // For kind === "embedded":
+  //   - iframePath is the URL (relative or absolute) loaded into the iframe.
+  //   - iframeEntries lists *all* the runnable HTML pages so we render a tab
+  //     picker above the iframe when there's more than one.
+  iframePath?: string;
+  iframeEntries?: { label: string; path: string }[];
+  iframeNote?: string;
+
+  // For kind === "nextjs-separate": env var that holds the deployed URL.
+  iframeUrlEnvVar?: string;
+
+  // For runbook-only: a short "what you do here" hint shown in place of the iframe.
+  runbookHint?: string;
 };
 
 export type DayPart = {
@@ -39,114 +51,151 @@ export const day3Demos: Demo[] = [
   {
     id: "demo_1",
     slug: "demo_1",
-    title:
-      'Day 3, Demo 1 — "What just happened?" (The request lifecycle)',
+    shortTitle: "Demo 1 — The request lifecycle",
+    title: 'Demo 1 — "What just happened?"',
     summary:
-      "How a browser loads a page (DNS → HTTP → parse → render), shown via the Network tab and a Slow 3G reload of a single Swiggy card that turns out to be six requests.",
+      "A tiny Swiggy card is really six network requests. Open DevTools, hit reload, and watch the browser stitch a page together — HTML, CSS, JS, image — in the order it arrives.",
     readmeSourcePath: "day_3/demo_1/README.md",
     contentFile: "day_3/demo_1.md",
-    kind: "python-server",
+    kind: "embedded",
+    iframePath: "/live-demos/demo_1/index.html",
+    iframeNote:
+      "Open DevTools → Network, then click reload inside the frame (Cmd-R won't refresh the iframe).",
   },
   {
     id: "demo_2",
     slug: "demo_2",
-    title: 'Day 3, Demo 2 — "The DOM is not the HTML"',
+    shortTitle: "Demo 2 — The DOM is not the HTML",
+    title: 'Demo 2 — "The DOM is not the HTML"',
     summary:
-      "HTML (what the server sent) vs the DOM (the live browser tree). The View Source stays frozen while JavaScript mutates the DOM.",
+      "What the server sent (View Source) vs what the browser is showing (the Elements tab). Proven by mutating one without touching the other.",
     readmeSourcePath: "day_3/demo_2/README.md",
     contentFile: "day_3/demo_2.md",
     kind: "runbook-only",
+    runbookHint:
+      "This one runs in the DevTools console — on Demo 1's page above, or any real site. Follow the runbook on the right.",
   },
   {
     id: "demo_2_5",
     slug: "demo_2_5",
-    title:
-      'Day 3, Demo 2.5 — "Your browser is holding your data" (Storage)',
+    shortTitle: "Demo 2.5 — Browser storage",
+    title: 'Demo 2.5 — "Your browser is holding your data"',
     summary:
-      "Where the browser stores your data — cookies (sent to the server every request) vs localStorage / sessionStorage (never leave the browser).",
+      "Where does your data live in the browser? Cookies go to the server every request; localStorage / sessionStorage never leave. A Swiggy preferences page makes both visible.",
     readmeSourcePath: "day_3/demo_2_5/README.md",
     contentFile: "day_3/demo_2_5.md",
-    kind: "python-server",
+    kind: "embedded",
+    iframePath: "/live-demos/demo_2_5/index.html",
+    iframeNote:
+      "Open DevTools → Application to watch Cookies and Storage update as you click.",
   },
   {
     id: "demo_3",
     slug: "demo_3",
-    title: 'Day 3, Demo 3 — "Why order matters" (Render blocking)',
+    shortTitle: "Demo 3 — Render blocking",
+    title: 'Demo 3 — "Why order matters"',
     summary:
-      "Why the position of a <script> tag determines whether your page is blank for seconds. The same Swiggy page, three ways.",
+      "The same Swiggy page, served three ways — the only difference is where the <script> tag sits. On Slow 3G the cost of getting it wrong is unmissable.",
     readmeSourcePath: "day_3/demo_3/README.md",
     contentFile: "day_3/demo_3.md",
-    kind: "python-server",
+    kind: "embedded",
+    iframePath: "/live-demos/demo_3/index.html",
+    iframeEntries: [
+      { label: "Index (all 3)", path: "/live-demos/demo_3/index.html" },
+      { label: "A: blocking in <head>", path: "/live-demos/demo_3/version-a.html" },
+      { label: "B: defer in <head>", path: "/live-demos/demo_3/version-b.html" },
+      { label: "C: end of <body>", path: "/live-demos/demo_3/version-c.html" },
+    ],
+    iframeNote:
+      "Throttle the iframe with DevTools → Network → Slow 3G, then load each version. Watch which one shows content first.",
   },
   {
     id: "demo_4",
     slug: "demo_4",
-    title:
-      'Day 3, Demo 4 — "The expensive DOM" (Layout, reflow, and paint)',
+    shortTitle: "Demo 4 — The expensive DOM",
+    title: 'Demo 4 — "The expensive DOM"',
     summary:
-      "Why per-element DOM updates are expensive — 500 restaurant tiles, slow loop vs batched update, timed live.",
+      "500 restaurant tiles. A per-element update loop thrashes layout; a batched update flies. The problem React was built to solve, timed live.",
     readmeSourcePath: "day_3/demo_4/README.md",
     contentFile: "day_3/demo_4.md",
-    kind: "python-server",
+    kind: "embedded",
+    iframePath: "/live-demos/demo_4/index.html",
+    iframeNote:
+      "Click 'Slow update' and 'Fast update' and read the timing in the badge. Try DevTools → Performance to see the layout/paint bars.",
   },
   {
     id: "demo_5",
     slug: "demo_5",
-    title:
-      'Day 3, Demo 5 — "This is why React exists" (Imperative vs Declarative)',
+    shortTitle: "Demo 5 — Why React exists",
+    title: 'Demo 5 — "This is why React exists"',
     summary:
-      "How a clean vanilla-JS filter tangles as a PM adds features, then the same thing in React.",
+      "A clean vanilla-JS search/filter that tangles as features pile on. Then the same thing in React: state changes, the UI follows.",
     readmeSourcePath: "day_3/demo_5/README.md",
     contentFile: "day_3/demo_5.md",
-    kind: "static-html",
-    htmlEntries: ["vanilla-simple.html", "vanilla-full.html", "react.html"],
-    liveDemoBase: "/live-demos/demo_5",
+    kind: "embedded",
+    iframePath: "/live-demos/demo_5/vanilla-simple.html",
+    iframeEntries: [
+      { label: "Vanilla (simple)", path: "/live-demos/demo_5/vanilla-simple.html" },
+      { label: "Vanilla (full)", path: "/live-demos/demo_5/vanilla-full.html" },
+      { label: "React", path: "/live-demos/demo_5/react.html" },
+    ],
+    iframeNote:
+      "Each file runs standalone — React is vendored locally, no server. Compare how each version handles state.",
   },
   {
     id: "demo_6",
     slug: "demo_6",
-    title:
-      'Day 3, Demo 6 — "What React actually does" (Virtual DOM, JSX, Reconciliation)',
+    shortTitle: "Demo 6 — Virtual DOM & JSX",
+    title: 'Demo 6 — "What React actually does"',
     summary:
-      "What React actually does — JSX → createElement → plain objects; the diff makes the minimal DOM update.",
+      "JSX is just sugar. The Babel side-by-side shows JSX → createElement → plain objects, and React's diff turns that into the minimal real-DOM update.",
     readmeSourcePath: "day_3/demo_6/README.md",
     contentFile: "day_3/demo_6.md",
-    kind: "static-html",
-    htmlEntries: ["jsx-vs-compiled.html"],
-    liveDemoBase: "/live-demos/demo_6",
+    kind: "embedded",
+    iframePath: "/live-demos/demo_6/jsx-vs-compiled.html",
+    iframeNote:
+      "Edit the JSX on the left; watch the compiled createElement and the resulting tree update on the right.",
   },
   {
     id: "demo_7_8_nextjs",
     slug: "demo_7_8_nextjs",
-    title:
-      "Day 3, Demos 7 / 8 / 8.5 — Rendering strategies, hydration & client-side routing",
+    shortTitle: "Demos 7 / 8 / 8.5 — SSG, SSR, CSR + hydration + routing",
+    title: "Demos 7 / 8 / 8.5 — Rendering strategies, hydration & routing",
     summary:
-      "The same Swiggy page rendered three ways (SSG, SSR, CSR), plus hydration and client-side routing. One real Next.js app — the homework stack.",
+      "Same Swiggy page, three rendering strategies (SSG vs SSR vs CSR), plus server-vs-client components and instant client-side routing. One real Next.js app — the homework stack.",
     readmeSourcePath: "day_3/demo_7_8_nextjs/README.md",
     contentFile: "day_3/demo_7_8_nextjs.md",
     kind: "nextjs-separate",
+    iframeUrlEnvVar: "NEXT_PUBLIC_DEMO_7_URL",
+    iframeNote:
+      "Right-click → View Source on each of /ssg, /ssr, /csr to see what the server actually sent. The frozen-SSG reveal needs the production build, not next dev.",
   },
   {
     id: "demo_9",
     slug: "demo_9",
-    title:
-      'Day 3, Demo 9 — "What are you actually shipping?" (Performance & Core Web Vitals)',
+    shortTitle: "Demo 9 — Lighthouse & Core Web Vitals",
+    title: 'Demo 9 — "What are you actually shipping?"',
     summary:
-      "How to measure frontend performance — Lighthouse, LCP / INP / CLS.",
+      "How to measure a real frontend. Lighthouse, LCP, INP, CLS — what each one means and what moves it.",
     readmeSourcePath: "day_3/demo_9/README.md",
     contentFile: "day_3/demo_9.md",
     kind: "runbook-only",
+    runbookHint:
+      "Lighthouse runs in your local Chrome — DevTools → Lighthouse → Analyze page load. Pick a real site you use.",
   },
   {
     id: "demo_10",
     slug: "demo_10",
-    title:
-      'Day 3, Demo 10 — "Don\'t trust the user, don\'t trust the page" (Frontend security)',
+    shortTitle: "Demo 10 — XSS & CORS",
+    title: 'Demo 10 — "Don\'t trust the user, don\'t trust the page"',
     summary:
-      "The two security ideas every frontend dev needs — XSS (a live innerHTML exploit) and CORS.",
+      "A live XSS via innerHTML on a Swiggy reviews page (and the safe textContent path), plus a CORS error in the console — the two frontend-security ideas every dev needs.",
     readmeSourcePath: "day_3/demo_10/README.md",
     contentFile: "day_3/demo_10.md",
-    kind: "python-server",
+    kind: "embedded",
+    iframePath: "/live-demos/demo_10/index.html",
+    iframeNote:
+      "Try posting a review with <img src=x onerror=alert(1)>. It runs on the UNSAFE side, prints as text on the SAFE side. Open the console for the CORS error.",
   },
 ];
 
@@ -154,12 +203,15 @@ export const day3Demos: Demo[] = [
 export const verbalSegments: Demo = {
   id: "verbal-segments",
   slug: "verbal-segments",
-  title: "Day 3 — Verbal segments",
+  shortTitle: "Verbal segments",
+  title: "Verbal segments — the spoken interludes",
   summary:
-    "The spoken interludes — Node / npm / bundling, the platform tour of browser APIs, CSS & styling, and the homework brief.",
+    "The non-demo bits — Node / npm / bundling, the platform tour of browser APIs, CSS & styling, and the homework brief.",
   readmeSourcePath: "day_3/verbal-segments.md",
   contentFile: "day_3/verbal-segments.md",
   kind: "runbook-only",
+  runbookHint:
+    "Read these alongside the demos — they're the conceptual glue, not labs.",
 };
 
 // Day 3 parts mirror the exact headings from day_3/README.md.

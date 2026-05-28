@@ -54,7 +54,7 @@ export default async function DayPage({
                         className="block h-full rounded-lg border border-neutral-200 bg-white p-4 transition hover:border-[#fc8019] hover:shadow-sm"
                       >
                         <div className="text-sm font-semibold text-neutral-900">
-                          {prettyTitle(item.title)}
+                          {item.shortTitle}
                         </div>
                         <p className="mt-1.5 text-sm text-neutral-600">
                           {item.summary}
@@ -72,10 +72,3 @@ export default async function DayPage({
   );
 }
 
-// Strip the "Day 3, Demo N — " prefix for a cleaner card title.
-function prettyTitle(title: string): string {
-  // Match patterns like: "Day 3, Demo 1 — ..." or "Day 3, Demos 7 / 8 / 8.5 — ..."
-  const m = title.match(/^Day\s+\d+,\s+Demos?\s+[^—]+—\s*(.*)$/);
-  if (m) return m[1].trim();
-  return title;
-}

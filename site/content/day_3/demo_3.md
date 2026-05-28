@@ -1,125 +1,104 @@
-# Day 3, Demo 3 — "Why order matters" (Render blocking)
+# Demo 3 — Why order matters
 
-Companion artifacts for the third demo of Day 3. Full design:
-`../docs/superpowers/specs/2026-05-28-day3-demo3-render-blocking-design.md`.
+Where you put a `<script>` tag changes whether your page is blank for two seconds. Same Swiggy restaurant card, same `slow.js`, three placements — and three very different experiences. By the end of this demo you'll know exactly why a single line of HTML can decide whether your page feels fast or broken.
 
-The **same Swiggy page, three ways** — differing only in where the
-`<script>` tag sits. A deliberately slow script (`slow.js`, a ~2-second
-synchronous busy-loop) makes the block last long enough to see and narrate. This
-is the concrete payoff of Demo 1: now you know *why* some resources are
-"render-blocking."
+## Setup
 
-## What's here
+Use the tab picker above the iframe to switch between **Index**, **A: blocking in `<head>`**, **B: `defer` in `<head>`**, and **C: end of `<body>`**. Open DevTools, go to the **Network** tab, and set throttling to **Slow 3G**. Then click reload inside the iframe and watch the Meghana Foods card — specifically, watch *when* it appears.
 
-- `slow.js` — blocks the main thread for ~2s on purpose; logs start/finish and
-  drops a "✓ finished" banner.
-- `version-a.html` — blocking `<script>` in `<head>` (no attributes).
-- `version-b.html` — `<head>` `<script>` with `defer` (identical to A otherwise).
-- `version-c.html` — plain `<script>` at the end of `<body>`.
-- `index.html` — links the three.
-- `server.py` — FastAPI static server that logs every request.
-- `test_server.py` — pytest (serving + the script-tag differences).
-- `requirements.txt` — `fastapi`, `uvicorn`, `httpx`, `pytest`.
+For the clearest signal, also open the **Console**: `slow.js` logs when it starts and finishes. If the iframe feels cramped, hit the ↗ button on the toolbar to pop the current version into its own tab.
 
-## Setup & run
+Try the versions in this order: A first (the painful one), then C, then B. You'll feel the difference more than you'll read it.
 
-```bash
-cd day_3/demo_3
-python3 -m venv .venv && source .venv/bin/activate   # first time only
-pip install -r requirements.txt                       # first time only
-uvicorn server:app --host 127.0.0.1 --port 8000 --reload
+## Concepts
+
+- **HTML is parsed top-to-bottom.** The browser walks your document tag by tag, building the DOM as it goes. Anything that interrupts that walk delays everything below it.
+- **A plain `<script>` is render-blocking.** When the parser hits one, it stops — fully stops — to download and execute the script before reading another byte of HTML. Why? Because old scripts could call `document.write` and rewrite the page mid-parse, so the browser plays it safe.
+- **`defer` and `async` are the modern fix.** Both tell the browser "keep parsing, I'll wait." `defer` runs the script after parsing finishes, in order. `async` runs it the moment it lands, order be damned. For most app code you want `defer`.
+- **Placement still matters.** Even without blocking, a `<script>` at the end of `<body>` only *starts* downloading once the parser gets there. `defer` in `<head>` starts the download immediately and in parallel — which is why B usually wins.
+- **Once a script runs, it owns the main thread.** Network tricks like `defer` only solve the *download* problem. A 2-second CPU loop (like `slow.js`) still freezes the page while it runs. Placement is necessary, not sufficient.
+
+## Diagrams
+
+Three timelines side by side. Notice when "render" happens in each row.
+
+```mermaid
+gantt
+    title Same page, three script placements (Slow 3G)
+    dateFormat  X
+    axisFormat  %Ls
+
+    section A — blocking in <head>
+    Parse HTML (head)        :a1, 0, 200
+    Fetch slow.js            :crit, a2, after a1, 1500ms
+    Run slow.js (2s CPU)     :crit, a3, after a2, 2000ms
+    Parse body + Render      :a4, after a3, 300ms
+
+    section B — defer in <head>
+    Parse HTML               :b1, 0, 600
+    Fetch slow.js (parallel) :b2, 0, 1500
+    Render page              :active, b3, after b1, 100ms
+    Run slow.js              :b4, after b2, 2000ms
+
+    section C — end of <body>
+    Parse HTML               :c1, 0, 800
+    Render page              :active, c2, after c1, 100ms
+    Fetch slow.js            :c3, after c1, 1500ms
+    Run slow.js (freezes UI) :crit, c4, after c3, 2000ms
 ```
 
-Open `http://localhost:8000/` and keep the **Console** open to see `slow.js`
-log when it starts and finishes.
+And the same story as a single timeline — orange marks the moment you can finally see the restaurant card.
 
-## Demo flow
+```html
+<svg width="600" height="240" xmlns="http://www.w3.org/2000/svg" font-family="ui-sans-serif" font-size="12">
+  <rect x="0" y="0" width="600" height="240" fill="#f5f5f5"/>
 
-### 0. Slido (before anything)
+  <!-- Time axis -->
+  <line x1="40" y1="215" x2="580" y2="215" stroke="#a3a3a3" stroke-width="1"/>
+  <text x="40" y="232" fill="#666">0s</text>
+  <text x="175" y="232" fill="#666">1s</text>
+  <text x="310" y="232" fill="#666">2s</text>
+  <text x="445" y="232" fill="#666">3s</text>
+  <text x="555" y="232" fill="#666">4s</text>
 
-> "You have a **500 KB JavaScript** file and a **50 KB CSS** file. Which one
-> should you worry about more for page-load speed?"
+  <!-- Row A: blocking in head -->
+  <text x="5" y="45" fill="#1c1c1c" font-weight="600">A</text>
+  <rect x="40" y="30" width="20" height="20" fill="#a3a3a3"/>
+  <rect x="60" y="30" width="200" height="20" fill="#a3a3a3" opacity="0.7"/>
+  <rect x="260" y="30" width="270" height="20" fill="#1c1c1c"/>
+  <rect x="530" y="30" width="50" height="20" fill="#fc8019"/>
+  <text x="65" y="20" fill="#666" font-size="10">fetch slow.js (blocked)</text>
+  <text x="265" y="20" fill="#666" font-size="10">run slow.js (main thread frozen)</text>
+  <text x="535" y="65" fill="#fc8019" font-weight="600" font-size="10">page visible (~3.5s)</text>
 
-A trick question — most will pick the bigger file (JS). The payoff lands in
-section 4.5: the *tiny* CSS blocks rendering of the **entire page**, while the
-big JS can be deferred out of the critical path. Don't reveal it yet; let them
-sit on the wrong intuition until the CSS-blocking beat.
+  <!-- Row B: defer in head -->
+  <text x="5" y="115" fill="#1c1c1c" font-weight="600">B</text>
+  <rect x="40" y="100" width="80" height="20" fill="#a3a3a3" opacity="0.5"/>
+  <rect x="120" y="100" width="20" height="20" fill="#fc8019"/>
+  <rect x="40" y="125" width="200" height="8" fill="#a3a3a3" opacity="0.7"/>
+  <rect x="240" y="100" width="270" height="20" fill="#1c1c1c"/>
+  <text x="45" y="92" fill="#666" font-size="10">parse HTML</text>
+  <text x="40" y="148" fill="#666" font-size="9">slow.js fetching in parallel</text>
+  <text x="245" y="92" fill="#666" font-size="10">run slow.js (after render)</text>
+  <text x="125" y="160" fill="#fc8019" font-weight="600" font-size="10">page visible (~0.6s)</text>
 
-### 1. Version A — blocking in the head
-
-Frame it with the old interview question — *"where do you put a `<script>` tag,
-head or end of body, and why?"* — then show them. Turn on **Slow 3G** (DevTools
-→ Network → throttling). Load
-`http://localhost:8000/version-a.html`. The page is **blank for several
-seconds** — the browser hit the `<script>` in `<head>`, **stopped parsing**,
-downloaded it (slow on 3G), ran the 2-second loop — then the whole page appears
-at once.
-
-### 2. Version C — at the end of the body
-
-Load `/version-c.html`. The content renders **immediately**, then the page
-**freezes** for ~2s while the script runs. Better first paint — but notice the
-download only *started* once the parser reached the end of the body.
-
-### 3. Version B — defer
-
-Load `/version-b.html`. Content renders **immediately** *and* the script was
-downloading **in parallel** during parsing (look at the waterfall), executing
-after the parse. Best of both.
-
-### 4. Why this happens
-
-A plain `<script>` blocks because it might modify the DOM mid-parse (classically
-`document.write`), so the browser must pause parsing to run it. `defer` means
-"download in parallel, but don't execute until the HTML is fully parsed."
-(`async` is the cousin: download in parallel, run as soon as it arrives, order
-not guaranteed — for independent scripts like analytics.)
-
-### 4.5. CSS is render-blocking too (2-minute addition — answers the Slido)
-
-Now pay off the Slido. **CSS also blocks rendering**, but for a different reason
-than a script:
-
-> "The browser *could* paint the raw, unstyled HTML while it waits for the CSS —
-> but you'd see a flash of ugly unstyled text, then everything would snap into
-> place. So instead the browser holds the paint until the CSS arrives. That's
-> why a tiny stylesheet matters: a 50 KB CSS file blocks the **whole page** from
-> appearing, while a 500 KB script can be pushed out of the way with `defer`.
-> Size isn't the whole story — *what blocks what* is."
-
-Tie it straight back to Demo 1: that's exactly the FOUC beat — the bare text
-that showed before `style.css` landed on Slow 3G.
-
-### 4.6. Fonts block text too (1-minute addition — FOUT vs FOIT)
-
-Reload **Demo 1's card** (`http://localhost:8000/` on the Demo 1 server) on Slow
-3G and watch the heading: it first appears in the **system font**, then **swaps**
-to Poppins once the font file lands. That swap is **FOUT** — Flash of Unstyled
-Text — and it happens because Demo 1's font URL ends in `&display=swap`.
-
-> "Fonts are yet another resource the browser needs before text is *final*. With
-> `display=swap` you get FOUT — readable fallback text that swaps when the font
-> arrives. The alternative is **FOIT** — Flash of *Invisible* Text — where the
-> browser hides the text until the font loads, and you stare at a blank space
-> that suddenly pops in. That's the gap you've all seen on slow sites."
-
-(Optional live edit: in `demo_1/index.html`, comment out the
-`fonts.googleapis.com` `<link>`, reload — the card renders in the system font;
-restore it and the Poppins swap returns.)
-
-### 5. Tie back to Demo 1
-
-This is exactly what "render-blocking" meant in Demo 1's waterfall. And the
-whole difference between A and B is one line:
-
-```bash
-diff version-a.html version-b.html
+  <!-- Row C: end of body -->
+  <text x="5" y="195" fill="#1c1c1c" font-weight="600">C</text>
+  <rect x="40" y="180" width="110" height="20" fill="#a3a3a3" opacity="0.5"/>
+  <rect x="150" y="180" width="20" height="20" fill="#fc8019"/>
+  <rect x="170" y="180" width="135" height="20" fill="#a3a3a3" opacity="0.7"/>
+  <rect x="305" y="180" width="270" height="20" fill="#1c1c1c"/>
+  <text x="45" y="172" fill="#666" font-size="10">parse, then fetch starts</text>
+  <text x="310" y="172" fill="#666" font-size="10">run slow.js (page freezes)</text>
+  <text x="155" y="210" fill="#fc8019" font-weight="600" font-size="10">page visible (~0.8s)</text>
+</svg>
 ```
 
-## Pre-session checklist
+## Takeaways
 
-- [ ] `.venv` exists and `pip install -r requirements.txt` succeeds.
-- [ ] `python -m pytest -q` passes (6 tests).
-- [ ] `uvicorn server:app ...` runs; `http://localhost:8000/` lists the three.
-- [ ] With Slow 3G on: A blanks then pops; C paints then freezes; B paints then
-      runs. Practised once.
+- **Default to `defer` on every external script in `<head>`.** It's the closest thing to a free lunch in frontend performance.
+- **Use `async` only for genuinely independent scripts** — analytics, error reporters, ad pixels. Order is not guaranteed.
+- **"Render-blocking" is about the main thread, not just the network.** `defer` saves the download; it can't save you from a 2-second CPU loop.
+- **End-of-`<body>` placement is the old fix.** It works, but it delays the *download* of the script. Prefer `defer` in `<head>`.
+- **Inline CSS or critical CSS in `<head>`** so the first paint doesn't wait on a stylesheet round-trip. CSS is render-blocking too — for a different reason.
+- **Test on Slow 3G, not your fast laptop.** The difference between A and B is invisible on a fast network. Your users are on the slow one.

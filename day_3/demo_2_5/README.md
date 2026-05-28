@@ -1,162 +1,123 @@
-# Day 3, Demo 2.5 — "Your browser is holding your data" (Storage)
+# Demo 2.5 — Your browser is holding your data
 
-Companion runbook for the storage demo of Day 3. Full design:
-`../docs/superpowers/specs/2026-05-28-day3-demo2_5-storage-design.md`.
+Every site you use is quietly stashing things on your machine. Your Swiggy dark-mode preference, your half-finished checkout, the cookie that proves you're logged in — they all live in different drawers inside your browser, and each drawer has very different rules about who can see it and how long it sticks around. Open this demo, poke at the controls, and watch those drawers fill up in real time.
 
-The browser stores data for every site you visit. Cookies, localStorage,
-sessionStorage, IndexedDB — four stores, four jobs. The one distinction that
-decides everything:
+## Setup
 
-> **Cookies are sent to the server automatically on every request.**
-> **localStorage and sessionStorage never leave the browser.**
->
-> Auth lives in cookies (the *server* needs it). UI prefs live in localStorage
-> (only the *browser* cares).
+Open **DevTools → Application**. Three panels are about to do all the talking:
 
-Demo 2 showed that JavaScript edits live in memory and die on refresh. This demo
-shows the storage that *survives* refresh — and the rules for each kind. Cookies
-and IndexedDB are shown on **real sites** you're already logged into; our little
-Swiggy page makes localStorage and sessionStorage reliable and offline.
+- **Cookies**
+- **Local Storage**
+- **Session Storage**
 
-## What's here
+In the iframe on the left, flip the **🌙 Dark mode** toggle. Watch `swiggy:theme` appear under Local Storage. Click **Next →** a couple of times in the Checkout card. Watch `swiggy:checkoutStep` appear under Session Storage.
 
-- `index.html` — a Swiggy "Preferences & Checkout" page: a dark-mode toggle and
-  a 3-step checkout with Next/Back.
-- `app.js` — reads `swiggy:theme` (localStorage) and `swiggy:checkoutStep`
-  (sessionStorage) on load; the toggle and buttons write them. No deps.
-- `style.css` — Swiggy-orange (`#fc8019`) accents with a `[data-theme="dark"]`
-  block; emoji/gradients only, fully offline.
-- `server.py` — FastAPI static server that logs every request. No delays.
-- `test_server.py` — pytest (serving + content-types + logging).
-- `requirements.txt` — `fastapi`, `uvicorn`, `httpx`, `pytest`.
+Now try a few experiments:
 
-## Setup & run
+- **Reload the iframe.** Both values survive. The page reads them on load.
+- **Open the demo URL in a new tab** (right-click the iframe → Open in new tab). Dark mode is still on (localStorage is shared across tabs). The checkout step resets to 1 (sessionStorage is per-tab).
+- **Close that new tab and reopen it.** Dark mode is *still* on. localStorage survives browser restarts.
+- For cookies, hop over to a real site you're logged into — `swiggy.com`, YouTube, GitHub — and look at the Cookies panel for that domain. Those values get attached to every request the browser makes to that domain. You never wrote code to send them.
+
+**Or run it locally:**
 
 ```bash
 cd day_3/demo_2_5
-python3 -m venv .venv && source .venv/bin/activate   # first time only
-pip install -r requirements.txt                       # first time only
 uvicorn server:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-Open `http://localhost:8000/` and keep **DevTools → Application** open. You'll
-also drop into the **Console** for one-liners.
+Then open `http://localhost:8000/`.
 
-## Demo flow
+## Concepts
 
-### 0. Slido (before anything)
+**Three storage layers, three lifetimes.** Cookies live until they expire (or you wipe them). localStorage lives forever, across tabs and restarts. sessionStorage lives until the tab closes. Same browser, three completely different contracts.
 
-> "You're building a **'remember me'** login. Do you store the token in
-> **localStorage** or in a **cookie**?"
+**Cookies ride along on every HTTP request.** When your browser asks `swiggy.com` for anything — a page, an image, an API call — it automatically tacks every cookie for that domain onto the request headers. That's how the server knows it's still you. It's also why cookies are tiny (~4KB cap): you're paying that cost on every single request.
 
-The answer is **cookies** — the *server* needs the token on every request to
-know who you are, and cookies are the only one of these that's sent to the server
-automatically. It's a common interview question. Let them commit to an answer
-first; the whole demo is the explanation of why.
+**localStorage and sessionStorage never touch the wire.** They're JavaScript-only stores. Nothing in them ever leaves the browser unless your code explicitly puts it in a `fetch()`. That's why you keep auth tokens out of them (the server can't see them anyway) and why they can be much bigger (~5–10MB).
 
-### 1. Cookies — the one that talks to the server (on a real site)
+**Everything is per-origin.** `swiggy.com` cannot read `zomato.com`'s storage. The browser keys every drawer by origin (`scheme://host:port`). This is the foundation of web security — without it, any tab could read any other site's session.
 
-Open a site you're logged into — **Swiggy.com** or **YouTube**. DevTools →
-**Application → Cookies** → pick the domain. Find a session/auth cookie (names
-like `_session`, `SID`, `__Secure-...`). Point at it:
+**Pick the right drawer for the job.** Auth → cookie (server needs it). UI preferences → localStorage (persists; only the browser cares). In-flight form/checkout state → sessionStorage (don't lose progress on refresh, don't leak it to other tabs).
 
-> "This value is attached to **every single request** your browser makes to this
-> domain — automatically, you never write code to do it. That's how the server
-> knows it's still you between page loads. HTTP itself is forgetful; the cookie
-> is the memory."
+## Diagrams
 
-Now the Console:
+**The flow when you flip a toggle:**
 
-```js
-document.cookie
+```mermaid
+flowchart LR
+    U([You click 🌙]) --> JS[app.js handler]
+    JS -->|localStorage.setItem| LS[(Local Storage<br/>swiggy:theme = dark)]
+    LS -.survives reload, new tab, restart.-> B[Browser keeps it]
+    JS -.never sends.-> S[(Swiggy server)]
+    style LS fill:#fc8019,color:#fff,stroke:#a3a3a3
+    style S fill:#f5f5f5,stroke:#a3a3a3
 ```
 
-A semicolon-separated key-value mess. (Note: `HttpOnly` auth cookies won't show
-here — mention that's *by design*, so scripts can't steal the token. Don't dwell.)
+Compare that with what a cookie does on a normal page load:
 
-### 2. localStorage — persists forever, never leaves the browser (our page)
-
-Switch to `http://localhost:8000/`. Toggle **🌙 Dark mode** on. In DevTools →
-**Application → Local Storage** → the localhost origin, the key appears:
-
-```
-swiggy:theme  →  dark
-```
-
-Now **reload** (`Cmd+R`). Still dark — the page read the key on load and applied
-it. Console:
-
-```js
-localStorage.getItem('swiggy:theme')   // "dark"
+```mermaid
+sequenceDiagram
+    participant You as You
+    participant Browser
+    participant Server as swiggy.com
+    You->>Browser: visit swiggy.com
+    Browser->>Server: GET / (Cookie: session=abc123)
+    Note right of Browser: cookie attached<br/>automatically
+    Server-->>Browser: 200 OK (knows it's you)
+    Browser->>Server: GET /restaurants (Cookie: session=abc123)
+    Server-->>Browser: your personalised list
 ```
 
-**Close the tab and reopen** the URL (or open a new tab) — still dark.
-localStorage is shared across every tab on the origin and survives a browser
-restart. Then wipe it:
+**Three drawers, side by side:**
 
-```js
-localStorage.clear()
-```
+<svg width="600" height="240" xmlns="http://www.w3.org/2000/svg" font-family="ui-sans-serif" font-size="12">
+  <rect width="600" height="240" fill="#ffffff"/>
 
-Reload — back to light.
+  <!-- Cookie box -->
+  <rect x="20" y="40" width="170" height="140" rx="10" fill="#f5f5f5" stroke="#a3a3a3"/>
+  <text x="105" y="62" text-anchor="middle" font-weight="700" fill="#1a1a1a">Cookies</text>
+  <text x="105" y="82" text-anchor="middle" fill="#6b6b6b">~4KB</text>
+  <text x="105" y="100" text-anchor="middle" fill="#1a1a1a">session=abc123</text>
+  <text x="105" y="118" text-anchor="middle" fill="#1a1a1a">lang=en-IN</text>
+  <text x="105" y="150" text-anchor="middle" fill="#6b6b6b">expires when</text>
+  <text x="105" y="166" text-anchor="middle" fill="#6b6b6b">told to</text>
+  <!-- arrow to server -->
+  <line x1="190" y1="110" x2="240" y2="110" stroke="#fc8019" stroke-width="2"/>
+  <polygon points="240,110 232,106 232,114" fill="#fc8019"/>
+  <text x="215" y="102" text-anchor="middle" fill="#fc8019" font-weight="700">to server</text>
 
-> "This is how 'remember my preferences,' dark mode, and language switchers work.
-> It **persists until something explicitly deletes it**, and it **never touches
-> the server** — which is exactly why you do *not* put an auth token here."
+  <!-- Server pill -->
+  <rect x="245" y="92" width="60" height="36" rx="18" fill="#fc8019" stroke="#fc8019"/>
+  <text x="275" y="115" text-anchor="middle" fill="#ffffff" font-weight="700">server</text>
 
-### 3. sessionStorage — scoped to the tab (our page)
+  <!-- localStorage box -->
+  <rect x="320" y="40" width="120" height="140" rx="10" fill="#f5f5f5" stroke="#a3a3a3"/>
+  <text x="380" y="62" text-anchor="middle" font-weight="700" fill="#1a1a1a">localStorage</text>
+  <text x="380" y="82" text-anchor="middle" fill="#6b6b6b">~5–10MB</text>
+  <text x="380" y="104" text-anchor="middle" fill="#1a1a1a">swiggy:theme</text>
+  <text x="380" y="120" text-anchor="middle" fill="#1a1a1a">= "dark"</text>
+  <text x="380" y="148" text-anchor="middle" fill="#6b6b6b">forever</text>
+  <text x="380" y="164" text-anchor="middle" fill="#6b6b6b">🔒 sealed</text>
 
-Same page. Click **Next →** a couple of times to reach **Step 2/3 — Payment**. In
-**Application → Session Storage** the key appears:
+  <!-- sessionStorage box -->
+  <rect x="460" y="40" width="120" height="140" rx="10" fill="#f5f5f5" stroke="#a3a3a3"/>
+  <text x="520" y="62" text-anchor="middle" font-weight="700" fill="#1a1a1a">sessionStorage</text>
+  <text x="520" y="82" text-anchor="middle" fill="#6b6b6b">~5MB</text>
+  <text x="520" y="104" text-anchor="middle" fill="#1a1a1a">swiggy:</text>
+  <text x="520" y="120" text-anchor="middle" fill="#1a1a1a">checkoutStep = 2</text>
+  <text x="520" y="148" text-anchor="middle" fill="#6b6b6b">dies with tab</text>
+  <text x="520" y="164" text-anchor="middle" fill="#6b6b6b">🔒 sealed</text>
 
-```
-swiggy:checkoutStep  →  2
-```
+  <!-- caption -->
+  <text x="300" y="220" text-anchor="middle" fill="#6b6b6b">Only the cookie box has an arrow leaving the browser.</text>
+</svg>
 
-**Reload.** The step survives — you're still on Payment. Console:
+## Takeaways
 
-```js
-sessionStorage.getItem('swiggy:checkoutStep')   // "2"
-```
-
-Now open the **same URL in a new tab**. It starts back at **Step 1** — the new
-tab's sessionStorage is empty (`null`).
-
-```js
-sessionStorage.getItem('swiggy:checkoutStep')   // null  (in the new tab)
-```
-
-> "sessionStorage is scoped to the **tab**. It survives a refresh but not a new
-> tab and not closing the tab. Perfect for a multi-step form: an accidental
-> refresh shouldn't lose your progress, but the data shouldn't leak into other
-> tabs or stick around forever."
-
-### 4. IndexedDB — the database in your browser (30-second mention)
-
-Open **Gmail** or **YouTube**. DevTools → **Application → IndexedDB** → expand the
-tree. Several named databases with object stores full of rows.
-
-> "When key-value isn't enough, the browser ships a **full database engine** —
-> IndexedDB. Gmail uses it to hold your mail so it can **work offline** and search
-> instantly. You won't touch it by hand, but now you know what those entries are."
-
-### 5. Drive it home
-
-> **Cookies go to the server on every request; localStorage and sessionStorage
-> never do.** That single fact decides where data belongs:
-> - **Auth token** → cookie (the server must see it).
-> - **Dark mode / language** → localStorage (persists; only the browser cares).
-> - **Multi-step form progress** → sessionStorage (per-tab, survives refresh).
-> - **Offline app data** → IndexedDB (a real database).
-
-## Pre-session checklist
-
-- [ ] `.venv` exists and `pip install -r requirements.txt` succeeds.
-- [ ] `python -m pytest -q` passes (5 tests).
-- [ ] `uvicorn server:app ...` runs; the page renders at `http://localhost:8000/`.
-- [ ] Dark toggle survives a reload **and** a new tab; `localStorage.clear()`
-      resets it. Practised once.
-- [ ] Checkout step survives a reload but reads `null` in a new tab. Practised once.
-- [ ] Logged into Swiggy.com / YouTube for the cookie beat; Gmail/YouTube open
-      for the IndexedDB beat.
-- [ ] Display sleep / Caffeinate enabled for the session duration.
+- **Auth tokens belong in cookies** (ideally `HttpOnly; Secure; SameSite`), because the server needs them on every request and JavaScript shouldn't be able to steal them.
+- **UI preferences belong in localStorage** — dark mode, language, "don't show this banner again." Persistent, no server round-trip, cheap to read.
+- **In-flight state belongs in sessionStorage** — a multi-step checkout, an unsaved draft, a wizard. Refresh is safe; leaking into other tabs is not.
+- **Never trust storage as a source of truth for anything sensitive.** A user can edit any of these from the Console. The server must re-check anything that matters.
+- **Watch the size.** Cookies are sent on every request — keep them tiny. If you find yourself stuffing JSON into a cookie, you wanted localStorage.
+- **Storage is per-origin.** Different subdomain, different port, different scheme = different drawer. Plan your origins before you plan your storage keys.

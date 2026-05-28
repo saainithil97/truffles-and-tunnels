@@ -1,263 +1,106 @@
-# Day 3, Demos 7 / 8 / 8.5 — Rendering strategies, hydration & client-side routing
+# Demos 7, 8 & 8.5 — SSG, SSR, CSR, hydration, and client-side routing
 
-Companion app for the closing trio of Day 3. Full design:
-`../docs/superpowers/specs/2026-05-28-day3-demo7-8-rendering-strategies-design.md`.
+The same Swiggy restaurant grid, shipped three radically different ways. In one route the HTML is baked at build time and frozen for every visitor. In another, the server rebuilds it from scratch on every request. In a third, the server gives up and lets your browser do the work after the page has already loaded. Same pixels, three completely different journeys from your code to your eyeballs — and the gap between them is where most modern web performance lives.
 
-**One** Next.js App Router app (the stack students use for homework) renders the
-**same Swiggy restaurant grid** several ways — so that **View Page Source** and
-the **Network tab** reveal *when* and *where* the HTML is actually built. This is
-the payoff of Demos 1–3: now that you know how one page loads, you can see how a
-real framework decides whether to build it at build time, per request, or in the
-browser.
+## Setup
 
-## What's here
+This app is already deployed and embedded as an iframe on the workshop site at `/days/3/demos/demo_7_8_nextjs`. Browse the embedded version first, but when it's time to right-click and **View Source**, click the toolbar's ↗ icon to pop the demo out into its own tab. View Source does not work inside iframes — you'd just see the workshop site's HTML, not the demo's. So open it standalone before you start poking around.
 
-- `lib/restaurants.ts` — the canonical typed Swiggy dataset (15 restaurants).
-- `components/` — `RestaurantCard` + `RestaurantGrid` (server components),
-  `RestaurantSearch` + `FavouriteButton` (client components).
-- `app/ssg`, `app/ssr`, `app/csr` — Demo 7: the same grid, three ways.
-- `app/hybrid` — Demos 8 & 8.5: a server grid with a nested client search box,
-  with cards that navigate client-side.
-- `app/restaurants/[id]` — Demo 8.5: the detail page, prerendered per restaurant.
-- `app/api/restaurants/route.ts` — the JSON API the CSR page fetches *from the
-  browser*.
+Walk yourself through `/ssg`, then `/ssr`, then `/csr`, in that order. On each one, right-click and pick **View Page Source** (`Cmd+Opt+U` on Mac, `Ctrl+U` on Windows/Linux). Compare what's in the raw HTML. That gap between "what the server sent" and "what you eventually see on screen" is the whole point of this demo.
 
-Built on **Next.js 16 + React 19 + Tailwind 4**, TypeScript, App Router.
-
-## Setup & run
+Want to run it locally? You can, but you have to use the **production build** — the SSG "frozen at build time" reveal does not work under `next dev`, because dev mode re-renders every page on every request:
 
 ```bash
-npm install        # first time only — node_modules is gitignored
-npm run dev        # dev server, http://localhost:3000
+cd day_3/demo_7_8_nextjs
+npm install
+npm run build
+npm start
 ```
 
-Open `http://localhost:3000`. The home page links all four routes. Keep DevTools
-(`Cmd+Opt+I`) open the whole time — the **Network** tab and **View Source**
-(`Cmd+Opt+U`) are the demo, not the page.
+Then open `http://localhost:3000`.
 
-> **Run Demo 7 against a PRODUCTION build, not `npm run dev`.** In dev mode every
-> page (even `/ssg`) re-renders on each request, so the "frozen SSG timestamp"
-> reveal won't land. SSG only freezes when it's prerendered at build time. Before
-> the session:
->
-> ```bash
-> npm run build      # bakes /ssg once
-> npm start          # serves the production build, http://localhost:3000
-> ```
->
-> Demo 8 and 8.5 work fine under either `npm run dev` or `npm start`. The
-> hydration gap (Demo 8) is easiest to feel under `npm start` too.
+## Concepts
 
-> **View Source vs Inspect — say this once, up front.** *View Source*
-> (`Cmd+Opt+U`) shows the raw HTML the server sent. *Inspect / Elements* shows
-> the live DOM *after* JavaScript has run. The whole of Demo 7 lives in the gap
-> between those two — so we use **View Source**, never Elements.
+- **SSG (Static Site Generation).** The HTML is rendered once, at `next build`, and saved as a flat file. Every visitor gets the same bytes from a CDN edge. Cheap, blazingly fast, and SEO-friendly — but the content is frozen until you rebuild.
+- **SSR (Server-Side Rendering).** The server renders the HTML fresh on every single request. Crawlers still see complete HTML, but you pay CPU per visit. Use it when the page depends on *who* is asking — logged-in dashboards, personalized feeds, anything that has to be "now".
+- **CSR (Client-Side Rendering).** The server sends a near-empty HTML shell. Your browser downloads JavaScript, runs it, then fetches the data and draws the page. Search engines that don't run JS see *nothing*. There's a visible loading flash. But for app-shell experiences behind a login, it's a perfectly good fit.
+- **Hydration.** Server-rendered HTML lands in your browser looking interactive — but it isn't, yet. React has to download, parse, and re-render the page in memory so it can attach event handlers to the existing DOM. The gap between "looks ready" and "actually works" is hydration. On fast networks it's invisible. On slow networks it's the bug ticket you'll write next year.
+- **Server vs Client Components.** In the Next.js App Router (Next 13+), every component is a Server Component by default — its JavaScript never ships to the browser. You add `'use client'` only when a component needs state, effects, or event handlers. Push that boundary as far down the tree as you can; everything above it stays pure HTML.
+- **Client-side routing.** Once a Next.js app has booted, clicking a `<Link>` doesn't reload the page. The router intercepts the click, uses the History API to update the URL, fetches just the new page's data, and swaps content in place. Fast, smooth, but it only kicks in *after* the first load — so every URL must still work as a real document on its own.
+- **The choice depends on the data shape.** A restaurant menu page is the same for everyone and rarely changes → SSG. A user's order history changes constantly and is personal → SSR or CSR. A homepage that mixes a marketing hero with a live cart → hybrid, server-rendered shell with client islands. There is no single right answer; there is only the right answer for *this* data.
 
----
+## Diagrams
 
-## Demo 7 — "The same page, three ways" (SSG vs SSR vs CSR)
+### How each strategy answers a request
 
-Three routes, one identical-looking grid. The reveal is **View Page Source**.
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant CDN as CDN / Server
+    participant API as Data source
+    Note over U,API: SSG — built once, served forever
+    U->>CDN: GET /ssg
+    CDN-->>U: Pre-built HTML (cached at edge)
+    Note over U,API: SSR — built fresh, every time
+    U->>CDN: GET /ssr
+    CDN->>API: Load restaurants
+    API-->>CDN: Data
+    CDN-->>U: HTML rendered just now
+    Note over U,API: CSR — empty shell, browser does the work
+    U->>CDN: GET /csr
+    CDN-->>U: Near-empty HTML + JS bundle
+    U->>U: Run JavaScript
+    U->>API: fetch('/api/restaurants')
+    API-->>U: JSON
+    U->>U: Render the grid in the DOM
+```
 
-### 0. Slido (before opening anything)
+### When does the user see content?
 
-> "You're building a **blog**. Should each post be SSG, SSR, or CSR?"
+<svg viewBox="0 0 600 220" xmlns="http://www.w3.org/2000/svg" font-family="ui-sans-serif" font-size="12">
+  <rect x="0" y="0" width="600" height="220" fill="#f5f5f5" rx="6"/>
+  <text x="12" y="20" fill="#525252" font-weight="600">Content-visible timeline (ms after request)</text>
 
-Let them sit on it. (Answer at the end: **SSG** — content is the same for
-everyone and rarely changes, so build it once.)
+  <!-- axis -->
+  <line x1="120" y1="190" x2="580" y2="190" stroke="#a3a3a3"/>
+  <g fill="#a3a3a3">
+    <text x="120" y="208" text-anchor="middle">0</text>
+    <text x="235" y="208" text-anchor="middle">200</text>
+    <text x="350" y="208" text-anchor="middle">400</text>
+    <text x="465" y="208" text-anchor="middle">600</text>
+    <text x="580" y="208" text-anchor="middle">800</text>
+  </g>
 
-### 1. `/ssg` — Static, built at build time
+  <!-- SSG -->
+  <text x="12" y="60" fill="#525252">SSG</text>
+  <rect x="120" y="48" width="115" height="18" fill="#fc8019" rx="3"/>
+  <text x="240" y="62" fill="#525252">cached HTML — full grid visible</text>
 
-Open `http://localhost:3000/ssg`, then **View Source** (`Cmd+Opt+U`). Every
-restaurant name is right there in the HTML — `Meghana Foods`, `Truffles`, all of
-them. Point at the **`generated at build:` timestamp**.
+  <!-- SSR -->
+  <text x="12" y="100" fill="#525252">SSR</text>
+  <rect x="120" y="88" width="100" height="18" fill="#a3a3a3" rx="3"/>
+  <rect x="220" y="88" width="115" height="18" fill="#fc8019" rx="3"/>
+  <text x="340" y="102" fill="#525252">server work, then full grid</text>
 
-Now **reload** the page a few times. The grid is there instantly, and the
-timestamp **never changes** — it was frozen when you ran `npm run build`. This
-page isn't built when you visit; it was built once, ahead of time, and the same
-HTML file is handed to every visitor. (This only holds against `npm start` — in
-`npm run dev` every page re-renders, so run the production build for this beat.)
+  <!-- CSR -->
+  <text x="12" y="140" fill="#525252">CSR</text>
+  <rect x="120" y="128" width="60" height="18" fill="#a3a3a3" rx="3"/>
+  <rect x="180" y="128" width="170" height="18" fill="#a3a3a3" fill-opacity="0.4" rx="3" stroke="#a3a3a3" stroke-dasharray="3 3"/>
+  <rect x="350" y="128" width="90" height="18" fill="#fc8019" rx="3"/>
+  <text x="445" y="142" fill="#525252">empty shell → fetch → grid</text>
 
-### 2. `/ssr` — Server-rendered, per request
+  <!-- legend -->
+  <rect x="120" y="165" width="12" height="10" fill="#fc8019"/><text x="137" y="174" fill="#525252">content visible</text>
+  <rect x="240" y="165" width="12" height="10" fill="#a3a3a3"/><text x="257" y="174" fill="#525252">server / network work</text>
+  <rect x="380" y="165" width="12" height="10" fill="#a3a3a3" fill-opacity="0.4" stroke="#a3a3a3" stroke-dasharray="3 3"/><text x="397" y="174" fill="#525252">JS booting in browser</text>
+</svg>
 
-Open `/ssr` and **View Source**. Same deal — every restaurant in the HTML, great
-for crawlers. But look at the **`rendered on server at:` timestamp**, then
-**reload**: it **changes every single time**. This HTML was built on the server
-*at the moment you asked for it* — fresh per request.
+## Takeaways
 
-> "SSG and SSR look identical in the browser and identical in View Source. The
-> difference is *when* the HTML was built — once, ahead of time, vs. freshly on
-> every request. The timestamp is the only tell."
-
-### 3. `/csr` — Client-rendered, in the browser
-
-Open `/csr` and **View Source**. This time **there are no restaurant names in the
-HTML at all** — just an empty shell and a spinner. Scroll the source; it's not
-there. Then switch back to the rendered page: the grid *is* there.
-
-What happened: the server sent a near-empty page, the browser ran the
-JavaScript, and *only then* did it `fetch('/api/restaurants')` and draw the
-cards. Open the **Network tab** and reload — you'll see the document arrive
-first (tiny), then a separate `restaurants` request fire *after* the JS runs.
-That second request is the data.
-
-### 4. The SEO connection
-
-> "A search-engine crawler reads the HTML the server sends — the same thing
-> *View Source* shows. On `/ssg` and `/ssr`, every restaurant is in that HTML,
-> so Google can index it. On `/csr`, the crawler sees an **empty shell** — no
-> names, no content. Many crawlers won't run your JavaScript, so a CSR page can
-> be effectively invisible to search. That's why a public, content-heavy site
-> reaches for SSG or SSR."
-
-### 5. The CORS seed (homework warning)
-
-> "Notice that on `/csr` the **browser** made the data call. On SSG/SSR the
-> *server* fetched the data, and servers don't enforce CORS. But the moment the
-> **browser** calls an API, the browser enforces **CORS** — it will block a call
-> to a different origin unless that server explicitly allows it. You'll hit this
-> in the homework when your React app calls an API on another domain. Remember
-> this beat — it's the same idea: *who* makes the request decides the rules."
-
-### 6. Close the Slido + the follow-up
-
-Reveal: **blog → SSG**. Then the follow-up:
-
-> "And a user's **personal order-history dashboard**?"
-
-> "**SSR or CSR** — it's per-user and changes constantly, so you can't bake one
-> version at build time. SSR if you want it in the HTML (logged-in, fast first
-> paint); CSR if it's behind a login and SEO doesn't matter."
-
----
-
-## Demo 8 — "The real world is a hybrid" (Hydration + server/client components)
-
-Real apps aren't purely one strategy. `/hybrid` is a **server-rendered** grid
-with a **client** search box living inside it.
-
-### 1. It's all in the HTML
-
-Open `http://localhost:3000/hybrid` and **View Source**. Both the **search
-input** and **every restaurant card** are in the HTML — all server-rendered.
-Then type in the box: the list filters live. So the page was server-rendered
-*and* it's interactive.
-
-### 2. Map the boundary (say it at the whiteboard)
-
-> "In the App Router, components are **server components by default** — their
-> JavaScript is *never shipped to the browser*. You only add `'use client'` when
-> a component needs interactivity (state, clicks, effects), and you push that
-> boundary **as far down the tree as possible** so you ship as little JS as you
-> can."
-
-Concretely, in this page:
-
-| Component | Type | Why |
-|---|---|---|
-| `app/layout.tsx` (shell + nav) | **Server** | Static markup, no interactivity. |
-| `app/hybrid/page.tsx` (page shell) | **Server** | Just renders HTML + passes data down. |
-| `RestaurantGrid` / `RestaurantCard` | **Server** | Pure display; ship zero JS. |
-| `RestaurantSearch` (the input) | **Client** | Needs `useState` + `onChange`. |
-| `FavouriteButton` (on the detail page) | **Client** | Needs click state. |
-
-Only the two leaves are `'use client'`. Everything else is HTML with no JS cost.
-
-### 3. The hydration gap (the money beat)
-
-The HTML arrives interactive-looking, but the search box doesn't actually *work*
-until React loads and **hydrates** it — wires the server HTML up to the client
-JavaScript. On fast localhost that's instant. To *see* the gap:
-
-1. DevTools → **Network** → throttling → **Slow 3G**.
-2. Tick **Disable cache** (so the JS bundle really re-downloads).
-3. **Hard refresh** (`Cmd+Shift+R`) and watch the search box.
-
-The page **paints immediately** (server HTML), but for a beat the box is
-**dead** — type and nothing filters. Then the JS lands, React hydrates, and the
-box suddenly **wakes up**. That dead beat is the hydration gap.
-
-> "This is the exact 'pretty ≠ working' beat from Demo 1's Like button — but now
-> it's a whole React app. The HTML painted, but the JavaScript that makes it
-> *do* something hadn't loaded and hydrated yet."
-
-(We rely on Slow 3G throttling — no framework hacks. Turn throttling back to
-**No Throttling** and untick **Disable cache** afterward.)
-
-### 4. Slido
-
-> "You click a button and **nothing happens for 2 seconds**, then it suddenly
-> works. What's going on?"
-
-> "**Hydration isn't complete.** The HTML painted, but React's JavaScript hadn't
-> loaded and wired up the button yet. Once it hydrated, the click worked."
-
----
-
-## Demo 8.5 — "The URL is a lie" (Client-side routing)
-
-A tight 5-minute connector. Stay on `/hybrid`.
-
-### 1. Click a card — watch the Network tab
-
-Open the **Network** tab, clear it, then **click any restaurant card**. The URL
-changes to `/restaurants/3` and the detail page appears — but there is **no full
-HTML document request**. You'll see only a small **RSC / data payload** (filter
-by Fetch/XHR). No reload, no white flash. The page never actually navigated in
-the browser's old sense.
-
-### 2. The back button still works
-
-Hit the browser **Back** button — it returns to `/hybrid` instantly, again with
-no full document load. The history is real even though no pages were reloaded.
-
-> "Next's `<Link>` **intercepts the click**, calls the **History API**
-> (`pushState`) to change the URL, fetches just the new page's data, and swaps
-> the content in place. The back button works because that's a real history
-> entry (`popstate`). The URL looks like a navigation — but no page was ever
-> reloaded. *The URL is a lie* (in the best way)."
-
-### 3. The kicker — open in a new tab
-
-**Right-click a card → Open in New Tab.** *Now* you get a **full page load** —
-the Network tab shows a real HTML document for `/restaurants/3`, server-rendered
-from scratch.
-
-> "This is why SSR/SSG still matter even in a single-page app. Client-side
-> routing only kicks in *after* the first page loads. The **first** load of
-> *any* URL — someone pasting a link, a crawler, open-in-new-tab — must work
-> without your client router. Every one of our detail pages is prerendered, so
-> direct URLs just work."
-
----
-
-## Pre-session checklist (run earlier in the day)
-
-- [ ] `npm install` completed (node_modules is gitignored — must run once).
-- [ ] `npm run build` succeeds; route table shows `/ssg` as `○ (Static)`,
-      `/ssr` as `ƒ (Dynamic)`, `/restaurants/[id]` as `●` (SSG), and
-      `/api/restaurants` as `ƒ (Dynamic)`.
-- [ ] For Demo 7: `npm run build` then `npm start` running (SSG freezes only in
-      the production build — `npm run dev` re-renders every page).
-- [ ] Home page at `http://localhost:3000` links all routes.
-- [ ] **View Source** practised: `/ssg` + `/ssr` show full HTML; `/csr` shows an
-      empty shell (no restaurant names).
-- [ ] Against `npm start`: `/ssr` timestamp changes on reload; `/ssg` timestamp
-      does not.
-- [ ] `/csr` Network tab shows the `restaurants` fetch firing *after* the JS.
-- [ ] `/hybrid` search filters; Slow 3G + Disable cache + hard refresh shows the
-      hydration gap (box dead for a beat). Practised once.
-- [ ] Clicking a card = RSC payload, no full document; Back works;
-      open-in-new-tab = full load. Practised once.
-- [ ] Throttling set back to **No Throttling** and **Disable cache** unticked.
-- [ ] Display sleep / Caffeinate enabled for the session.
-
-## Notes for the live session
-
-- Local, screen-shared — no public tunnel.
-- The "View Source vs Inspect" distinction is load-bearing for Demo 7. Use
-  **View Source** (`Cmd+Opt+U`); the Elements panel shows the post-JS DOM and
-  will *spoil* the CSR reveal (it'll show the cards).
-- If you want a no-network build/run, this app uses no external fonts or images
-  (food emoji + CSS gradients only), so `npm run build` works offline once
-  `npm install` has run.
+- **Default to SSG when the content doesn't change per user.** Marketing pages, blog posts, product catalogues, docs — bake them once and let the CDN handle the rest.
+- **Reach for SSR when the page depends on *who* is asking, but SEO still matters.** Logged-in homepages, personalized feeds, locale-specific landings. The HTML is complete, just freshly built.
+- **CSR is fine for app-shell experiences behind a login.** If Google doesn't need to read it and you're okay with a brief loading state, CSR keeps your server boring and your client busy.
+- **In View Source, SSG and SSR look identical.** The only tell is whether the timestamp changes on reload. The browser doesn't know or care which one built the HTML; users don't either.
+- **Hydration mismatch errors will be the #1 bug you hit in App Router projects.** They happen when the server-rendered HTML doesn't exactly match what the client renders on first pass — random IDs, `Date.now()`, `window.something`. Render that stuff inside `useEffect`, not in the component body.
+- **`'use client'` is a boundary, not a switch.** Everything above it is server-only (zero JS shipped). Everything below it ships to the browser. Push the boundary down. Tiny leaves of interactivity, big trunks of static HTML.
+- **Client-side routing is sugar on top of real URLs.** Every detail page in this app still works as a direct paste-the-link load, because each one is prerendered at build time. If your URLs only work *after* an SPA boot, crawlers, share links, and open-in-new-tab will all be broken.

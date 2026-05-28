@@ -1,162 +1,104 @@
-# Day 3, Demo 2 — "The DOM is not the HTML"
+# Demo 2 — The DOM is not the HTML
 
-Companion runbook for the second demo of Day 3. Full design:
-`../docs/superpowers/specs/2026-05-28-day3-demo2-dom-vs-html-design.md`.
-
-This demo ships no code. It runs in the browser console on top of **Demo 1's
-Swiggy card** and a **real public site** (Wikipedia). The big idea:
-
-> **The HTML** is the text the server sent — frozen, in View Source.
-> **The DOM** is the live object tree the browser built from it and renders the
-> screen from — mutable, in the Elements tab.
-> JavaScript changes the **DOM, not the HTML**. Refresh rebuilds the DOM from
-> the untouched HTML.
+You probably think "the HTML" and "what's on screen" are the same thing. They're not — and the gap between them is where most of frontend development lives. In this demo you'll prove it to yourself in sixty seconds by editing a real website in your own browser without touching the server.
 
 ## Setup
 
-Start the Demo 1 server (it serves the card this demo opens with):
+You'll run this one entirely in DevTools — there's no code to install.
 
-```bash
-cd ../demo_1
-source .venv/bin/activate
-uvicorn server:app --host 127.0.0.1 --port 8000 --reload
-```
+1. Open **Demo 1** in a new tab — use the toolbar arrow (↗) on the Demo 1 page so the Swiggy card opens in its own tab.
+2. Press **Cmd+Opt+I** (Mac) or **Ctrl+Shift+I** (Windows/Linux) to open Chrome DevTools.
+3. Click the **Elements** tab. This is the live DOM tree.
+4. Click the **Console** tab next to it. This is where you'll type JavaScript.
+5. Right-click anywhere on the page (not in DevTools) and choose **View Page Source**. A new tab opens showing the raw HTML the server sent. Keep this tab around — you'll flip back to it.
 
-Open `http://localhost:8000/` in Chrome. Have DevTools ready (`Cmd+Opt+I`).
+Now you've got three views of the same page open: the rendered card, the live DOM in Elements, and the frozen HTML in View Source. The whole demo is noticing when those three stop agreeing.
 
-## Demo flow
+## Concepts
 
-### 0. Slido (before anything)
+1. **HTML is a string. The DOM is a tree.** When the server responds, it sends a chunk of text — that's HTML. The browser parses that text into an in-memory tree of objects called the **DOM** (Document Object Model). The screen is painted from the DOM, not from the HTML.
 
-> "If you change something in the Elements tab, does the original HTML file on
-> the server change?"
+2. **JavaScript mutates the DOM, never the HTML.** Every `document.querySelector(...)`, every `element.textContent = ...`, every React render — all of it edits the live tree the browser is holding. The text the server sent stays frozen on the server.
 
-Answer is no — but make them commit to an answer first. This forces the
-HTML-vs-DOM distinction into the open.
+3. **View Source vs Elements is the whole point.** *View Source* shows the original HTML response. *Elements* shows the current DOM serialized back into HTML-looking text. They match at page load and then drift apart the moment any script runs.
 
-### 0.5. DevTools tour (2 minutes, first time through)
+4. **Refresh resets the DOM, not the HTML.** Because your edits only live in the browser's memory, hitting refresh asks the server for the HTML again, builds a brand-new DOM, and everything snaps back. Nothing you did persisted anywhere.
 
-Before mutating anything, orient them on the tabs they'll live in all session.
-Open DevTools (`Cmd+Opt+I`) and name each one in a sentence:
+5. **A web page is a data structure you can poke at.** This isn't hacking — it's local, it's yours, and it's how every browser extension, devtool, and bookmarklet you've ever used works.
 
-- **Elements** — the live DOM tree (today's star).
-- **Console** — run JavaScript against the page.
-- **Network** — every request (you just used this in Demo 1).
-- **Application** — storage and cache.
-- **Performance** — profiling, for later.
+## Try it
 
-> "Think of DevTools as a doctor's instruments — each tab is a different vital
-> sign of the page."
-
-### 1. The hook — call back to Demo 1's Like button
-
-On the card, click **❤️ Like** a few times. The on-screen count climbs to, say,
-**3**. Now open **View Source** (`Cmd+Opt+U`, or right-click → *View Page
-Source*). Find the count — the markup still reads:
-
-```html
-<span id="like-count">0</span>
-```
-
-> "The screen says 3, the source says 0. Nobody's lying — **the screen is the
-> DOM, the source is the HTML.** You already watched these diverge in Demo 1;
-> you just didn't have the words for it."
-
-### 2. "They look identical, right?"
-
-Show **View Source** (the exact file we wrote) next to the **Elements** tab.
-They look the same. Set up the reveal: they are two different things — one is
-frozen text, one is a live tree.
-
-### 3. Mutate the DOM from the console
-
-In the Console, type:
+In the Console, run these one at a time and watch the page:
 
 ```js
 document.querySelector('h1').textContent = 'HACKED'
 ```
 
-The card's heading ("Meghana Foods") becomes **HACKED**. Switch to **Elements** —
-the `<h1>` now says HACKED. Switch to **View Source** (reopen it) — it still
-says "Meghana Foods". *JavaScript changed the DOM, not the HTML.*
-
-### 4. The dramatic one
+```js
+document.body.style.background = 'hotpink'
+```
 
 ```js
 document.body.innerHTML = '<h1>I deleted everything</h1>'
 ```
 
-The entire page is wiped to one heading.
+Each command rewrites the DOM, and the screen updates instantly. Now flip to the **View Source** tab and refresh it — the original HTML hasn't changed by a single character. Then hit **Cmd+R** on the page itself. The card is back, untouched. Your edits never left your machine.
 
-> "The DOM is the truth. Whatever's in the DOM is what you see."
-
-### 5. The reveal — why refresh fixes it
-
-Hit **Refresh** (`Cmd+R`). Everything is back: the card, the image, the button.
-
-> "Why did refresh undo it? Your edits only ever lived in the browser's memory —
-> the DOM. The server resent the **same unchanged HTML**, and the browser parsed
-> a brand-new clean DOM from it. The source never changed, so refresh restores
-> everything."
-
-This is the concept that makes the whole demo click.
-
-### 6. Vandalize a real site (this is the fun part)
-
-Open **https://en.wikipedia.org** (any article). It's public, stable, and
-refresh undoes everything. Try, one at a time, in the Console:
+Try the same thing on a real site — open `https://en.wikipedia.org` in a new tab and run:
 
 ```js
 document.querySelector('h1').textContent = 'My Encyclopedia'
-```
-```js
-document.body.style.background = 'hotpink'
-```
-```js
-document.querySelector('header')?.remove()   // hide the top nav/header
+document.querySelector('header')?.remove()
 ```
 
-**If a selector misses** (real sites change their markup): right-click any
-element on the page → **Inspect**. DevTools selects it and exposes it in the
-console as `$0`. Then:
+If a selector doesn't match (real sites change their markup), right-click any element on the page and choose **Inspect** — DevTools selects it and binds it to the variable `$0` in the console. Then `$0.remove()` or `$0.textContent = 'whatever'` works on whatever you clicked.
 
-```js
-$0.textContent = 'whatever you want'
+## Diagrams
+
+```mermaid
+flowchart LR
+    A[Server sends<br/>HTML text] --> B[Browser parses<br/>the bytes]
+    B --> C[DOM tree<br/>in memory]
+    C --> D[Pixels on<br/>the screen]
+    E[Your JS in<br/>the console] -->|mutates| C
+    A -.->|untouched| F[View Source<br/>still shows<br/>original HTML]
+    C -.->|serialized| G[Elements tab<br/>shows current<br/>DOM]
 ```
-```js
-$0.remove()
-```
 
-College websites work too, but their markup is unpredictable — Wikipedia is the
-reliable default.
+<svg width="600" height="240" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="600" height="240" fill="#f5f5f5"/>
+  <rect x="20" y="30" width="240" height="180" fill="#ffffff" stroke="#a3a3a3" stroke-width="1"/>
+  <text x="140" y="55" font-family="ui-sans-serif" font-size="13" font-weight="600" text-anchor="middle" fill="#171717">What the server sent</text>
+  <text x="140" y="75" font-family="ui-sans-serif" font-size="11" text-anchor="middle" fill="#a3a3a3">(View Source)</text>
+  <text x="35" y="105" font-family="ui-monospace, monospace" font-size="11" fill="#171717">&lt;h1&gt;Meghana Foods&lt;/h1&gt;</text>
+  <text x="35" y="125" font-family="ui-monospace, monospace" font-size="11" fill="#171717">&lt;span id="like-count"&gt;</text>
+  <text x="35" y="140" font-family="ui-monospace, monospace" font-size="11" fill="#171717">  0</text>
+  <text x="35" y="155" font-family="ui-monospace, monospace" font-size="11" fill="#171717">&lt;/span&gt;</text>
+  <text x="140" y="190" font-family="ui-sans-serif" font-size="11" text-anchor="middle" fill="#a3a3a3">frozen text</text>
+  <path d="M 270 120 L 330 120" stroke="#fc8019" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="300" y="110" font-family="ui-sans-serif" font-size="11" text-anchor="middle" fill="#fc8019">parse + JS</text>
+  <rect x="340" y="30" width="240" height="180" fill="#ffffff" stroke="#fc8019" stroke-width="2"/>
+  <text x="460" y="55" font-family="ui-sans-serif" font-size="13" font-weight="600" text-anchor="middle" fill="#171717">What the browser shows</text>
+  <text x="460" y="75" font-family="ui-sans-serif" font-size="11" text-anchor="middle" fill="#a3a3a3">(Elements tab / the DOM)</text>
+  <circle cx="380" cy="105" r="5" fill="#fc8019"/>
+  <text x="395" y="109" font-family="ui-monospace, monospace" font-size="11" fill="#171717">h1: "HACKED"</text>
+  <circle cx="380" cy="130" r="5" fill="#fc8019"/>
+  <text x="395" y="134" font-family="ui-monospace, monospace" font-size="11" fill="#171717">span#like-count: 3</text>
+  <circle cx="380" cy="155" r="5" fill="#fc8019"/>
+  <text x="395" y="159" font-family="ui-monospace, monospace" font-size="11" fill="#171717">body.style: hotpink</text>
+  <text x="460" y="190" font-family="ui-sans-serif" font-size="11" text-anchor="middle" fill="#fc8019">live tree</text>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#fc8019"/>
+    </marker>
+  </defs>
+</svg>
 
-### 6.5. Semantic HTML (60-second addition)
+## Takeaways
 
-While you're in the **Elements** tab on Wikipedia, scroll the tree and point out
-the named elements: `<nav>`, `<main>`, `<article>`, `<header>`, `<footer>` —
-that `<header>` you just removed was one of them.
-
-> "These aren't just for tidiness. Screen readers for blind users navigate a
-> page *by* these landmarks — 'jump to main', 'jump to navigation.' Search
-> engines use them to understand structure. You could build the whole page out
-> of `<div>`s and it'd look identical — but you'd throw all of that away. Using
-> the right element costs you nothing."
-
-(Our own Swiggy card already does this — the card is a `<main>`, the name is an
-`<h1>`.)
-
-### 7. Reframe (and defuse "is this hacking?")
-
-A web page is not a sealed artifact — it's a **data structure you can reach into
-and edit**. And this is entirely **local**: you changed only your browser's
-in-memory DOM. Nobody else sees it, you didn't touch the server, and refresh
-resets it. (So no — this isn't hacking.)
-
-## Conceptual sidebar
-
-- **HTML** — the recipe the server sent, as static text in the HTTP response.
-- **DOM** — the live tree the browser built from that text and holds in memory;
-  the rendered screen is a picture of the DOM.
-- **View Source** shows the original served HTML. **Elements** shows the current
-  DOM serialized back to HTML-looking text. They match only until the first
-  script (or console command) runs — then they diverge.
+- **HTML** is the static text response from the server. **DOM** is the live object tree in your browser's memory.
+- Every framework you'll ever use — React, Vue, Svelte — is just a fancier way to mutate the DOM.
+- **View Source** never changes after page load. **Elements** changes every time anything runs.
+- **Refresh** fetches the HTML again and rebuilds a fresh DOM. That's why your hacks vanish.
+- DevTools is your superpower: right-click → Inspect on anything, anywhere, and you can read or change it.
+- This is local-only. You can't break someone else's site this way — you're only editing what your browser is holding.

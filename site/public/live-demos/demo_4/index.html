@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Demo 4 — The expensive DOM</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Demo 4 — The expensive DOM</h1>
+    <p class="lede">
+      500 restaurant tiles. Two buttons resize all of them to the same look —
+      one tile-by-tile in a loop, one in a single pass. Watch the timings.
+    </p>
+
+    <div class="controls">
+      <button id="slow">Resize each (slow)</button>
+      <button id="fast">Resize all (batched / fast)</button>
+      <button id="reset" class="ghost">Reset</button>
+    </div>
+
+    <div class="timings">
+      <div class="timing">
+        <span class="label">Resize each (slow)</span>
+        <span id="slow-time" class="value">—</span>
+      </div>
+      <div class="timing">
+        <span class="label">Resize all (batched)</span>
+        <span id="fast-time" class="value">—</span>
+      </div>
+    </div>
+  </header>
+
+  <main id="grid" class="grid" aria-label="Restaurant tiles"></main>
+
+  <script src="app.js"></script>
+</body>
+</html>

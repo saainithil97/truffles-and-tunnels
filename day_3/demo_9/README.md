@@ -1,133 +1,87 @@
-# Day 3, Demo 9 — "What are you actually shipping?" (Performance & Core Web Vitals)
+# Demo 9 — What are you actually shipping?
 
-Companion runbook for the ninth demo of Day 3. Full design:
-`../docs/superpowers/specs/2026-05-28-day3-demo9-core-web-vitals-design.md`.
+You've spent all day learning how a page loads, parses, styles, lays out, and paints. Lighthouse is the tool that measures every one of those steps and hands you a graded report card — and Google reads the same report to decide where you rank in search. Time to point it at a real site and see what falls out.
 
-This demo ships **no code**. It runs Chrome DevTools' **Lighthouse** against a
-real page and reads the report out loud. The big idea:
+## Setup
 
-> You've spent all day learning *how* a page loads, mutates, styles, lays out,
-> and paints. Lighthouse is the tool that **measures** all of it and hands you a
-> graded report card — and Google reads the same report to decide where you rank.
+No code to install. Everything happens inside Chrome.
 
-The best target is **a student's own Day-2 landing page** — it's their code, so
-the findings sting in a good way. Demo 1's Swiggy card at
-`http://localhost:8000/` is the **reliable fallback** if no student page is
-handy or the volunteer is shy.
+1. Pick a target page. Good choices: **swiggy.com**, your college's website, a news site, or anything image-heavy you actually visit. Heavier is better — you want findings to read.
+2. Open a **fresh Incognito window** (Cmd+Shift+N / Ctrl+Shift+N). This stops your extensions from polluting the score.
+3. Navigate to the page, then press **Cmd+Opt+I** (Mac) or **Ctrl+Shift+I** (Windows/Linux) to open DevTools.
+4. Click the **Lighthouse** tab at the top of DevTools. If you don't see it, click the **»** overflow menu.
+5. Configure the run:
+   - **Mode**: Navigation
+   - **Device**: Mobile (Google ranks on mobile; this is the score that matters)
+   - **Categories**: check all four — Performance, Accessibility, Best Practices, SEO
+6. Click **Analyze page load**. It will reload the page, instrument it, and after ~15 seconds give you four big circular scores.
 
-## What's here
+## Concepts
 
-Nothing to install. The whole demo is Chrome DevTools → **Lighthouse**. You just
-need:
+1. **Lighthouse runs the page in a controlled lab.** It throttles your network to mobile 4G, throttles CPU, reloads the page, and measures every step. It's not what *you* experience on fast Wi-Fi — it's what a real user on a mid-range Android phone experiences.
 
-- A page to audit (a student's deployed Day-2 page, or Demo 1's card running
-  locally — see Setup).
-- Chrome with DevTools (`Cmd+Opt+I`).
+2. **Four dials, one that matters most.** Performance, Accessibility, Best Practices, SEO. They all matter, but Performance is the one you'll watch shift as you change code.
 
-## Setup & run
+3. **Core Web Vitals — the three numbers Google ranks on.**
+   - **LCP (Largest Contentful Paint)** — the time until the biggest visible element (usually the hero image or main headline) finishes rendering. The user's gut feel for *"the page loaded."* **Good: under 2.5s.**
+   - **INP (Interaction to Next Paint)** — the delay between a tap/click and the screen visibly responding. A slow React re-render or heavy event handler destroys it. **Good: under 200ms.**
+   - **CLS (Cumulative Layout Shift)** — how much stuff jumps around while the page is loading (classically, an image with no set height pushing text down once it arrives). **Good: under 0.1.**
 
-If you're using **Demo 1's card** as the target, start its server first:
+4. **Opportunities & Diagnostics is the actual to-do list.** Scroll past the dials. Lighthouse names the specific files, image, or script slowing you down — biggest savings at the top. *"Properly size images"*, *"Eliminate render-blocking resources"*, *"Reduce unused JavaScript"* — each one is a real frontend concept with a number attached.
 
-```bash
-cd ../demo_1
-source .venv/bin/activate
-uvicorn server:app --host 127.0.0.1 --port 8000 --reload
+5. **Performance is a search-ranking signal.** Two sites with equally good content — the faster, more stable one ranks higher in Google. This isn't a vibe; it's the measurable number sitting in front of you in the report.
+
+## Diagrams
+
+```mermaid
+flowchart TD
+    A[Lighthouse audit] --> B[Performance score]
+    A --> C[Accessibility]
+    A --> D[Best Practices]
+    A --> E[SEO]
+    B --> F[LCP<br/>Largest Contentful Paint]
+    B --> G[INP<br/>Interaction to Next Paint]
+    B --> H[CLS<br/>Cumulative Layout Shift]
+    F --> F1[Big image size<br/>Slow server<br/>Render-blocking CSS]
+    G --> G1[Heavy JS handlers<br/>Long React renders<br/>Main-thread work]
+    H --> H1[Images without dimensions<br/>Web fonts swapping<br/>Late-loaded banners]
 ```
 
-Open the target page in Chrome, then DevTools (`Cmd+Opt+I`) → **Lighthouse**
-tab. Pick **Navigation** mode, check all four categories (Performance, Best
-Practices, SEO, Accessibility), choose **Mobile** (Google ranks on mobile), and
-click **Analyze page load**. Audit in a **fresh Incognito window** so extensions
-don't pollute the score.
+<svg width="600" height="240" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="600" height="240" fill="#f5f5f5"/>
+  <text x="300" y="25" font-family="ui-sans-serif" font-size="13" font-weight="600" text-anchor="middle" fill="#171717">The LCP timeline — what a user actually sees</text>
+  <line x1="40" y1="160" x2="560" y2="160" stroke="#a3a3a3" stroke-width="2"/>
+  <line x1="40" y1="155" x2="40" y2="165" stroke="#a3a3a3" stroke-width="2"/>
+  <line x1="560" y1="155" x2="560" y2="165" stroke="#a3a3a3" stroke-width="2"/>
+  <text x="40" y="185" font-family="ui-sans-serif" font-size="11" text-anchor="middle" fill="#a3a3a3">0s</text>
+  <text x="560" y="185" font-family="ui-sans-serif" font-size="11" text-anchor="middle" fill="#a3a3a3">4s</text>
+  <line x1="120" y1="80" x2="120" y2="160" stroke="#a3a3a3" stroke-width="1" stroke-dasharray="3,3"/>
+  <circle cx="120" cy="160" r="6" fill="#a3a3a3"/>
+  <text x="120" y="70" font-family="ui-sans-serif" font-size="11" text-anchor="middle" fill="#171717">First paint</text>
+  <text x="120" y="205" font-family="ui-sans-serif" font-size="11" text-anchor="middle" fill="#a3a3a3">0.6s</text>
+  <text x="120" y="220" font-family="ui-sans-serif" font-size="10" text-anchor="middle" fill="#a3a3a3">header, nav</text>
+  <line x1="240" y1="100" x2="240" y2="160" stroke="#a3a3a3" stroke-width="1" stroke-dasharray="3,3"/>
+  <circle cx="240" cy="160" r="6" fill="#a3a3a3"/>
+  <text x="240" y="90" font-family="ui-sans-serif" font-size="11" text-anchor="middle" fill="#171717">Text shows</text>
+  <text x="240" y="205" font-family="ui-sans-serif" font-size="11" text-anchor="middle" fill="#a3a3a3">1.2s</text>
+  <text x="240" y="220" font-family="ui-sans-serif" font-size="10" text-anchor="middle" fill="#a3a3a3">restaurant names</text>
+  <line x1="400" y1="80" x2="400" y2="160" stroke="#fc8019" stroke-width="2" stroke-dasharray="3,3"/>
+  <circle cx="400" cy="160" r="9" fill="#fc8019"/>
+  <text x="400" y="70" font-family="ui-sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#fc8019">LCP</text>
+  <text x="400" y="205" font-family="ui-sans-serif" font-size="11" font-weight="600" text-anchor="middle" fill="#fc8019">2.4s</text>
+  <text x="400" y="220" font-family="ui-sans-serif" font-size="10" text-anchor="middle" fill="#a3a3a3">hero biryani image</text>
+  <line x1="510" y1="115" x2="510" y2="160" stroke="#a3a3a3" stroke-width="1" stroke-dasharray="3,3"/>
+  <circle cx="510" cy="160" r="6" fill="#a3a3a3"/>
+  <text x="510" y="105" font-family="ui-sans-serif" font-size="11" text-anchor="middle" fill="#171717">Done</text>
+  <text x="510" y="205" font-family="ui-sans-serif" font-size="11" text-anchor="middle" fill="#a3a3a3">3.5s</text>
+  <text x="510" y="220" font-family="ui-sans-serif" font-size="10" text-anchor="middle" fill="#a3a3a3">interactive</text>
+</svg>
 
-## Demo flow
+## Takeaways
 
-### 0. Slido (before anything)
-
-> "What's the **biggest performance killer** on a typical web page — images,
-> JavaScript, CSS, or fonts?"
-
-There's no single right answer, and that's the point. **JavaScript** wins by
-impact: it blocks the main thread, delays interactivity, and a heavy bundle is
-the usual cause of a sluggish page. **Images** win by raw bytes: they're almost
-always the largest thing downloaded. Both are defensible — let the room argue,
-then show them how Lighthouse actually attributes the cost in section 4.
-
-### 1. Run the audit
-
-Open the target page, DevTools → **Lighthouse** → **Analyze page load**. It
-reloads the page, instruments it, and after ~15 seconds produces four big dials:
-
-- **Performance** — how fast it loads and becomes interactive.
-- **Best Practices** — HTTPS, console errors, deprecated APIs.
-- **SEO** — is it discoverable (meta tags, crawlable links, mobile-friendly)?
-- **Accessibility** — contrast, alt text, labels, landmarks (ties straight back
-  to the semantic-HTML beat from Demo 2).
-
-Read the scores aloud. A polished-looking page scoring 60 on Performance is the
-hook: **pretty ≠ fast.**
-
-### 2. The three Core Web Vitals
-
-Scroll to the **Metrics** panel. These three are the ones Google standardised —
-the "Core Web Vitals." One sentence and one threshold each:
-
-- **LCP — Largest Contentful Paint:** time until the biggest visible element
-  (the hero image or headline) finishes rendering — the user's gut feel for "the
-  page loaded." **Good: under 2.5s.**
-- **INP — Interaction to Next Paint:** the delay between a click/tap and the
-  screen visibly responding — a slow React re-render or a heavy event handler
-  destroys it. **Good: under 200ms.**
-- **CLS — Cumulative Layout Shift:** how much stuff jumps around while loading
-  (classically an image with no set height that pushes the text down once it
-  arrives) — users hate it because they tap the wrong thing. **Good: under 0.1.**
-
-> "LCP is *how fast did it show up*, INP is *how fast does it react to me*, and
-> CLS is *did it hold still while I was reading it*. Load speed, responsiveness,
-> visual stability — the three things a user actually feels."
-
-### 3. Why these three matter beyond the dial
-
-> "Google uses Core Web Vitals as a **search-ranking signal**. Two sites with
-> equally good content — the faster, more stable one ranks higher. This isn't a
-> vibe; it's the measurable number sitting right here in the report. Performance
-> stopped being a nice-to-have the day it started affecting traffic."
-
-### 4. Walk Opportunities & Diagnostics — the frontend health check
-
-Scroll past the dials. This is the part that pays the session back. Read a few
-real entries aloud — typical hits:
-
-- **"Properly size images" / "Serve images in next-gen formats"** — an
-  uncompressed photo is shipping ten times the bytes it needs (callback to the
-  biryani image in Demo 1).
-- **"Eliminate render-blocking resources"** — the CSS and synchronous scripts
-  holding up first paint. This is **literally Demo 3**, now with a number on it.
-- **"Reduce unused JavaScript"** — you shipped a library and use 5% of it; this
-  is what tree-shaking (the bundling interlude) is fighting.
-
-> "Each of these is a frontend concept we've covered today, now with a price tag
-> attached. Lighthouse turns 'your page feels slow' into a prioritised to-do
-> list — biggest win at the top."
-
-### 5. Forward-ref to observability
-
-> "Today we ran this **once, by hand**. In production you'd measure these
-> continuously — real users, real devices, every deploy. The point isn't the
-> one-off score; it's the **trend**. A deploy that quietly pushes LCP from 1.5s
-> to 4s should set off an alarm before your users feel it. That's the
-> observability story, and it's where Day 4 picks up."
-
-## Pre-session checklist
-
-- [ ] Chrome installed with DevTools; **Lighthouse** tab present.
-- [ ] A target page chosen: ideally a willing student's deployed Day-2 page;
-      otherwise Demo 1's card with its server running at
-      `http://localhost:8000/`.
-- [ ] Ran the audit once end-to-end in an **Incognito** window; it completes and
-      shows the four dials plus Metrics.
-- [ ] Confirmed the report surfaces **LCP / INP / CLS** and at least a couple of
-      **Opportunities / Diagnostics** to read aloud.
-- [ ] Backup screenshot of a completed report saved, in case the live run is
-      flaky on conference Wi-Fi.
-- [ ] Display sleep / Caffeinate enabled for the session duration.
+- **LCP is "how fast did it show up", INP is "how fast does it react to me", CLS is "did it hold still while I was reading it."** Load, response, stability — the three things a user actually feels.
+- A polished-looking page can still score 60 on Performance. **Pretty is not the same as fast.**
+- **Opportunities** is sorted by impact — fixing the top item is almost always the biggest win.
+- Most pages bleed performance from **images** (too large, wrong format) and **JavaScript** (too much, not split, not tree-shaken). Both are fixable.
+- Run Lighthouse in **Incognito** — extensions like ad blockers and password managers wreck the score.
+- In production you'd measure these **continuously**, on real users, every deploy. The single score is a snapshot; the **trend** is what catches regressions before users do.

@@ -1,25 +1,15 @@
 import Link from "next/link";
 import { ThemeToggle } from "./ThemeToggle";
-import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex w-full items-center gap-3 px-4 lg:px-6">
-        <SidebarTrigger className="-ml-1" />
-        <Separator
-          orientation="vertical"
-          className="mr-1 data-[orientation=vertical]:h-4"
-        />
+    <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="mx-auto flex h-14 w-full max-w-6xl items-center gap-3 px-4 sm:px-6 lg:px-8">
         <Link
           href="/"
           className="flex items-center gap-2 text-sm font-semibold tracking-tight"
         >
-          <span
-            aria-hidden
-            className="inline-block size-5 rounded-md bg-primary"
-          />
+          <span aria-hidden className="inline-block size-5 rounded-md bg-primary" />
           Truffles &amp; Tunnels
         </Link>
 

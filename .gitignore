@@ -13,3 +13,4 @@ env/
 
 # Brainstorming visual companion
 .superpowers/
+.vercel

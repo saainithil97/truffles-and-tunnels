@@ -1,41 +1,170 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
+@custom-variant dark (&:is(.dark *));
+
+/* ---- Light theme ----
+ * Brand: Swiggy orange #fc8019 → oklch(0.71 0.16 52).
+ * primary is bound to the brand so buttons/focus rings/links pick it up.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --accent: #fc8019;
+  --brand: oklch(0.71 0.16 52);
+  --brand-foreground: oklch(1 0 0);
+
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+
+  --primary: var(--brand);
+  --primary-foreground: var(--brand-foreground);
+
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.45 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: var(--brand);
+
+  --chart-1: var(--brand);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+
+  --radius: 0.625rem;
+
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: var(--brand-foreground);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: var(--brand);
+}
+
+/* ---- Dark theme ---- */
+.dark {
+  --brand: oklch(0.76 0.16 52);
+  --brand-foreground: oklch(0.145 0 0);
+
+  --background: oklch(0.16 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+
+  --primary: var(--brand);
+  --primary-foreground: var(--brand-foreground);
+
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.72 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: var(--brand);
+
+  --chart-1: var(--brand);
+  --chart-2: oklch(0.7 0 0);
+  --chart-3: oklch(0.5 0 0);
+  --chart-4: oklch(0.4 0 0);
+  --chart-5: oklch(0.3 0 0);
+
+  --sidebar: oklch(0.18 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: var(--brand-foreground);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 12%);
+  --sidebar-ring: var(--brand);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
   --color-accent: var(--accent);
-  --font-sans:
-    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, sans-serif;
-  --font-mono:
-    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas,
-    "Liberation Mono", "Courier New", monospace;
+
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-heading: var(--font-sans);
+
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-html {
-  font-family: var(--font-sans);
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  html {
+    @apply font-sans;
+  }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-}
-
-/* ---- Hand-rolled "prose" styles for rendered markdown ---- */
+/* ---- Rendered markdown — token-driven, dark-mode aware ---- */
 
 .markdown {
-  color: #1f2937;
+  color: var(--foreground);
   font-size: 1rem;
   line-height: 1.7;
 }
 
-/* Tighter spacing for headings inside the demo page right-column (callout-y feel) */
+/* In the demo two-column layout the markdown sits in a narrower column;
+   suppress the leading margin on the first heading so it lines up flush. */
 .markdown h2:first-child,
 .markdown h3:first-child {
   margin-top: 0;
@@ -49,10 +178,10 @@ body {
 .markdown h2,
 .markdown h3,
 .markdown h4 {
-  color: #111827;
+  color: var(--foreground);
   font-weight: 700;
   line-height: 1.25;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
 }
 
 .markdown h1 {
@@ -62,11 +191,11 @@ body {
 .markdown h2 {
   font-size: 1.5rem;
   margin-top: 2rem;
-  padding-bottom: 0.25rem;
-  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border);
 }
 .markdown h3 {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   margin-top: 1.75rem;
 }
 .markdown h4 {
@@ -79,16 +208,17 @@ body {
 }
 
 .markdown a {
-  color: #fc8019;
+  color: var(--primary);
   text-decoration: underline;
-  text-underline-offset: 2px;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
 }
 .markdown a:hover {
-  color: #c2611a;
+  filter: brightness(0.85);
 }
 
 .markdown strong {
-  color: #111827;
+  color: var(--foreground);
   font-weight: 600;
 }
 
@@ -103,18 +233,18 @@ body {
   list-style: decimal;
 }
 .markdown li {
-  margin-top: 0.25rem;
+  margin-top: 0.35rem;
 }
 .markdown li > p {
   margin: 0;
 }
 
 .markdown blockquote {
-  border-left: 4px solid #fc8019;
-  background: #fff7ed;
+  border-left: 3px solid var(--primary);
+  background: color-mix(in oklab, var(--primary) 8%, transparent);
   padding: 0.75rem 1rem;
-  color: #5b3a1a;
-  border-radius: 0 0.375rem 0.375rem 0;
+  color: var(--foreground);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
 }
 .markdown blockquote p {
   margin: 0;
@@ -123,20 +253,22 @@ body {
 .markdown code {
   font-family: var(--font-mono);
   font-size: 0.9em;
-  background: #f3f4f6;
+  background: var(--muted);
   padding: 0.1rem 0.35rem;
-  border-radius: 0.25rem;
-  color: #b91c1c;
+  border-radius: 0.3rem;
+  color: var(--foreground);
 }
 
+/* <pre> stays consistently dark for code legibility in both themes */
 .markdown pre {
-  background: #0b1020;
-  color: #e5e7eb;
+  background: oklch(0.18 0 0);
+  color: oklch(0.92 0 0);
   padding: 1rem;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-md);
   overflow-x: auto;
   font-size: 0.85rem;
-  line-height: 1.55;
+  line-height: 1.6;
+  border: 1px solid var(--border);
 }
 .markdown pre code {
   background: transparent;
@@ -154,41 +286,40 @@ body {
   overflow-x: auto;
 }
 .markdown thead {
-  background: #f9fafb;
+  background: var(--muted);
 }
 .markdown th,
 .markdown td {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
   padding: 0.5rem 0.75rem;
   text-align: left;
   vertical-align: top;
 }
 .markdown th {
   font-weight: 600;
-  color: #111827;
+  color: var(--foreground);
 }
 
 .markdown hr {
   border: 0;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--border);
 }
 
 .markdown img {
   max-width: 100%;
   height: auto;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-md);
 }
 
-/* Override the github highlight.js theme background so it blends with our dark
- * <pre> blocks. */
+/* Override the highlight.js theme background so it blends with our dark <pre>. */
 .markdown pre code.hljs {
   background: transparent;
   padding: 0;
-  color: #e5e7eb;
+  color: oklch(0.92 0 0);
 }
 .markdown .hljs-comment,
 .markdown .hljs-quote {
-  color: #9ca3af;
+  color: oklch(0.62 0 0);
 }
 .markdown .hljs-keyword,
 .markdown .hljs-selector-tag,

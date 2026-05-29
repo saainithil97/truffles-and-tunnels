@@ -130,10 +130,9 @@ The quick-reference card:
 - **Demo 2 — The DOM is not the HTML.** HTML is the frozen text from the server. DOM is the live tree the browser is holding. JS only ever edits the DOM.
 - **Demo 3 — Order matters.** Where you put a `<script>` decides whether the page is blank for two seconds. `defer` in `<head>` is the default you want.
 - **Demo 2.5 — Storage.** Three drawers: cookies (sent to the server every request), localStorage (forever, browser-only), sessionStorage (per tab, browser-only).
-- **Demo 4 — The DOM is expensive.** Layout/paint is slow if you touch it wrong. Batched writes are 50× faster than per-element ones.
-- **Demo 5 — Imperative tangles.** Vanilla JS stays clean until a PM piles on features. Then every handler edits five things and you lose track.
-- **Demo 6 — What React solves for.** JSX → virtual DOM → diff → minimal real-DOM update. The expensive stage gets batched, the imperative tangle goes away.
-- **Demo 6.3 — React is a library.** Two `<script>` tags from a CDN, one component, no build. React's whole job is keeping your DOM in sync with state — everything else (router, build, data, styling) is your problem.
+- **Demo 4 — Pure JS hits a wall.** Three pains the language doesn't help with: state↔UI drift across surfaces, no standard composition vocabulary, the DOM punishes hot loops. Not language problems — missing-abstraction problems.
+- **Demo 5 — The shape of every library that fixes this.** React, Vue, Svelte, Solid all agree: describe state → UI, the library does the sync. Three mechanisms (virtual-tree diff, build-time compilation, signals), one destination — minimum real-DOM work. Components are the universal composition unit.
+- **Demo 6 — How the pieces actually plug in.** Library vs framework (a library is something you call; a framework is something that calls you). These libraries own one column — rendering — and leave routing, build, state, styling, data fetching to you. That flexibility is the win and the cost.
 - **Demo 6.5 — What's an SPA, why.** One HTML shell + a JS router (`pushState`). Fast after first load, painful before it.
 - **Demo 6.7 — How a modern stack builds one.** Bundlers walk your `import` graph, drop unused code (tree shaking), split per route, and ship the handful of files the browser actually needs.
 - **Demo 6.6 — Why Next when React exists.** Next gives you file-based routing, a dev server, SSR, the bundler, and a `<Link>` component for SPA navigation — none of which React itself provides.

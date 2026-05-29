@@ -157,77 +157,66 @@ export const day3Demos: Demo[] = [
   {
     id: "demo_4",
     slug: "demo_4",
-    shortTitle: "Demo 4 — The expensive DOM",
-    title: 'Demo 4 — "The expensive DOM"',
+    shortTitle: "Demo 4 — Pure JS hits a wall",
+    title: 'Demo 4 — "Pure JS hits a wall"',
     summary:
-      "A scrollable Swiggy feed. One scroll handler thrashes layout per card; the other reads cached offsets. Toggle between them and feel the difference — the canary at the top freezes in slow mode and stays smooth in fast.",
+      "Vanilla works fine for a button. A cart with a topbar badge, three dishes, a subtotal, and a free-delivery banner is five UI surfaces to keep in sync with one piece of state — and vanilla has nothing built in to help. Three pains: state↔UI drift, no composition vocabulary, the DOM punishes hot loops.",
     readmeSourcePath: "day_3/demo_4/README.md",
     contentFile: "day_3/demo_4.md",
     kind: "embedded",
-    iframePath: "/live-demos/demo_4/index.html",
+    iframePath: "/live-demos/demo_5/vanilla-full.html",
     iframeNote:
-      "Scroll the iframe in Slow mode and watch the canary stutter. Hit Fast and scroll again — buttery. Try DevTools → Performance to see the purple Layout bars disappear.",
+      "Click Add then + a few times. The DOM-writes counter at the top shows ~17 writes per click — the vanilla cart updates every UI surface every time. The full scroll-thrash demo lives at day_3/demo_4/ if you want to feel Beat 3.",
     sourceFiles: [
-      { name: "index.html", language: "html" },
-      { name: "style.css", language: "css" },
-      { name: "app.js", language: "javascript" },
-      { name: "server.py", language: "python" },
+      { name: "vanilla-full.html", language: "html" },
     ],
+    sourceCodeFromDemo: "demo_5",
   },
   {
     id: "demo_5",
     slug: "demo_5",
-    shortTitle: "Demo 5 — Why React exists",
-    title: 'Demo 5 — "This is why React exists"',
+    shortTitle: "Demo 5 — The shape of the solution",
+    title: 'Demo 5 — "The shape of every library that fixes this"',
     summary:
-      "A tiny Swiggy cart, built three ways. One dish in vanilla — fine. Three dishes plus a topbar badge plus a subtotal plus a free-delivery banner in vanilla — a tangle. The same thing in React, with one cart state and a DishCard component used three times.",
+      "React, Vue, Svelte, Solid all answer Demo 4's three problems with the same contract: describe state → UI, the library does the sync. Three side-by-side snippets for the syntax, three mechanisms for the diff, one React rewrite of the vanilla cart — 17 writes → 3.",
     readmeSourcePath: "day_3/demo_5/README.md",
     contentFile: "day_3/demo_5.md",
     kind: "embedded",
-    iframePath: "/live-demos/demo_5/vanilla-simple.html",
+    iframePath: "/live-demos/demo_5/react.html",
     iframeEntries: [
-      { label: "Vanilla (simple)", path: "/live-demos/demo_5/vanilla-simple.html" },
-      { label: "Vanilla (full)", path: "/live-demos/demo_5/vanilla-full.html" },
       { label: "React", path: "/live-demos/demo_5/react.html" },
+      { label: "Vanilla (full, for comparison)", path: "/live-demos/demo_5/vanilla-full.html" },
+      { label: "Vanilla (simple)", path: "/live-demos/demo_5/vanilla-simple.html" },
     ],
     iframeNote:
-      "Each file runs standalone — React is vendored locally, no server. Compare how each version handles state.",
+      "React tab is the worked example. Flip to vanilla-full to compare the DOM-writes counter side-by-side: ~3 in React, ~17 in vanilla. Each file runs standalone — React is vendored locally, no server.",
     sourceFiles: [
-      { name: "vanilla-simple.html", language: "html" },
-      { name: "vanilla-full.html", language: "html" },
       { name: "react.html", language: "html" },
+      { name: "vanilla-full.html", language: "html" },
+      { name: "vanilla-simple.html", language: "html" },
     ],
   },
   {
     id: "demo_6",
     slug: "demo_6",
-    shortTitle: "Demo 6 — Virtual DOM & JSX",
-    title: 'Demo 6 — "What React actually does"',
+    shortTitle: "Demo 6 — How the pieces plug in",
+    title: 'Demo 6 — "How the pieces actually plug in"',
     summary:
-      "JSX is just sugar. The Babel side-by-side shows JSX → createElement → plain objects, and React's diff turns that into the minimal real-DOM update.",
+      "React, Vue, Solid, Svelte all own one column — rendering — and leave the rest to you. The inversion-of-control test, the universal \"what they don't ship\" table, the <script>-tag proof, and the trade you're actually making when you reach for one.",
     readmeSourcePath: "day_3/demo_6/README.md",
     contentFile: "day_3/demo_6.md",
     kind: "embedded",
-    iframePath: "/live-demos/demo_6/jsx-vs-compiled.html",
+    iframePath: "/live-demos/demo_6/index.html",
+    iframeEntries: [
+      { label: "<script>-tag React app", path: "/live-demos/demo_6/index.html" },
+      { label: "JSX → object playground", path: "/live-demos/demo_6/jsx-vs-compiled.html" },
+    ],
     iframeNote:
-      "Edit the JSX on the left; watch the compiled createElement and the resulting tree update on the right.",
-  },
-  {
-    id: "demo_6_3",
-    slug: "demo_6_3",
-    shortTitle: "Demo 6.3 — How and where React works",
-    title: 'Demo 6.3 — "React in a script tag"',
-    summary:
-      "Two <script> tags, one component, no build. The same React that ships in big apps, running in a 30-line HTML page. Proves the library framing — and sets up why bundlers and Next exist for everything bigger than this.",
-    readmeSourcePath: "day_3/demo_6_3/README.md",
-    contentFile: "day_3/demo_6_3.md",
-    kind: "embedded",
-    iframePath: "/live-demos/demo_6_3/index.html",
-    iframeNote:
-      "View Source on the iframe to see the three script tags. Open DevTools → Network to watch React load from unpkg.com.",
+      "View Source on the <script>-tag app: three script tags + one component. Open DevTools → Network to see React load from unpkg.com. Flip to the playground tab to step through how JSX compiles to createElement to a plain object.",
     sourceFiles: [
       { name: "index.html", language: "html" },
       { name: "style.css", language: "css" },
+      { name: "jsx-vs-compiled.html", language: "html" },
     ],
   },
   {
@@ -392,7 +381,7 @@ export const day3Parts: DayPart[] = [
   },
   {
     heading: "Part 2 — Why do we need React (or other libraries)?",
-    demoSlugs: ["demo_4", "demo_5", "demo_6", "demo_6_3", "verbal-segments"],
+    demoSlugs: ["demo_4", "demo_5", "demo_6", "verbal-segments"],
   },
   {
     heading: "Part 3 — Single-Page Apps",

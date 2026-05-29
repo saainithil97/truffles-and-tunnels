@@ -1,120 +1,91 @@
-# "What React actually does"
+# "How the pieces actually plug in"
 
-Demo 5 convinced you *why* React exists. This one opens the hood. You'll see that JSX isn't a new language, the virtual DOM isn't a magic trick, and "React is fast" comes down to one boring, beautiful idea: keep a cheap copy of the UI in memory, diff it against the new one, and only touch the real DOM where it actually needs to change.
+You've seen the contract a library in this class offers. Now: where does it sit in your stack? React, Vue, Solid, Svelte — they all share *another* property beyond Demo 5's contract. They own one column — rendering — and leave the rest to you. That design choice is where the rest of Day 3 begins: it's what frameworks fill, and it's what tells you when to reach for one.
 
 ## Setup
 
-On the left is a single live playground: `jsx-vs-compiled.html`. It uses Babel-standalone to compile JSX in the browser, so you can read three things side by side:
+The iframe above is `index.html` — a single static HTML file. Two `<script>` tags from a CDN, one component, no build step. The same library that ships in big Next.js apps is the library running in this 30-line page.
 
-1. The **JSX** you write (looks like HTML).
-2. The **compiled** `React.createElement(...)` calls Babel turns it into.
-3. The **plain JavaScript object** that `createElement` returns — one node of the virtual DOM.
-
-React, ReactDOM and Babel are vendored locally, so nothing hits the network.
-
-**Thing to try:** open DevTools → Console with the playground loaded. You'll see a logged React element. Expand it. It's not a "React thing" — it's a plain object with a `type`, `props`, and `children`. Once you accept that, everything else clicks.
+1. **View Source.** Three script tags + one `<script type="text/babel">` block. That's the entire app.
+2. Click **Like**. The counter goes up. That's `useState`.
+3. Open DevTools → **Network**. Three requests from `unpkg.com` — `react.production.min.js`, `react-dom.production.min.js`, `@babel/standalone`. Physically, that's all React is.
+4. Open DevTools → **Elements**. The `<div id="root">` was empty in View Source; now it has the rendered card. The DOM is what React built; the source is what the server sent.
 
 ## Content
 
-### JSX is sugar for objects
+### A library, not a framework — the inversion-of-control test
 
-<p class="beat__lede">The browser never sees a single angle bracket of your JSX. Babel rewrites every tag into a function call before the code ever ships.</p>
+<p class="beat__lede">A clean one-line test that holds across languages: a library is something <em>you</em> call; a framework is something that calls <em>you</em>.</p>
 
-- `<Card name="Meghana Foods" />` becomes `React.createElement(Card, { name: "Meghana Foods" })`.
-- That function call doesn't touch the DOM. It returns a plain JavaScript object: `{ type: Card, props: { name: "Meghana Foods" }, children: [] }`.
-- A whole tree of those objects sitting in memory is what people call the **virtual DOM**. No pixels, no nodes — data. Cheap to build, cheap to throw away, cheap to compare.
+- **Library:** *your code is in charge.* You call `createRoot(...).render(<App />)` when you decide. The library shows up only when invited.
+- **Framework:** *the framework is in charge.* Angular instantiates your components on a lifecycle you don't own. Rails calls your controller when a request comes in. You hand the framework your pieces; it decides when to call them.
 
-<figure class="beat__visual">
-<div class="before-after">
-  <div class="before-after__panel">
-    <small>What you write — JSX</small>
-    <pre class="before-after__html">function Card({ name }) {
-  return (
-    &lt;div className="card"&gt;
-      &lt;h3&gt;{name}&lt;/h3&gt;
-      &lt;button&gt;Like&lt;/button&gt;
-    &lt;/div&gt;
-  );
-}</pre>
-  </div>
-  <div class="before-after__panel">
-    <small>What runs — function calls returning objects</small>
-    <pre class="before-after__html">function Card({ name }) {
-  return React.createElement(
-    "div", { className: "card" },
-    React.createElement("h3", null, name),
-    React.createElement("button", null, "Like")
-  );
-}
-// → { type: "div", props: { className: "card" },
-//     children: [
-//       { type: "h3", props: {}, children: ["Meghana"] },
-//       { type: "button", props: {}, children: ["Like"] }
-//     ] }</pre>
-  </div>
-</div>
-</figure>
-
-### Reconciliation is a diff
-
-<p class="beat__lede">When state changes, React calls your components again and gets a brand new tree of those objects. Then it walks the new and old trees together, asking at each node: same type? same props? same children?</p>
-
-- Wherever it finds a difference, it queues the smallest real-DOM update that would fix it: change this text node, add this attribute, remove that child.
-- Wherever the new and old nodes match, it does *nothing*. The corresponding real DOM node is untouched.
-- That walk is **reconciliation**. The output is the minimum set of DOM ops that turn the old screen into the new screen.
-
-<figure class="beat__visual">
-<div class="before-after">
-  <div class="before-after__panel">
-    <small>Old tree (before)</small>
-    <pre class="before-after__html">ul
-├ li · "Meghana Foods"
-├ li · "Pizza Hut"
-└ li · "Burger King"</pre>
-  </div>
-  <div class="before-after__panel">
-    <small>New tree (after one keystroke)</small>
-    <pre class="before-after__html">ul
-├ li · "Meghana Foods"      <span style="color: var(--muted-foreground)">same</span>
-├ li · "Pizza Express"      <span style="color: var(--primary)">text changed</span>
-└ li · "BK"                 <span style="color: var(--primary)">text changed</span></pre>
-  </div>
-</div>
-</figure>
-
-Reconciler output: **two** real-DOM ops — `node2.textContent = "Pizza Express"`, `node3.textContent = "BK"`. The `<ul>` and the first `<li>` are never touched.
-
-### Why this beats both alternatives
-
-<p class="beat__lede">There are three ways to keep the screen in sync with state. React is the only one that's both easy to write and easy to run.</p>
-
-- **Manual DOM (vanilla JS)** — fast per update, but expensive per feature. You write every mutation yourself, every time, and your job is to not forget any. Demo 5 showed what that costs.
-- **Re-render everything** — replace the whole DOM tree on every change. Easy to write, but the browser repaints everything every time. Layout, paint, scroll position, focus state — all destroyed.
-- **React** — re-render the *cheap* virtual tree on every change, diff it, and touch only the real DOM nodes that actually changed. You get the writing experience of the second option with the runtime cost of the first.
-
-| | Per-feature cost | Per-update cost |
+| In this class | What it ships | Library or framework? |
 |---|---|---|
-| Manual DOM | High — you write every mutation | Low |
-| Naive re-render | Low — describe the whole UI | Very high — full reflow every time |
-| React | Low — describe the whole UI | Low — diff finds the minimum |
+| **React** | Reconciler + renderer | Library — you call `createRoot().render()` |
+| **Vue (core)** | Reactivity + renderer | Library — you call `createApp().mount()` |
+| **Solid** | Signals + renderer | Library — you call `render()` |
+| **Svelte** | A compiler | Library — you import compiled components |
+| **Angular** | All of the above + routing + DI + forms + … | **Framework** — Angular owns the lifecycle |
+| **Next.js** | A wrapper around React | **Framework** — Next decides when your page runs |
 
-### Going deeper — where React sits in the rendering pipeline
+Two design philosophies in the same class. **Demo 6.6** is what happens when you put a framework wrapper around the library.
 
-<p class="beat__lede">React doesn't change what the browser does. It changes how much work reaches the browser in the first place.</p>
+### What these libraries deliberately don't ship
 
-- The render-tree → layout → paint stages from Demo 1 are still where the real cost lives.
-- Every DOM mutation React emits triggers some amount of that pipeline. *Avoiding* mutations is the same as avoiding pipeline work.
-- The diff happens entirely **in JS**, before the browser sees any change. By the time the browser is asked to do anything, the work is already minimised.
+<p class="beat__lede">The library owns one column — rendering. The rest is yours to pick. That's the source of every "which X should I use" decision in a React codebase.</p>
 
-<figure class="beat__visual">
-<render-pipeline highlight="render-tree,layout,paint" note="The diff (in JS) decides what reaches these stages. The fewer real-DOM ops React emits, the less work the browser has to redo."></render-pipeline>
-</figure>
+| Concern | What the library ships | What you pick |
+|---|---|---|
+| **Routing** | Nothing | React Router / TanStack Router / Next's router / Vue Router / SvelteKit's router |
+| **Build / bundler** | Nothing | Vite (default these days), webpack, Turbopack, esbuild |
+| **State management** | `useState` / a `ref` / a signal for one component | Zustand, Redux, Jotai, Pinia, TanStack Query — or "just lift it up" |
+| **Styling** | Nothing | CSS Modules, Tailwind, styled-components, vanilla CSS |
+| **Data fetching** | Nothing | `fetch`, axios, TanStack Query, SWR |
+| **Server rendering host** | An engine (`react-dom/server`, Vue's renderer-as-string) | Next, Remix, Astro, Nuxt, SvelteKit, your own Node process |
+| **Form handling** | Nothing | React Hook Form, Formik, plain state |
+
+This list is mostly the same whether you pick React, Vue, or Solid. The library says "I render; you compose." That **flexibility** is also what makes onboarding hard — every codebase has different answers to this table.
+
+### The `<script>`-tag proof
+
+<p class="beat__lede">"It's just a JavaScript file" is easy to say. Easier to see.</p>
+
+The iframe above is the whole React surface in 30 lines: two `<script>` tags, one component, `useState`, `createRoot`. No build step, no bundler, no `node_modules`. The library is a file the browser downloads.
+
+- **`react`** — the reconciler. Exports `useState`, `useEffect`, `createElement`. Knows nothing about the browser; it produces and diffs trees of element objects.
+- **`react-dom`** — the renderer. Exports `createRoot`. Takes React's tree of objects and turns them into actual DOM nodes (or updates existing ones).
+- **`@babel/standalone`** — *not part of React.* In this page it compiles JSX in-browser so we can skip the build step. In a real app, a bundler compiles JSX once at build time and Babel never ships.
+
+In a real codebase you'd reach for a bundler so you can `import`, use npm packages, tree-shake, and code-split — that's **Demo 6.7**. But the script-tag mode is a real pattern: embedding a React widget in a non-React page (a comments box on a blog, a calculator in a marketing site, an admin tool in an old PHP app). Two `<script>` tags, no pipeline.
+
+### The trade — and when to actually reach for one
+
+<p class="beat__lede">"The library owns rendering, you pick the rest" is a deliberate trade. Here's what you buy, what you pay, and when to take it.</p>
+
+**What you buy:**
+
+- **Composability.** Because the library doesn't bring its own everything, you can drop it into whatever stack already exists. A React widget inside a Rails app, a Vue island in a WordPress page, a Solid component in an Electron shell.
+- **Ecosystem flexibility.** Different teams pick different routers, state libraries, data layers — and the component model still works. That's why your last React job and your next one will look completely different above the component layer.
+- **Long shelf life.** When a routing library falls out of fashion, you swap it without touching your components.
+
+**What you pay:**
+
+- **Decision fatigue.** Every new app starts with a 10-line checklist of choices. Angular makes those for you and gets you to "first working app" faster.
+- **Setup work.** A new React app needs a bundler, a dev server, a router, an HMR setup. Each is fine on its own; together they're a stack you assemble.
+- **Runtime cost.** ~45 KB of React + ReactDOM before your first line. Vue and Solid are smaller; Svelte often zero (it compiles). Worth it when the app is more than a button; not when the page is mostly static.
+
+**When you take it:**
+
+- **Vanilla** (or htmx, Alpine, 50 lines of your own) — page is mostly static, team is one person, you're learning the platform.
+- **A library in this class** — state has more than a handful of pieces, components need to stay in sync, team is larger than one, app is going to grow.
+- **A framework on top** (Next / Nuxt / SvelteKit) — you also need routing, server rendering, deployment, and an opinion about every row in the table above. **That's Part 3.**
+
+Choose the simpler stack until it's about to run out, then upgrade. Most apps don't need a framework; many don't need a library at all.
 
 ## Takeaways
 
-- **JSX is a function call in disguise.** Once you've seen `React.createElement` next to its JSX twin, the angle brackets stop feeling magical.
-- **A React element is just an object** with `type`, `props`, and `children`. The virtual DOM is a tree of those objects in memory.
-- **Re-running your component is cheap.** It builds new objects, not new DOM nodes — that's why "render on every keystroke" doesn't kill performance.
-- **Reconciliation is a diff.** React compares the new tree to the old one and emits the smallest set of real-DOM updates that close the gap.
-- **The real DOM is the expensive part — and React gatekeeps it.** That's the whole performance story.
-- **You write descriptions; React writes the steps.** Demo 5 showed why that's a better way to think; Demo 6 shows how React pulls it off.
+- **A library: you call it. A framework: it calls you.** React, Vue (core), Solid, Svelte pass the library test. Angular, Next.js don't.
+- **The library owns rendering. Everything else, you pick.** Routing, build, state, styling, data — separate decisions. True of every library in this class.
+- **The proof is one HTML file.** Two `<script>` tags, no build step. Same library as the big production apps.
+- **Composability is the payoff; decision fatigue is the cost.** Frameworks trade the flexibility for fewer decisions. **Part 3** is what that trade looks like.

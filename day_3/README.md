@@ -16,11 +16,10 @@ stays on the course spine — the Swiggy restaurant card from Day 1.
 
 ### Part 2 — Why do we need React (or other libraries)?
 
-- **[Demo 4 — The DOM is expensive](demo_4/README.md)** — layout thrash vs batched updates.
-- **[Demo 5 — Imperative tangles](demo_5/README.md)** — vanilla Swiggy search/filter that stays clean until features pile on.
-- **[Demo 6 — What React solves for](demo_6/README.md)** — JSX, vDOM, reconciliation.
-- **[Demo 6.3 — React is a library](demo_6_3/README.md)** — two script tags from unpkg, one component, `useState`, no build.
-- **[Verbal — Other libraries and frameworks](verbal-segments.md)** — Vue, Svelte, Solid, Angular, what each solves differently.
+- **[Demo 4 — Pure JS hits a wall](demo_4/README.md)** — three pains vanilla leaves you: state↔UI drift, no composition vocabulary, the DOM punishes hot loops.
+- **[Demo 5 — The shape of every library that fixes this](demo_5/README.md)** — describe state → UI, the library does the sync. React, Vue, Svelte, Solid all fit the same contract.
+- **[Demo 6 — How the pieces actually plug in](demo_6/README.md)** — library vs framework, what these libraries deliberately don't ship, the `<script>`-tag proof, the trade.
+- **[Verbal — Other libraries and frameworks](verbal-segments.md)** — Vue, Svelte, Solid, Angular, htmx — one distinctive choice each.
 
 ### Part 3 — Single-Page Apps
 

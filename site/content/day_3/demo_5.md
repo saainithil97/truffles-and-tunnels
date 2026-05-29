@@ -1,108 +1,179 @@
-# Demo 5 — This is why React exists
+# "The shape of every library that fixes this"
 
-You've probably heard "React makes UIs easier" and quietly wondered, _easier than what?_ This demo answers that question with a real, growing feature: a Swiggy restaurant search. You'll build it once in vanilla JavaScript, watch a PM bolt on four small extras, see the code turn into a tangle, and then rebuild the exact same thing in React. By the end the difference won't be a slogan — it'll be something you _felt_.
+There's a class of library that answers Demo 4's three problems. React is the most common — but Vue, Svelte, and Solid sit in the same class, solving the same problems with different mechanisms. What you should walk out with isn't *"React has JSX and a virtual DOM."* It's the shape these libraries all share, so the next one you meet doesn't feel like a new language.
 
 ## Setup
 
-On the left of this page there's an iframe with three tabs:
+The iframe above is `react.html` — the cart from Demo 4, in ~30 lines of React. Vanilla-full was 17 DOM writes per click; this is **~3**. The behaviour is identical to the user.
 
-- **Vanilla simple** — the clean starting point. Around 25 lines.
-- **Vanilla full** — the same page after the PM piles on four features.
-- **React** — the same four features, declarative, in React.
+1. Click **Add to cart** then `+` a couple of times. Watch the **DOM writes — last click** counter at the top. Same `MutationObserver`, same accounting as Demo 4. Vanilla-full: ~17. React: ~3.
+2. Open `react.html` in your editor. There's no `renderAll()`. There's no `querySelector(".qty")`. There's one `useState`, one `DishCard` component, and JSX that reads as "given the cart, the screen looks like this."
+3. There's a `jsx-vs-compiled.html` playground in `day_3/demo_6/` if you want to step through how JSX becomes a function call becomes a plain object. We use the diagram from it below.
 
-React, ReactDOM and Babel are vendored locally inside the demo folder, so nothing reaches out to the internet — open the tabs and they just work.
+## Content
 
-**Thing to try first:** open _Vanilla simple_, type "pizza", watch the list filter. Then switch to _Vanilla full_ and try the same thing. Same UX from the user's perspective, right? Now flip both source files open side by side. That gap — same behaviour, wildly different code — is the whole point.
+### Describe the UI as a function of state
 
-## Concepts
+<p class="beat__lede">You write the <em>result</em>, not the steps. The same component, three libraries — React, Vue, Svelte.</p>
 
-### Imperative vs declarative
+The same `DishCard`, three ways. The differences are spelling. The shape is identical: declare props, declare what the UI looks like for those props, emit events upward.
 
-Imperative code is a list of _steps_: find this node, change that class, append these children, hide this div. You're the one driving the DOM. Declarative code is a _description_: "here's what the screen should look like right now." Something else figures out the steps. Vanilla JS pushes you toward imperative. React pushes you toward declarative.
-
-### State is the source of truth
-
-In the React version, the whole UI boils down to three variables: `query`, `loading`, `results`. If you can describe the screen as a pure function of those three, you've already won — every render is just "what does the page look like for _these_ values?" In the vanilla version there is no single source of truth; the truth is scattered across the DOM, a debounce timer, `localStorage`, and a few `classList` toggles.
-
-### How vanilla rots as features grow
-
-The simple vanilla page is genuinely fine. The trouble starts when features _interact_. The spinner has to know about the message. The message has to know about the highlight. The highlight has to know about HTML-escaping. The `localStorage` restore has to know to re-run the search. Each new feature multiplies the number of pairs that have to stay in sync, and you're tracking every pair in your head.
-
-### Render as a function of state
-
-React flips the model. You don't say "hide the spinner when results arrive." You say "render the spinner when `loading` is true." When `loading` flips to false, the spinner is just _not in the description anymore_, and React removes it. You stop writing transitions; you write _snapshots_, and React handles getting from one snapshot to the next.
-
-### React isn't always less code
-
-Count the lines — they're in the same ballpark. The win isn't fewer characters. It's that the vanilla version's complexity grew _exponentially_ with features (every pair of features had to be reconciled by hand), while the React version grew _linearly_ (one new state + one new line of description per feature). That trade is the reason a whole industry moved.
-
-## Diagrams
-
-### How an update happens
-
-```mermaid
-flowchart LR
-  subgraph Vanilla["Vanilla / Imperative"]
-    A1[User types] --> A2[Find DOM nodes]
-    A2 --> A3[Mutate classes / text]
-    A3 --> A4[Toggle spinner]
-    A4 --> A5[Update message]
-    A5 --> A6[Sync localStorage]
-  end
-  subgraph React["React / Declarative"]
-    B1[User types] --> B2[setQuery]
-    B2 --> B3[Render returns new UI]
-    B3 --> B4[React figures out DOM changes]
-  end
+```jsx
+// React
+function DishCard({ name, qty, onAdd }) {
+  return (
+    <div className="card">
+      <h3>{name}</h3>
+      <button onClick={onAdd}>Add ({qty})</button>
+    </div>
+  );
+}
 ```
 
-### Code growth as features pile on
+```vue
+<!-- Vue -->
+<script setup>
+defineProps(['name', 'qty']);
+const emit = defineEmits(['add']);
+</script>
+<template>
+  <div class="card">
+    <h3>{{ name }}</h3>
+    <button @click="emit('add')">Add ({{ qty }})</button>
+  </div>
+</template>
+```
 
-<svg width="600" height="220" xmlns="http://www.w3.org/2000/svg" style="font-family: ui-sans-serif; font-size: 12px;">
-  <rect width="600" height="220" fill="#f5f5f5"/>
-  <text x="20" y="24" fill="#404040" font-weight="600">Lines of code as features grow (1 → 5)</text>
+```svelte
+<!-- Svelte -->
+<script>
+  export let name;
+  export let qty;
+</script>
+<div class="card">
+  <h3>{name}</h3>
+  <button on:click>Add ({qty})</button>
+</div>
+```
 
-  <line x1="40" y1="190" x2="580" y2="190" stroke="#a3a3a3"/>
-  <line x1="40" y1="50" x2="40" y2="190" stroke="#a3a3a3"/>
+Each is "a function from props to UI." JSX with curly-brace expressions, a `<template>` block with `{{ … }}`, a `.svelte` file with `{ … }`. None of them is `renderAll`. None mentions a DOM node. You describe what the screen looks like for a given state; whose job is it to make the real DOM agree? The library's.
 
-  <!-- Vanilla curve: explodes -->
-  <polyline points="60,180 160,170 260,150 360,110 460,70 560,55"
-    fill="none" stroke="#fc8019" stroke-width="3"/>
-  <text x="470" y="50" fill="#fc8019" font-weight="600">Vanilla</text>
+### The library figures out what to change
 
-  <!-- React curve: linear-ish -->
-  <polyline points="60,170 160,160 260,150 360,140 460,130 560,120"
-    fill="none" stroke="#404040" stroke-width="3" stroke-dasharray="6 4"/>
-  <text x="470" y="115" fill="#404040" font-weight="600">React</text>
+<p class="beat__lede">You hand it the new description. It figures out the diff against what's on screen. Three different mechanisms, same destination — minimum real-DOM work.</p>
 
-  <text x="40" y="210" fill="#a3a3a3">1 feature</text>
-  <text x="510" y="210" fill="#a3a3a3">5 features</text>
-</svg>
+| Mechanism | Used by | When the work happens | What runs at runtime |
+|---|---|---|---|
+| **Diff a virtual tree** | React, Vue (template) | Runtime | Re-run your component → get a new tree of plain objects → compare to last → emit minimum DOM ops |
+| **Compile to imperative ops** | Svelte | Build time | Compiler reads your `.svelte`, generates per-component code that *already knows* which DOM nodes to update for which state change. No diff at runtime. |
+| **Fine-grained signals** | Solid, Vue 3 internals | Runtime, surgically | Each piece of UI subscribes to exactly the state it reads. State changes → only those subscribers re-run → updates fire without diffing |
 
-### Places that touch the DOM
+All three end at the same place: when the cart goes from 1 → 2, the only thing the browser sees is `node.textContent = "2"`. The path through your library differs; the *contract* — minimum work for the visible change — is the same.
 
-<svg width="600" height="140" xmlns="font-family: ui-sans-serif;" style="font-family: ui-sans-serif; font-size: 12px;">
-  <rect width="600" height="140" fill="#f5f5f5"/>
-  <text x="20" y="24" fill="#404040" font-weight="600">Spots in your code that mutate the DOM directly</text>
+Look at the React path concretely. JSX compiles to function calls; function calls return plain objects; objects are the cheap "virtual tree":
 
-  <text x="20" y="60" fill="#404040">Vanilla simple</text>
-  <rect x="180" y="48" width="40" height="16" fill="#fc8019"/>
-  <text x="230" y="60" fill="#a3a3a3">~2</text>
+<figure class="beat__visual">
+<div class="before-after">
+  <div class="before-after__panel">
+    <small>What you write — JSX</small>
+    <pre class="before-after__html">&lt;h3&gt;{name}&lt;/h3&gt;</pre>
+  </div>
+  <div class="before-after__panel">
+    <small>What runs — function call returning an object</small>
+    <pre class="before-after__html">React.createElement("h3", null, name)
+// → { type: "h3", props: {}, children: [name] }</pre>
+  </div>
+</div>
+</figure>
 
-  <text x="20" y="90" fill="#404040">Vanilla full</text>
-  <rect x="180" y="78" width="320" height="16" fill="#fc8019"/>
-  <text x="510" y="90" fill="#a3a3a3">~16</text>
+State changes, your function runs again, you get a new object tree. The library walks the old and new trees together:
 
-  <text x="20" y="120" fill="#404040">React</text>
-  <rect x="180" y="108" width="20" height="16" fill="#fc8019"/>
-  <text x="210" y="120" fill="#a3a3a3">1 (ReactDOM.render)</text>
-</svg>
+<figure class="beat__visual">
+<div class="before-after">
+  <div class="before-after__panel">
+    <small>Old tree</small>
+    <pre class="before-after__html">card
+├ h3 · "Meghana Foods"
+└ button · "Add (1)"</pre>
+  </div>
+  <div class="before-after__panel">
+    <small>New tree (one click)</small>
+    <pre class="before-after__html">card
+├ h3 · "Meghana Foods"      <span style="color: var(--muted-foreground)">same</span>
+└ button · "Add (2)"        <span style="color: var(--primary)">text changed</span></pre>
+  </div>
+</div>
+</figure>
+
+Reconciler output: one real-DOM op — `button.textContent = "Add (2)"`. The `<h3>` is never touched.
+
+Svelte gets to the same one op a different way: at build time it noticed only `qty` changes that text, and emitted `node.textContent = qty` as a wired-up update function. No runtime diff because the compiler already did the comparison.
+
+Solid skips both — `qty` is a signal, the text subscribes to it, the assignment fires directly when the signal updates.
+
+The mental model is the *contract*: describe state → UI, get minimum work. Pick a library, pick its mechanism — but recognise the shape, and the next library stops feeling foreign.
+
+### Components are the composition unit
+
+<p class="beat__lede">Every library in this class agrees: a chunk of UI with inputs is the unit you reuse.</p>
+
+The vanilla card from Demo 4 was copy-pasted three times because vanilla had no standard place for "this is what a card looks like, here are its inputs." Every library in this class answers the same question the same shape:
+
+- A **name** (`DishCard`)
+- **Props** (the inputs: `name`, `qty`)
+- **Output** (the UI for those inputs)
+- **Events** (clicks that propagate up)
+
+React calls the unit a function component, Vue calls it a single-file component, Svelte calls it a `.svelte` file, Solid calls it a function. Vocabulary differs; shape is shared. Read one, you can read the others. That standardised shape is what lets React Router exist, lets Vue's ecosystem exist, lets a UI-kit library ship one set of components every consuming codebase can drop in. **The component contract is the ecosystem.**
+
+### React, in code
+
+<p class="beat__lede">Demo 4's vanilla-full cart, rewritten in React. Same five UI surfaces. One state object. Three derived values. The whole UI is a function of those.</p>
+
+```jsx
+const DISHES = [
+  { id: "meghana", name: "Meghana Foods",     price: 325 },
+  { id: "truffles", name: "Truffles",         price: 280 },
+  { id: "glens",    name: "Glen's Bakehouse", price: 220 },
+];
+
+function App() {
+  const [cart, setCart] = useState({ meghana: 0, truffles: 0, glens: 0 });
+
+  const totalQty = DISHES.reduce((s, d) => s + cart[d.id], 0);
+  const subtotal = DISHES.reduce((s, d) => s + cart[d.id] * d.price, 0);
+  const unlocked = subtotal >= 499;
+
+  const setQty = (id, q) => setCart({ ...cart, [id]: Math.max(0, q) });
+
+  return (
+    <>
+      <Topbar count={totalQty} />
+      {DISHES.map(d =>
+        <DishCard
+          key={d.id} dish={d} qty={cart[d.id]}
+          onChange={q => setQty(d.id, q)}
+        />
+      )}
+      <Banner unlocked={unlocked} />
+      <Subtotal value={subtotal} />
+    </>
+  );
+}
+```
+
+What changed from vanilla:
+
+- **`renderAll()` is gone.** You don't write the sync; the library does. You wrote the description.
+- **The five surfaces are four components.** Topbar, DishCard ×3, Banner, Subtotal — each a function from props to UI. Add a sixth surface ("recently viewed" strip) and it joins the JSX; it doesn't add a line to any existing function.
+- **One state object.** Three derived values flow from `cart`. Drift between cart and screen is *structurally* impossible — the screen is computed from the cart on every render.
+- **17 → 3 DOM writes per click.** The library diffed and emitted only what changed: the qty, the badge, the subtotal.
+
+This is the worked example. The general model is the previous three beats — every library in this class fits the same shape.
 
 ## Takeaways
 
-- **Imperative code lists DOM steps; declarative code describes the UI.** You'll feel this every time you remember to hide something — or forget.
-- **State is the source of truth.** If you can't name the variables that drive your UI, you're going to spend your week chasing bugs where the screen disagrees with itself.
-- **Complexity, not character count, is the real cost.** Vanilla doesn't lose on line count; it loses because every new feature has to coordinate with every old one.
-- **React doesn't make _small_ things faster — it makes _growing_ things survivable.** The 25-line vanilla page is fine. The 150-line one is where you'd want React.
-- **Read the React file like a description, not a script.** "When `loading`, render `<Spinner/>`." Not "show the spinner now and hide it later."
-- **One change in mindset unlocks the rest of the week:** stop thinking in DOM mutations, start thinking in state.
+- **Describe state → UI, not steps.** Every library in this class makes you write the result; they handle the sync. React, Vue, Svelte, Solid — same contract, different syntax.
+- **Three mechanisms, one destination.** Virtual-tree diff (React, Vue), compiled imperative updates (Svelte), fine-grained signals (Solid) — all end at minimum real-DOM work.
+- **Components are the universal composition unit.** A name, props, output, events. Read one library's components, you can read the rest.
+- **React is the worked example.** ~30 lines for Demo 4's cart, 17 → 3 writes. The model isn't React-specific; React is the most common implementation of it.

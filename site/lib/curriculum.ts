@@ -196,18 +196,54 @@ export const day3Demos: Demo[] = [
     ],
   },
   {
-    id: "demo_7_8_nextjs",
-    slug: "demo_7_8_nextjs",
-    shortTitle: "Demos 7 / 8 / 8.5 — SSG, SSR, CSR + hydration + routing",
-    title: "Demos 7 / 8 / 8.5 — Rendering strategies, hydration & routing",
+    id: "demo_7",
+    slug: "demo_7",
+    shortTitle: "Demo 7 — SSG, SSR, CSR",
+    title: 'Demo 7 — "Same page, three rendering strategies"',
     summary:
-      "Same Swiggy page, three rendering strategies (SSG vs SSR vs CSR), plus server-vs-client components and instant client-side routing. One real Next.js app — the homework stack.",
-    readmeSourcePath: "day_3/demo_7_8_nextjs/README.md",
-    contentFile: "day_3/demo_7_8_nextjs.md",
+      "The same Swiggy grid, served three ways: SSG (built at build time), SSR (built per request), CSR (built in the browser). View Source on each tells the whole story.",
+    readmeSourcePath: "day_3/demo_7_8_nextjs/demo_7.md",
+    contentFile: "day_3/demo_7.md",
     kind: "nextjs-separate",
     iframeUrlEnvVar: "NEXT_PUBLIC_DEMO_7_URL",
+    iframePathSuffix: "/ssg",
+    iframeEntries: [
+      { label: "SSG", path: "/ssg" },
+      { label: "SSR", path: "/ssr" },
+      { label: "CSR", path: "/csr" },
+    ],
     iframeNote:
-      "Right-click → View Source on each of /ssg, /ssr, /csr to see what the server actually sent. The frozen-SSG reveal needs the production build, not next dev.",
+      "Right-click → View Source on each route. Iframes hide View Source — click the ↗ button to pop the demo into its own tab first.",
+  },
+  {
+    id: "demo_8",
+    slug: "demo_8",
+    shortTitle: "Demo 8 — Server vs client components",
+    title: 'Demo 8 — "The boundary, not the switch"',
+    summary:
+      "A server-rendered grid with a client-rendered search box. Badges in the live demo mark which component is which. Slow 3G makes the hydration gap visible.",
+    readmeSourcePath: "day_3/demo_7_8_nextjs/demo_8.md",
+    contentFile: "day_3/demo_8.md",
+    kind: "nextjs-separate",
+    iframeUrlEnvVar: "NEXT_PUBLIC_DEMO_7_URL",
+    iframePathSuffix: "/hybrid",
+    iframeNote:
+      "Throttle to Slow 3G, hard-refresh, and try typing into the search box. The hydration gap is the dead window between paint and interactivity.",
+  },
+  {
+    id: "demo_8_5",
+    slug: "demo_8_5",
+    shortTitle: "Demo 8.5 — Client-side routing",
+    title: 'Demo 8.5 — "The URL changes, the page doesn\'t reload"',
+    summary:
+      "Click a restaurant card — URL updates, no full reload. Copy the URL to a fresh tab — still loads as a real page. Demo 6.5's SPA pattern with the SPA's downsides removed.",
+    readmeSourcePath: "day_3/demo_7_8_nextjs/demo_8_5.md",
+    contentFile: "day_3/demo_8_5.md",
+    kind: "nextjs-separate",
+    iframeUrlEnvVar: "NEXT_PUBLIC_DEMO_7_URL",
+    iframePathSuffix: "/restaurants",
+    iframeNote:
+      "Watch the Network tab while you click cards — RSC payloads instead of full HTML documents. Then copy a /restaurants/[id] URL into a fresh tab.",
   },
   {
     id: "demo_9",
@@ -287,8 +323,16 @@ export const day3Parts: DayPart[] = [
     demoSlugs: ["demo_6", "demo_6_5", "verbal-segments"],
   },
   {
-    heading: "Parts 4–5 — Rendering strategies, hydration, routing",
-    demoSlugs: ["demo_7_8_nextjs"],
+    heading: "Part 4 — Rendering strategies",
+    demoSlugs: ["demo_7"],
+  },
+  {
+    heading: "Part 5 — Hydration & component boundaries",
+    demoSlugs: ["demo_8"],
+  },
+  {
+    heading: "Part 5.5 — Client-side routing",
+    demoSlugs: ["demo_8_5"],
   },
   {
     heading: "Part 6 — Security, performance, and the platform",

@@ -128,25 +128,6 @@ export const day3Demos: Demo[] = [
     ],
   },
   {
-    id: "demo_2_75",
-    slug: "demo_2_75",
-    shortTitle: "Demo 2.75 — One thread, one mood",
-    title: 'Demo 2.75 — "One thread, one mood"',
-    summary:
-      "The event loop in four buttons. setTimeout(0) doesn't mean now, Promises jump the queue, rAF skips when the main thread is blocked. The scheduling model Demo 4 is about to violate at 36,000 layouts/sec.",
-    readmeSourcePath: "day_3/demo_2_75/README.md",
-    contentFile: "day_3/demo_2_75.md",
-    kind: "embedded",
-    iframePath: "/live-demos/demo_2_75/index.html",
-    iframeNote:
-      "Press a scenario button and read the event log. Watch the canary spinner and clock in the topbar freeze while the main thread is hogged.",
-    sourceFiles: [
-      { name: "index.html", language: "html" },
-      { name: "style.css", language: "css" },
-      { name: "app.js", language: "javascript" },
-    ],
-  },
-  {
     id: "demo_3",
     slug: "demo_3",
     shortTitle: "Demo 3 — Render blocking",
@@ -199,7 +180,7 @@ export const day3Demos: Demo[] = [
     shortTitle: "Demo 5 — Why React exists",
     title: 'Demo 5 — "This is why React exists"',
     summary:
-      "A clean vanilla-JS search/filter that tangles as features pile on. Then the same thing in React: state changes, the UI follows.",
+      "A tiny Swiggy cart, built three ways. One dish in vanilla — fine. Three dishes plus a topbar badge plus a subtotal plus a free-delivery banner in vanilla — a tangle. The same thing in React, with one cart state and a DishCard component used three times.",
     readmeSourcePath: "day_3/demo_5/README.md",
     contentFile: "day_3/demo_5.md",
     kind: "embedded",
@@ -230,19 +211,6 @@ export const day3Demos: Demo[] = [
     iframePath: "/live-demos/demo_6/jsx-vs-compiled.html",
     iframeNote:
       "Edit the JSX on the left; watch the compiled createElement and the resulting tree update on the right.",
-  },
-  {
-    id: "demo_6_2",
-    slug: "demo_6_2",
-    shortTitle: "Demo 6.2 — Why React is a library",
-    title: 'Demo 6.2 — "Library, not framework"',
-    summary:
-      "React is a library. It does one thing — keep your DOM in sync with state — and deliberately omits everything else. That design constraint is why Next.js exists, why your homework picks its own router, and why every React job looks different above the component layer.",
-    readmeSourcePath: "day_3/demo_6_2/README.md",
-    contentFile: "day_3/demo_6_2.md",
-    kind: "runbook-only",
-    runbookHint:
-      "No iframe — this is a 5-minute framing read between Demo 6 and Demo 6.3. The runbook on the right is the reading itself.",
   },
   {
     id: "demo_6_3",
@@ -319,19 +287,6 @@ export const day3Demos: Demo[] = [
     ],
   },
   {
-    id: "demo_6_8",
-    slug: "demo_6_8",
-    shortTitle: "Demo 6.8 — How Next works with React",
-    title: 'Demo 6.8 — "Next is a host; React is the engine"',
-    summary:
-      "The layered model: Next.js → React DOM → React. Where each layer runs (build, server, browser), what 'use client' really means at the boundary, and why every React skill still applies inside Next. The map you'll use through Demos 7, 8, and 8.5.",
-    readmeSourcePath: "day_3/demo_6_8/README.md",
-    contentFile: "day_3/demo_6_8.md",
-    kind: "runbook-only",
-    runbookHint:
-      "No iframe — this is a 5-minute reading between Demo 6.7 and Demo 7. The layered diagram in the runbook is the whole picture.",
-  },
-  {
     id: "demo_7",
     slug: "demo_7",
     shortTitle: "Demo 7 — SSG, SSR, CSR",
@@ -365,21 +320,6 @@ export const day3Demos: Demo[] = [
     iframePathSuffix: "/hybrid",
     iframeNote:
       "Throttle to Slow 3G, hard-refresh, and try typing into the search box. The hydration gap is the dead window between paint and interactivity.",
-  },
-  {
-    id: "demo_8_5",
-    slug: "demo_8_5",
-    shortTitle: "Demo 8.5 — Client-side routing",
-    title: 'Demo 8.5 — "The URL changes, the page doesn\'t reload"',
-    summary:
-      "Click a restaurant card — URL updates, no full reload. Copy the URL to a fresh tab — still loads as a real page. Demo 6.5's SPA pattern with the SPA's downsides removed.",
-    readmeSourcePath: "day_3/demo_7_8_nextjs/demo_8_5.md",
-    contentFile: "day_3/demo_8_5.md",
-    kind: "nextjs-separate",
-    iframeUrlEnvVar: "NEXT_PUBLIC_DEMO_7_URL",
-    iframePathSuffix: "/restaurants",
-    iframeNote:
-      "Watch the Network tab while you click cards — RSC payloads instead of full HTML documents. Then copy a /restaurants/[id] URL into a fresh tab.",
   },
   {
     id: "demo_9",
@@ -448,38 +388,23 @@ export const verbalSegments: Demo = {
 export const day3Parts: DayPart[] = [
   {
     heading: "Part 1 — The browser as a platform",
-    demoSlugs: ["demo_1", "demo_2", "demo_2_5", "demo_2_75", "demo_3"],
+    demoSlugs: ["demo_1", "demo_2", "demo_3", "demo_2_5", "verbal-segments"],
   },
   {
-    heading: "Part 2 — Why frameworks exist",
-    demoSlugs: ["demo_4", "demo_5"],
+    heading: "Part 2 — Why do we need React (or other libraries)?",
+    demoSlugs: ["demo_4", "demo_5", "demo_6", "demo_6_3", "verbal-segments"],
   },
   {
-    heading: "Part 3 — React and the modern frontend",
-    demoSlugs: [
-      "demo_6", "demo_6_2", "demo_6_3", "demo_6_5",
-      "demo_6_6", "demo_6_7", "demo_6_8", "verbal-segments",
-    ],
+    heading: "Part 3 — Single-Page Apps",
+    demoSlugs: ["demo_6_5", "demo_6_7", "demo_6_6"],
   },
   {
     heading: "Part 4 — Rendering strategies",
-    demoSlugs: ["demo_7"],
+    demoSlugs: ["demo_7", "demo_8"],
   },
   {
-    heading: "Part 5 — Hydration & component boundaries",
-    demoSlugs: ["demo_8"],
-  },
-  {
-    heading: "Part 5.5 — Client-side routing",
-    demoSlugs: ["demo_8_5"],
-  },
-  {
-    heading: "Part 6 — Security, performance, and the platform",
-    demoSlugs: ["demo_9", "demo_10"],
-  },
-  {
-    heading: "Wrap — Frontend at scale",
-    demoSlugs: ["wrap"],
+    heading: "Part 5 — Perf, security, and the real world",
+    demoSlugs: ["demo_9", "demo_10", "wrap"],
   },
 ];
 

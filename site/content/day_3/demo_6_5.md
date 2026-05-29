@@ -40,6 +40,17 @@ That's the entire mechanism. Three browser APIs — `addEventListener('click')`,
 | **Feels fast?** | Slow on bad networks (full re-download) | Instant after first load |
 | **Cost of the first load** | Cheap (one small page) | Bigger (ship the whole app) |
 
+### How React helps you build this
+
+<p class="beat__lede">The 90 lines of <code>app.js</code> you just read do two painful things by hand: swap DOM on state changes, and re-attach event handlers after every swap. Skip those, and the SPA becomes ~30 lines of React.</p>
+
+- **State → UI is automatic.** `app.js` rebuilds `<main>`'s `innerHTML` on every nav. React would let you write `<View route={currentRoute} />` and diff — only the parts that actually changed touch the DOM. Same reconciler from Demo 6, doing the manual work you wrote out by hand here.
+- **Components instead of template strings.** Each view in `app.js` is a function returning an HTML string. In React, each view is a component: typed props, composition, reuse.
+- **Event handlers come along for free.** Every `innerHTML` swap in `app.js` blows away listeners; you have to re-attach with event delegation. In React, JSX handlers (`onClick={...}`) travel with the markup; React wires them after every render.
+- **Routing is a library, not hand-rolled.** React Router, TanStack Router, etc. wrap `pushState` + `popstate` in a component API: `<Link>` (intercepts clicks), `<Route>` (renders for a path), `<Outlet>` (where the child route goes). Same browser APIs underneath; much nicer ergonomics.
+
+That's React's contribution to "SPAs are tolerable to build" — DOM updates, event re-binding, route → view mapping all become declarative. The browser APIs underneath haven't changed; React just gives you a saner way to express them. And once you reach for React + a router, the next obvious move is reaching for *one framework* that ships them together. That's Next.js (Demo 6.6).
+
 ### The dead end — and why we're about to revisit it
 
 <p class="beat__lede">An SPA's "first load is empty" problem is real. Google sees nothing. Slow phones see a blank screen while JS boots. Share a link, the preview is empty.</p>

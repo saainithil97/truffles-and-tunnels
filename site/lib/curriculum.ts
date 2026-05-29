@@ -29,6 +29,11 @@ export type Demo = {
 
   // For runbook-only: a short "what you do here" hint shown in place of the iframe.
   runbookHint?: string;
+
+  // Source files to surface as a "Source" section at the bottom of the deck.
+  // Files are staged into site/content/day_3/<id>/code/ by copy-content.mjs.
+  // `language` is the fence info string used by rehype-highlight.
+  sourceFiles?: { name: string; language: string }[];
 };
 
 export type DayPart = {
@@ -61,6 +66,12 @@ export const day3Demos: Demo[] = [
     iframePath: "/live-demos/demo_1/index.html",
     iframeNote:
       "Open DevTools → Network, then click reload inside the frame (Cmd-R won't refresh the iframe).",
+    sourceFiles: [
+      { name: "index.html", language: "html" },
+      { name: "style.css", language: "css" },
+      { name: "app.js", language: "javascript" },
+      { name: "server.py", language: "python" },
+    ],
   },
   {
     id: "demo_2",
@@ -157,6 +168,29 @@ export const day3Demos: Demo[] = [
       "Edit the JSX on the left; watch the compiled createElement and the resulting tree update on the right.",
   },
   {
+    id: "demo_6_5",
+    slug: "demo_6_5",
+    shortTitle: "Demo 6.5 — What's an SPA?",
+    title: 'Demo 6.5 — "The page that never reloads"',
+    summary:
+      "Same Swiggy app, two patterns. MPA: every click is a full reload. SPA: one HTML shell + a tiny JS router. View Source on the SPA is nearly empty. The thing every rendering strategy in the next section is an answer to.",
+    readmeSourcePath: "day_3/demo_6_5/README.md",
+    contentFile: "day_3/demo_6_5.md",
+    kind: "embedded",
+    iframePath: "/live-demos/demo_6_5/index-mpa.html",
+    iframeEntries: [
+      { label: "MPA (full reload)", path: "/live-demos/demo_6_5/index-mpa.html" },
+      { label: "SPA (no reload)", path: "/live-demos/demo_6_5/index-spa.html" },
+    ],
+    iframeNote:
+      "Open DevTools → Network. On MPA every click adds a request; on SPA the tab stays silent after the first load.",
+    sourceFiles: [
+      { name: "index-spa.html", language: "html" },
+      { name: "app.js", language: "javascript" },
+      { name: "style.css", language: "css" },
+    ],
+  },
+  {
     id: "demo_7_8_nextjs",
     slug: "demo_7_8_nextjs",
     shortTitle: "Demos 7 / 8 / 8.5 — SSG, SSR, CSR + hydration + routing",
@@ -197,6 +231,25 @@ export const day3Demos: Demo[] = [
     iframeNote:
       "Try posting a review with <img src=x onerror=alert(1)>. It runs on the UNSAFE side, prints as text on the SAFE side. Open the console for the CORS error.",
   },
+  {
+    id: "wrap",
+    slug: "wrap",
+    shortTitle: "Day 3 wrap — Frontend at scale",
+    title: 'Day 3 wrap — "Frontend at scale, what we couldn\'t fit"',
+    summary:
+      "A live audit of swiggy.com in DevTools plus three production patterns we didn't have room for as full demos: skeleton screens, optimistic updates, and error boundaries.",
+    readmeSourcePath: "day_3/wrap/README.md",
+    contentFile: "day_3/wrap.md",
+    kind: "embedded",
+    iframePath: "/live-demos/wrap/skeletons.html",
+    iframeEntries: [
+      { label: "Skeletons", path: "/live-demos/wrap/skeletons.html" },
+      { label: "Optimistic", path: "/live-demos/wrap/optimistic.html" },
+      { label: "Error boundary", path: "/live-demos/wrap/boundary.html" },
+    ],
+    iframeNote:
+      "Three mini-demos in tabs. For the Swiggy audit itself, open swiggy.com in a separate tab and follow the cheat sheet on the right.",
+  },
 ];
 
 // Verbal segments page is treated like a demo for routing purposes.
@@ -226,7 +279,7 @@ export const day3Parts: DayPart[] = [
   },
   {
     heading: "Part 3 — React and the modern frontend",
-    demoSlugs: ["demo_6", "verbal-segments"],
+    demoSlugs: ["demo_6", "demo_6_5", "verbal-segments"],
   },
   {
     heading: "Parts 4–5 — Rendering strategies, hydration, routing",
@@ -235,6 +288,10 @@ export const day3Parts: DayPart[] = [
   {
     heading: "Part 6 — Security, performance, and the platform",
     demoSlugs: ["demo_9", "demo_10"],
+  },
+  {
+    heading: "Wrap — Frontend at scale",
+    demoSlugs: ["wrap"],
   },
 ];
 

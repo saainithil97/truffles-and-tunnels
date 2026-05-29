@@ -97,6 +97,11 @@ async function main() {
       { name: "app.js", language: "javascript" },
       { name: "server.py", language: "python" },
     ],
+    demo_6_5: [
+      { name: "index-spa.html", language: "html" },
+      { name: "app.js", language: "javascript" },
+      { name: "style.css", language: "css" },
+    ],
   };
   for (const [id, files] of Object.entries(demoSourceFiles)) {
     const src = path.join(day3Src, id);

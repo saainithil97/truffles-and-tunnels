@@ -15,7 +15,9 @@ The iframe is a static viewer. Read top to bottom:
 
 Stay in the iframe for the numbers; come back here for the why.
 
-## What bundling actually is
+## Content
+
+### What bundling actually is
 
 <p class="beat__lede">The browser doesn't know what <code>import { useState } from 'react'</code> means. The bundler is the thing that turns your hundreds of files of <code>import</code> statements into a small handful of files the browser can actually load.</p>
 
@@ -27,7 +29,7 @@ Stay in the iframe for the numbers; come back here for the why.
 
 That's the whole job. The output is what the browser actually loads.
 
-## Tree shaking, in one paragraph
+### Tree shaking, in one paragraph
 
 <p class="beat__lede">A bundler can drop code you didn't use, because ES modules are statically analyzable.</p>
 
@@ -36,7 +38,7 @@ That's the whole job. The output is what the browser actually loads.
 - It only works with ES modules (`import`/`export`), not with CommonJS `require()`. Modern libraries are ESM-friendly; older ones can defeat tree shaking.
 - The practical takeaway: **import what you use, not the namespace**. `import { debounce } from 'lodash-es'` over `import _ from 'lodash'`. Your bundle is happier.
 
-## Code splitting, in one paragraph
+### Code splitting, in one paragraph
 
 <p class="beat__lede">Instead of one giant bundle, the bundler can split into chunks so the browser downloads only what the current page needs.</p>
 
@@ -44,7 +46,7 @@ That's the whole job. The output is what the browser actually loads.
 - **Component-level** (`React.lazy`): you tell the bundler "this component is a dynamic import; split it into its own chunk." The bundler obliges. React provides `Suspense` to render a fallback while the chunk loads. Five lines, no framework needed.
 - **What this buys you:** smaller first-load JS. The user only pays for what they need to see *right now*. Heavy admin panels, modal dialogs, fancy editors — load on demand, not on first paint.
 
-## Why this is in Part 3, not in the performance section
+### Why this is in Part 3, not in the performance section
 
 <p class="beat__lede">Bundlers are framing, not just optimization.</p>
 
@@ -52,7 +54,7 @@ That's the whole job. The output is what the browser actually loads.
 - **It explains Demo 8's badges.** "🟢 Server (0 KB JS)" only means something if you know what the bundle is. Server components are an aggressive form of code-splitting where the split happens at the runtime boundary, not at an `import` statement.
 - **Performance work in Demo 9 builds on this.** "Reduce LCP" usually means "reduce bundle size and reduce server work." If you don't know what's in the bundle, you can't reduce it.
 
-## Going deeper — Vite is the default plain-React story now
+### Going deeper — Vite is the default plain-React story now
 
 <p class="beat__lede">If you're building a React app that isn't Next, you're probably using Vite. Worth knowing.</p>
 
@@ -61,7 +63,7 @@ That's the whole job. The output is what the browser actually loads.
 - It does *not* do SSR/SSG out of the box like Next — for those you reach for a Vite-based meta-framework (Astro, Remix, TanStack Start) or you go to Next.
 - The "React without Next" world is real and common: internal admin apps, embedded widgets, React inside a non-Node backend (Django, Rails). Vite owns that space.
 
-## Stretch goal — reproduce the lodash numbers yourself
+### Stretch goal — reproduce the lodash numbers yourself
 
 Not required for the lesson, but if you want to see the bundle sizes for real:
 

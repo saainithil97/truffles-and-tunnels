@@ -11,7 +11,9 @@ The iframe above is `index.html` — a single static HTML file. Try this:
 3. Open DevTools → **Network**. Three requests from `unpkg.com` — `react.production.min.js`, `react-dom.production.min.js`, `@babel/standalone`. That's all React is, physically: a JavaScript file the browser downloads.
 4. Open DevTools → **Elements**. The `<div id="root">` was empty in View Source; now it has the rendered card. The DOM is what React built; the source is what the server sent.
 
-## The smallest possible React app
+## Content
+
+### The smallest possible React app
 
 <p class="beat__lede">Three pieces. That's the whole architecture.</p>
 
@@ -21,7 +23,7 @@ The iframe above is `index.html` — a single static HTML file. Try this:
 
 The component itself is plain JavaScript that returns JSX, which Babel compiles to `React.createElement(...)` calls. `createRoot(element).render(<App />)` is the line that mounts it. That's the whole API surface used in this demo.
 
-## Where else React runs
+### Where else React runs
 
 <p class="beat__lede">The reconciler is host-agnostic. Different renderers, different hosts.</p>
 
@@ -37,7 +39,7 @@ The component itself is plain JavaScript that returns JSX, which Babel compiles 
 
 Same `useState`. Same component model. Same diffing. The renderer is pluggable; that's the design.
 
-## Why this proves React is a library
+### Why this proves React is a library
 
 <p class="beat__lede">A framework owns the host. A library can be dropped into any host. React is the latter.</p>
 
@@ -46,7 +48,7 @@ Same `useState`. Same component model. Same diffing. The renderer is pluggable; 
 - Demo 6.5's SPA was a 90-line vanilla JS app. You could have written that *in React*, with the same script tags, and gotten the same SPA pattern with `useState` + a tiny router. The router is the missing piece; React is happy to compose with whatever you bring.
 - Next.js (Demo 6.6, next) is what happens when you stop bringing the missing pieces yourself and let a framework bring them for you. The React inside Next is the same React in this iframe.
 
-## Going deeper — when would you actually use script-tag React?
+### Going deeper — when would you actually use script-tag React?
 
 <p class="beat__lede">Rarely as the main app. Often as a widget.</p>
 

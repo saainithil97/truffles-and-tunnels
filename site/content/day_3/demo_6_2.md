@@ -6,7 +6,9 @@ You just watched React keep the DOM in sync with state (Demo 6). Now let's name 
 
 There's no iframe here — this is a 5-minute talk between Demo 6 and Demo 6.3. Read it slowly. The framing it gives makes the next four demos click into place.
 
-## Library vs. framework — the inversion-of-control test
+## Content
+
+### Library vs. framework — the inversion-of-control test
 
 <p class="beat__lede">There's a clean one-line test: a library is something you call; a framework is something that calls you.</p>
 
@@ -17,7 +19,7 @@ There's no iframe here — this is a 5-minute talk between Demo 6 and Demo 6.3. 
 
 The same React, hosted in two different ways. That's the whole game.
 
-## What React deliberately doesn't include
+### What React deliberately doesn't include
 
 <p class="beat__lede">React is intentionally small. Here's the list of things it doesn't ship — and the per-row "so what do I pick instead" answer.</p>
 
@@ -35,7 +37,7 @@ The same React, hosted in two different ways. That's the whole game.
 
 React owns one column: rendering. Everything else, you pick.
 
-## Why this matters
+### Why this matters
 
 <p class="beat__lede">"React is a library" isn't a slogan — it's a design constraint with three consequences you'll feel every day.</p>
 

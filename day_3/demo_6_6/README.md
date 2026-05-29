@@ -10,7 +10,9 @@ The iframe is `/` of the Swiggy Next.js app that powers Demos 7, 8, and 8.5. Sam
 2. Pop the iframe out (↗ button). The URL bar updates as you click. Copy any URL into a fresh tab — every one still works. (Try doing *that* with Demo 6.5's SPA — only the shell URL loads from a cold tab.)
 3. View Source on `/` from the popped-out tab. Real HTML, the four card links right there. Not the empty shell from Demo 6.5.
 
-## What's in a Next.js project
+## Content
+
+### What's in a Next.js project
 
 <p class="beat__lede">Open the folder. Next is convention-over-configuration — what each file/folder is named is what it does.</p>
 
@@ -46,7 +48,7 @@ Three rules of thumb the file tree is telling you:
 - **`layout.tsx` wraps everything below it.** The root `app/layout.tsx` wraps every page. A nested `app/dashboard/layout.tsx` would wrap only `/dashboard/*` pages. Persistent UI (sidebars, headers, providers) goes in a layout — it doesn't re-render when you navigate within its subtree.
 - **`'use client'` is a boundary, not a switch.** Top of file. Everything above it (parents, importers) is server-only and ships zero JS. Everything below it (this component + everything it imports) ships to the browser. Push the boundary down to keep bundles small.
 
-## Compare and contrast — Demo 6.5 SPA (by hand) vs. Next.js
+### Compare and contrast — Demo 6.5 SPA (by hand) vs. Next.js
 
 <p class="beat__lede">You wrote one version yourself. Next gives you the other.</p>
 
@@ -64,7 +66,7 @@ Three rules of thumb the file tree is telling you:
 | **Lines of "infrastructure" code you write** | ~150 LOC to start | One command (`npx create-next-app`) |
 | **Lock-in** | None | Significant — you adopt Next conventions |
 
-## What you trade for it
+### What you trade for it
 
 <p class="beat__lede">Next gives you a lot. It also makes you eat its opinions.</p>
 
@@ -75,7 +77,7 @@ Three rules of thumb the file tree is telling you:
 
 This is the framework trade-off from Demo 6.2. You take Next's opinions in exchange for never thinking about routing, build, dev server, or production server again.
 
-## Forward-look
+### Forward-look
 
 Demos 7, 8, and 8.5 each take one slice of this app and dig in.
 

@@ -8,7 +8,9 @@ Short answer: Next is a host. React is the engine. Next *uses* React the same wa
 
 No iframe — this is a 5-minute reading between Demo 6.7 and Demo 7. The diagram below is the whole picture; the rest of the page is the walk-through.
 
-## The layered model
+## Content
+
+### The layered model
 
 <figure class="beat__visual">
 <pre>
@@ -42,29 +44,29 @@ Three layers:
 
 The arrow always points the same way. Next calls React DOM. React DOM calls React. React produces a diff. React DOM applies the diff. Next never "uses React" directly — it always goes through React DOM.
 
-## What runs where
+### What runs where
 
 <p class="beat__lede">Same React component, different moments. Same diffing, different renderer.</p>
 
-### On `next build`
+#### On `next build`
 
 For every **SSG** route (default), Next calls `react-dom/server.renderToString(<Page />)`. The output is an HTML file written to disk under `.next/`. That file is what the CDN serves when you visit the route. **React ran once, at build time, on the build server.**
 
-### On every request to an **SSR** route
+#### On every request to an **SSR** route
 
 Next calls `react-dom/server.renderToString(<Page />)` again — but live, this time, with whatever cookies / locale / user context the request brought. **React runs per request, on the production server.**
 
-### On every request to **any** route
+#### On every request to **any** route
 
 The browser receives HTML (whether SSG-built or SSR-built or a CSR shell). Then Next ships a JavaScript bundle. `react-dom/client.hydrateRoot(<Page />)` runs in the browser, walks the same React tree the server walked, and attaches event handlers to the existing DOM nodes the server already painted. **React runs once on the browser to "wake up" the page.** This is hydration. The gap between paint and hydration finishing is the hydration gap — Demo 8's Slow 3G reveal.
 
-### On every client-side navigation via `<Link>`
+#### On every client-side navigation via `<Link>`
 
 Next's router intercepts the click, fetches a serialized React tree (an RSC payload) for the next route, hands it back to React for reconciliation, and React DOM swaps in only the changed sections. **No new server-rendered HTML document.** Same reconciler from Demo 6 — running in the browser, diffing two trees, producing minimal DOM updates.
 
 That's the whole "where does React run in a Next app" map. Build server, production server (for SSR), browser (for hydration, for client-side navigation, for `useEffect`).
 
-## Server components vs. client components, in one paragraph
+### Server components vs. client components, in one paragraph
 
 <p class="beat__lede"><code>'use client'</code> is a Next-era directive that tells the build "below this point, ship React's <em>client</em> renderer and this component's JS to the browser."</p>
 
@@ -72,7 +74,7 @@ That's the whole "where does React run in a Next app" map. Build server, product
 - Below the boundary: components run in `react-dom/server` first (to produce the initial HTML) **and** in `react-dom/client` after (to hydrate and update). The boundary component plus everything it imports ships to the browser.
 - The boundary is not a switch — it's a tree split. Push it down. Tiny client leaves, big server trunks. That's the lesson Demo 8 makes visible with its badges.
 
-## What this means for your homework
+### What this means for your homework
 
 <p class="beat__lede">Every React concept still applies inside Next.</p>
 
@@ -84,7 +86,7 @@ That's the whole "where does React run in a Next app" map. Build server, product
 
 If you can build a React component in plain React (Demo 6.3), you can build one in Next. The framework adds where and when; it doesn't replace what.
 
-## Why this matters for the next three demos
+### Why this matters for the next three demos
 
 <p class="beat__lede">Demos 7, 8, 8.5 each pick one layer of this stack and stare at it.</p>
 

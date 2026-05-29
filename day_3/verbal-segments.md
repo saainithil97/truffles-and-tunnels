@@ -2,7 +2,7 @@
 
 The demos are the spine of Day 3, but the bits between them are where the picture comes together. These short reads are the conceptual bridges — the tooling under your feet, the platform around you, the styling on top, and the homework that ties it all together. Treat them as required reading between demos.
 
-## Tooling break — Node, npm, and bundling
+## Tooling break — Node and npm
 
 You've been writing JavaScript that runs *in the browser* all day. Now meet the plumbing that gets it there.
 
@@ -12,41 +12,7 @@ You've been writing JavaScript that runs *in the browser* all day. Now meet the 
 
 Open `node_modules` once and you'll see 50,000 files for a basic app. Don't panic — that's normal. It's every dependency-of-a-dependency-of-a-dependency. And don't commit it; it's in `.gitignore` for a reason. `package.json` is the recipe. `node_modules` is the groceries. You ship the recipe; anyone can re-fetch the groceries with one command.
 
-**Bundling.** Here's the problem. In your code you write `import { Button } from './button'` and `import React from 'react'`. The **browser can't follow those** — it has no idea where `./button` lives on disk, and it certainly can't go rummaging through `node_modules`. So before the browser ever sees your code, a **bundler** (Next.js uses Turbopack) starts at your entry point, **traces every import** into a dependency graph, and stitches it all into a small handful of files the browser *can* load.
-
-Three things the bundler does along the way:
-
-1. **Compilation.** Your JSX/TSX isn't valid JavaScript. The bundler runs it through SWC to turn `<Card />` into plain function calls the browser understands.
-2. **Code splitting.** It doesn't ship one giant file. It cuts per-route chunks so visiting `/restaurants` only downloads the code that page needs.
-3. **Tree shaking.** If you import one function from a library and never use the rest, the bundler strips the unused code so it never ships.
-
-Next.js does all of this automatically — you'll never hand-configure a bundler in this course. But understanding what it's doing is exactly how you diagnose a slow production page: a fat bundle, a route that wasn't split, dead code that didn't get shaken out.
-
-```mermaid
-flowchart LR
-    A[your src/<br/>imports] --> B[Bundler<br/>Turbopack]
-    C[node_modules] --> B
-    B --> D[Compile<br/>JSX → JS]
-    D --> E[Code split<br/>per route]
-    E --> F[Tree shake<br/>drop unused]
-    F --> G[Browser<br/>downloads chunks]
-```
-
-## Platform tour — what the browser gives you for free
-
-The browser isn't just a document viewer. It's an application runtime with a massive built-in API surface. Before you reach for a library, check whether the browser already does it. It usually does. Here's the short list of APIs you'll meet in the homework or in your first job:
-
-- **fetch** — the modern way to make HTTP requests. `fetch('/api/restaurants').then(r => r.json())`. Reach for it any time you need to talk to a backend.
-- **localStorage** — a synchronous key-value store that survives refreshes. Perfect for "remember the user's last search" or a cart that should outlive a page reload.
-- **navigator.geolocation** — how Swiggy knows your location the moment you open the app. The browser asks the user for permission and hands the page their coordinates.
-- **IntersectionObserver** — tells you when an element scrolls into the viewport. This is how the restaurant list lazy-loads images: don't download the picture until the card is about to be on screen.
-- **WebSocket** — a two-way pipe that stays open. Live order tracking, support chat, stock tickers — anything the server needs to push to the client the moment it happens, no refresh required.
-- **Notifications** — the "Your order is on the way" banner that pops even when the tab isn't focused. One API call.
-- **Service Worker** — a script that sits between your app and the network, caches everything, and serves the cached app when the user goes through a tunnel. This is what makes "offline mode" possible.
-- **Web Worker** — moves heavy computation (sorting 10,000 restaurants, parsing a giant CSV) off the main thread so the UI stays responsive instead of freezing.
-- **Canvas / WebGL** — a pixel drawing surface. The delivery map, charts, dataviz, games.
-
-You don't need to learn all of these today. Bookmark this list and reach for it when you have a feature to build.
+**Bundling.** That's its own demo — see **Demo 6.7 — "What a bundler actually does"** in Part 3 for the bundler story (tree shaking, code splitting, the `next build` route table, how plain React + Vite handles it, and why Demo 8's "0 KB JS" badge is a bundle story). The headline: a bundler walks your `import` graph, compiles JSX, splits per route, drops unused code, and produces the handful of files the browser actually loads.
 
 ## CSS and styling — the third leg
 

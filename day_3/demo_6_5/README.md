@@ -103,7 +103,7 @@ So the answer to "do I need a library for this?" is no — you can build an SPA 
 
 - The fix isn't "stop using SPAs." The fix is **give the server some work back** — render the first paint as real HTML, then let the SPA take over after the page is interactive.
 - That's the whole next section: SSG (build the HTML once), SSR (build it per request), CSR (the pure SPA we just saw). Same destination, three different starting points.
-- Next.js's `<Link>` (Demo 8.5) gives you SPA-style navigation **after** the first paint, with prerendered pages for the first paint. Best of both worlds.
+- Next.js's `<Link>` (Demo 6.6) gives you SPA-style navigation **after** the first paint, with prerendered pages for the first paint. Best of both worlds.
 
 So Demo 6.5 is the thing the next four demos are answers to.
 

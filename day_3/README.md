@@ -60,6 +60,11 @@ stays on the course spine — the Swiggy restaurant card from Day 1.
   (the same one Demos 7/8/8.5 dissect), compare-and-contrast vs Demo 6.5's
   hand-rolled SPA — file-based routing, free dev server, free SSR, real
   HTML in View Source. The framework trade-off (opinions for velocity).
+- **[Demo 6.7 — "Bundling, splitting, tree shaking"](demo_6_7/README.md)** — what
+  a bundler actually does. Three-column compare (script tag / React + Vite /
+  React + Next), real lodash size numbers (~70 KB vs ~2 KB on one import line),
+  a mocked `next build` routes table, and `React.lazy` in five lines. Sets up
+  why Demo 8's "0 KB JS" badge matters.
 - **[Verbal segments](verbal-segments.md)** — the spoken interludes: the Tooling
   Break (Node / npm / bundling), the Platform Tour (browser APIs), and CSS &
   Styling, plus the homework brief and the 60-second wrap-up recap.

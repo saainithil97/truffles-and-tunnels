@@ -211,6 +211,11 @@ export const day3Demos: Demo[] = [
     ],
     iframeNote:
       "Each file runs standalone — React is vendored locally, no server. Compare how each version handles state.",
+    sourceFiles: [
+      { name: "vanilla-simple.html", language: "html" },
+      { name: "vanilla-full.html", language: "html" },
+      { name: "react.html", language: "html" },
+    ],
   },
   {
     id: "demo_6",
@@ -294,6 +299,24 @@ export const day3Demos: Demo[] = [
     iframePathSuffix: "/",
     iframeNote:
       "Click the four cards inside the iframe — every nav is a Link, no full reload. Pop the iframe out to see real URLs.",
+  },
+  {
+    id: "demo_6_7",
+    slug: "demo_6_7",
+    shortTitle: "Demo 6.7 — What a bundler actually does",
+    title: 'Demo 6.7 — "Bundling, splitting, tree shaking"',
+    summary:
+      "Three worlds for getting React to the browser: script tag (no bundler), React + Vite (you pick), React + Next (Turbopack picks for you). Real bundle-size numbers (full lodash vs named import), a mocked next build route table, and how React.lazy gives plain React code-splitting in five lines.",
+    readmeSourcePath: "day_3/demo_6_7/README.md",
+    contentFile: "day_3/demo_6_7.md",
+    kind: "embedded",
+    iframePath: "/live-demos/demo_6_7/index.html",
+    iframeNote:
+      "Static viewer — read top to bottom. Compare the lodash size bars and the /hybrid row in the routes table.",
+    sourceFiles: [
+      { name: "index.html", language: "html" },
+      { name: "style.css", language: "css" },
+    ],
   },
   {
     id: "demo_7",
@@ -422,7 +445,7 @@ export const day3Parts: DayPart[] = [
     heading: "Part 3 — React and the modern frontend",
     demoSlugs: [
       "demo_6", "demo_6_2", "demo_6_3", "demo_6_5",
-      "demo_6_6", "verbal-segments",
+      "demo_6_6", "demo_6_7", "verbal-segments",
     ],
   },
   {

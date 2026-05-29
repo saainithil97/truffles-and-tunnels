@@ -36,6 +36,7 @@ const markdownDemos = [
   { src: "demo_6_2/README.md", dest: "demo_6_2.md" },
   { src: "demo_6_3/README.md", dest: "demo_6_3.md" },
   { src: "demo_6_6/README.md", dest: "demo_6_6.md" },
+  { src: "demo_6_7/README.md", dest: "demo_6_7.md" },
   { src: "demo_7_8_nextjs/demo_7.md", dest: "demo_7.md" },
   { src: "demo_7_8_nextjs/demo_8.md", dest: "demo_8.md" },
   { src: "demo_7_8_nextjs/demo_8_5.md", dest: "demo_8_5.md" },
@@ -128,7 +129,16 @@ async function main() {
       { name: "app.js", language: "javascript" },
       { name: "server.py", language: "python" },
     ],
+    demo_5: [
+      { name: "vanilla-simple.html", language: "html" },
+      { name: "vanilla-full.html", language: "html" },
+      { name: "react.html", language: "html" },
+    ],
     demo_6_3: [
+      { name: "index.html", language: "html" },
+      { name: "style.css", language: "css" },
+    ],
+    demo_6_7: [
       { name: "index.html", language: "html" },
       { name: "style.css", language: "css" },
     ],
@@ -185,6 +195,7 @@ async function main() {
     "demo_6",
     "demo_6_3",
     "demo_6_5",
+    "demo_6_7",
     "demo_10",
     "wrap",
   ];

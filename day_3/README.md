@@ -45,6 +45,11 @@ stays on the course spine — the Swiggy restaurant card from Day 1.
   a framework: it calls you). The table of everything React deliberately omits
   (routing, build, state, styling, data, server-rendering host) with the "what
   do I pick instead" column. Sets up why Next exists.
+- **[Demo 6.3 — "React in a script tag"](demo_6_3/README.md)** — proof that
+  React is just a library: two `<script>` tags from unpkg.com, one component
+  with `useState`, no build, no bundler. The same Swiggy card from Demo 1,
+  rendered in React this time. Sets up "where React runs" — browser, server,
+  native, anywhere there's a renderer.
 - **[Demo 6.5 — "The page that never reloads"](demo_6_5/README.md)** — what an
   SPA actually is. One HTML shell + a tiny JS router (`pushState` + click
   interception + `popstate`). Side-by-side: a fake MPA where every click is a

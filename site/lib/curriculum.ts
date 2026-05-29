@@ -128,6 +128,25 @@ export const day3Demos: Demo[] = [
     ],
   },
   {
+    id: "demo_2_75",
+    slug: "demo_2_75",
+    shortTitle: "Demo 2.75 — One thread, one mood",
+    title: 'Demo 2.75 — "One thread, one mood"',
+    summary:
+      "The event loop in four buttons. setTimeout(0) doesn't mean now, Promises jump the queue, rAF skips when the main thread is blocked. The scheduling model Demo 4 is about to violate at 36,000 layouts/sec.",
+    readmeSourcePath: "day_3/demo_2_75/README.md",
+    contentFile: "day_3/demo_2_75.md",
+    kind: "embedded",
+    iframePath: "/live-demos/demo_2_75/index.html",
+    iframeNote:
+      "Press a scenario button and read the event log. Watch the canary spinner and clock in the topbar freeze while the main thread is hogged.",
+    sourceFiles: [
+      { name: "index.html", language: "html" },
+      { name: "style.css", language: "css" },
+      { name: "app.js", language: "javascript" },
+    ],
+  },
+  {
     id: "demo_3",
     slug: "demo_3",
     shortTitle: "Demo 3 — Render blocking",
@@ -219,6 +238,24 @@ export const day3Demos: Demo[] = [
     kind: "runbook-only",
     runbookHint:
       "No iframe — this is a 5-minute framing read between Demo 6 and Demo 6.3. The runbook on the right is the reading itself.",
+  },
+  {
+    id: "demo_6_3",
+    slug: "demo_6_3",
+    shortTitle: "Demo 6.3 — How and where React works",
+    title: 'Demo 6.3 — "React in a script tag"',
+    summary:
+      "Two <script> tags, one component, no build. The same React that ships in big apps, running in a 30-line HTML page. Proves the library framing — and sets up why bundlers and Next exist for everything bigger than this.",
+    readmeSourcePath: "day_3/demo_6_3/README.md",
+    contentFile: "day_3/demo_6_3.md",
+    kind: "embedded",
+    iframePath: "/live-demos/demo_6_3/index.html",
+    iframeNote:
+      "View Source on the iframe to see the three script tags. Open DevTools → Network to watch React load from unpkg.com.",
+    sourceFiles: [
+      { name: "index.html", language: "html" },
+      { name: "style.css", language: "css" },
+    ],
   },
   {
     id: "demo_6_5",
@@ -360,7 +397,7 @@ export const verbalSegments: Demo = {
 export const day3Parts: DayPart[] = [
   {
     heading: "Part 1 — The browser as a platform",
-    demoSlugs: ["demo_1", "demo_2", "demo_2_5", "demo_3"],
+    demoSlugs: ["demo_1", "demo_2", "demo_2_5", "demo_2_75", "demo_3"],
   },
   {
     heading: "Part 2 — Why frameworks exist",
@@ -368,7 +405,7 @@ export const day3Parts: DayPart[] = [
   },
   {
     heading: "Part 3 — React and the modern frontend",
-    demoSlugs: ["demo_6", "demo_6_2", "demo_6_5", "verbal-segments"],
+    demoSlugs: ["demo_6", "demo_6_2", "demo_6_3", "demo_6_5", "verbal-segments"],
   },
   {
     heading: "Part 4 — Rendering strategies",

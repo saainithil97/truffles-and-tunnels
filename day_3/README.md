@@ -55,6 +55,11 @@ stays on the course spine — the Swiggy restaurant card from Day 1.
   interception + `popstate`). Side-by-side: a fake MPA where every click is a
   full reload, vs the SPA where the Network tab goes silent after the first
   load. The dead end that the next four demos are answers to.
+- **[Demo 6.6 — "The framework around React"](demo_6_6/README.md)** — what
+  Next.js is and why it exists. Annotated file tree of the Swiggy Next app
+  (the same one Demos 7/8/8.5 dissect), compare-and-contrast vs Demo 6.5's
+  hand-rolled SPA — file-based routing, free dev server, free SSR, real
+  HTML in View Source. The framework trade-off (opinions for velocity).
 - **[Verbal segments](verbal-segments.md)** — the spoken interludes: the Tooling
   Break (Node / npm / bundling), the Platform Tour (browser APIs), and CSS &
   Styling, plus the homework brief and the 60-second wrap-up recap.

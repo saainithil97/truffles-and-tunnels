@@ -281,6 +281,21 @@ export const day3Demos: Demo[] = [
     ],
   },
   {
+    id: "demo_6_6",
+    slug: "demo_6_6",
+    shortTitle: "Demo 6.6 — Intro to Next.js",
+    title: 'Demo 6.6 — "The framework around React"',
+    summary:
+      "You wrote 90 lines of router by hand in Demo 6.5. Next.js is what happens when you let a framework bring the router, the build, the dev server, and the production server — and just write components. Iframes the homepage of the Swiggy Next app the next three demos dissect.",
+    readmeSourcePath: "day_3/demo_6_6/README.md",
+    contentFile: "day_3/demo_6_6.md",
+    kind: "nextjs-separate",
+    iframeUrlEnvVar: "NEXT_PUBLIC_DEMO_7_URL",
+    iframePathSuffix: "/",
+    iframeNote:
+      "Click the four cards inside the iframe — every nav is a Link, no full reload. Pop the iframe out to see real URLs.",
+  },
+  {
     id: "demo_7",
     slug: "demo_7",
     shortTitle: "Demo 7 — SSG, SSR, CSR",
@@ -405,7 +420,10 @@ export const day3Parts: DayPart[] = [
   },
   {
     heading: "Part 3 — React and the modern frontend",
-    demoSlugs: ["demo_6", "demo_6_2", "demo_6_3", "demo_6_5", "verbal-segments"],
+    demoSlugs: [
+      "demo_6", "demo_6_2", "demo_6_3", "demo_6_5",
+      "demo_6_6", "verbal-segments",
+    ],
   },
   {
     heading: "Part 4 — Rendering strategies",

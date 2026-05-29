@@ -11,7 +11,7 @@ No iframe — this is a 5-minute reading between Demo 6.7 and Demo 7. The diagra
 ## The layered model
 
 <figure class="beat__visual">
-<pre style="background:#fafafa;border:1px solid #e5e5e5;border-radius:8px;padding:18px 20px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.45;color:#1c1c1c;overflow-x:auto;">
+<pre>
 ┌─────────────────────────────────────────────────────────┐
 │ <strong>Next.js</strong> (the framework)                              │
 │   • file-based router (<code>app/foo/page.tsx</code> → <code>/foo</code>)         │

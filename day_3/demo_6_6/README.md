@@ -15,7 +15,7 @@ The iframe is `/` of the Swiggy Next.js app that powers Demos 7, 8, and 8.5. Sam
 <p class="beat__lede">Open the folder. Next is convention-over-configuration — what each file/folder is named is what it does.</p>
 
 <figure class="beat__visual">
-<pre style="background:#1c1c1c;color:#eee;padding:16px;border-radius:8px;font-size:13px;line-height:1.6;overflow-x:auto;">
+<pre>
 day_3/demo_7_8_nextjs/
 ├── <span style="color:#fc8019">app/</span>                           <span style="color:#888">← every route lives here (App Router convention)</span>
 │   ├── <span style="color:#7cffb8">layout.tsx</span>                 <span style="color:#888">← wraps every page (header, footer, fonts, providers)</span>

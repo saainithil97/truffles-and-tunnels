@@ -70,8 +70,9 @@ stays on the course spine — the Swiggy restaurant card from Day 1.
   server, browser), what `'use client'` does at the boundary, and why every
   React skill still applies inside Next. The map for Demos 7, 8, and 8.5.
 - **[Verbal segments](verbal-segments.md)** — the spoken interludes: the Tooling
-  Break (Node / npm / bundling), the Platform Tour (browser APIs), and CSS &
-  Styling, plus the homework brief and the 60-second wrap-up recap.
+  Break (Node and npm — bundling is now Demo 6.7), the Platform Tour (browser
+  APIs), and CSS & Styling, plus the homework brief and the 60-second wrap-up
+  recap.
 
 ### Part 4 — Rendering strategies
 

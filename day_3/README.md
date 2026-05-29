@@ -49,12 +49,24 @@ stays on the course spine — the Swiggy restaurant card from Day 1.
   Break (Node / npm / bundling), the Platform Tour (browser APIs), and CSS &
   Styling, plus the homework brief and the 60-second wrap-up recap.
 
-### Parts 4–5 — Rendering strategies, hydration, routing
+### Part 4 — Rendering strategies
 
-- **[Demos 7, 8 & 8.5 — the Next.js Swiggy app](demo_7_8_nextjs/README.md)** —
-  SSG vs SSR vs CSR (View Source is the reveal), server vs client components +
-  the hydration gap, and client-side routing (the URL changes with no full
-  reload). One real Next.js App Router app, the stack students use for homework.
+- **[Demo 7 — "Same page, three rendering strategies"](demo_7_8_nextjs/demo_7.md)** —
+  SSG vs SSR vs CSR. The identical Swiggy grid at `/ssg`, `/ssr`, `/csr`. View
+  Source is the reveal — SSG and SSR ship full HTML, CSR ships an empty shell.
+
+### Part 5 — Hydration & component boundaries
+
+- **[Demo 8 — "Server components vs client components"](demo_7_8_nextjs/demo_8.md)** —
+  `/hybrid` is a server-rendered grid with a client-rendered search box.
+  Server/client badges mark each component. Slow 3G makes the hydration gap
+  visible.
+
+### Part 5.5 — Client-side routing
+
+- **[Demo 8.5 — "The URL changes, the page doesn't reload"](demo_7_8_nextjs/demo_8_5.md)** —
+  Next.js's `<Link>` gives you SPA navigation feel without the SPA's "URLs only
+  work after JS boots" tax. Compare back to Demo 6.5's hand-rolled SPA.
 
 ### Part 6 — Security, performance, and the platform
 

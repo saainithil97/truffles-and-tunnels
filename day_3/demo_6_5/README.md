@@ -49,6 +49,52 @@ That's the entire mechanism. Three browser APIs — `addEventListener('click')`,
 - **Event handlers come along for free.** Every `innerHTML` swap in `app.js` blows away listeners; you have to re-attach with event delegation. In React, JSX handlers (`onClick={...}`) travel with the markup; React wires them after every render.
 - **Routing is a library, not hand-rolled.** React Router, TanStack Router, etc. wrap `pushState` + `popstate` in a component API: `<Link>` (intercepts clicks), `<Route>` (renders for a path), `<Outlet>` (where the child route goes). Same browser APIs underneath; much nicer ergonomics.
 
+Concretely, the same three routes — home, restaurant, cart — in React:
+
+```jsx
+const { useState, useEffect } = React;
+const { createRoot } = ReactDOM;
+
+const getView = () =>
+  new URLSearchParams(location.search).get("view") || "home";
+
+const VIEWS = {
+  home: () => (
+    <ul className="restaurants">
+      <li><a href="?view=restaurant" data-link>Meghana Foods</a></li>
+      <li><a href="?view=restaurant" data-link>Truffles</a></li>
+      <li><a href="?view=restaurant" data-link>Burma Burma</a></li>
+    </ul>
+  ),
+  restaurant: () => <div className="detail"><h2>Meghana Foods</h2></div>,
+  cart: () => <div className="detail"><h2>Your cart</h2></div>,
+};
+
+function App() {
+  const [view, setView] = useState(getView);
+
+  useEffect(() => {
+    const onPop = () => setView(getView());
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  const navigate = (e) => {
+    const a = e.target.closest("a[data-link]");
+    if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+    e.preventDefault();
+    history.pushState({}, "", a.getAttribute("href"));
+    setView(getView());
+  };
+
+  return <main onClick={navigate}>{VIEWS[view]()}</main>;
+}
+
+createRoot(document.getElementById("app")).render(<App />);
+```
+
+The `render()` function from `app.js` is gone — React's diff replaces it. The manual `popstate` listener is now a `useEffect` with cleanup. The click interceptor is still there (because we didn't pull in a router library); the moment you add React Router, even that disappears, replaced with `<Link to="?view=cart">Cart</Link>`.
+
 That's React's contribution to "SPAs are tolerable to build" — DOM updates, event re-binding, route → view mapping all become declarative. The browser APIs underneath haven't changed; React just gives you a saner way to express them. And once you reach for React + a router, the next obvious move is reaching for *one framework* that ships them together. That's Next.js (Demo 6.6).
 
 ### The dead end — and why we're about to revisit it

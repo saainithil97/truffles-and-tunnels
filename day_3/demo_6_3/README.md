@@ -1,6 +1,6 @@
 # "How and where React works"
 
-In Demo 6.2 we said React is a library, not a framework. Here's the proof. Two `<script>` tags from a CDN, one component, no build step. The same library that ships in big Next.js apps is the library running in this 30-line HTML page.
+React is a *library*, not a framework — and this demo is what that looks like in practice. Two `<script>` tags from a CDN, one component, no build step. The same library that ships in big Next.js apps is the library running in this 30-line HTML page.
 
 ## Setup
 
@@ -23,6 +23,35 @@ The iframe above is `index.html` — a single static HTML file. Try this:
 
 The component itself is plain JavaScript that returns JSX, which Babel compiles to `React.createElement(...)` calls. `createRoot(element).render(<App />)` is the line that mounts it. That's the whole API surface used in this demo.
 
+### A library, not a framework — the inversion-of-control test
+
+<p class="beat__lede">There's a clean one-line test: a library is something you call; a framework is something that calls you.</p>
+
+- **Library:** *your code is in charge*. You call `createRoot(...).render(<App />)` when you decide. React shows up only when invited.
+- **Framework:** *the framework is in charge*. Angular instantiates your components on a lifecycle you don't own. Rails runs your controller method when a request comes in. You hand the framework your pieces; it decides when to call them.
+- **React** passes the library test. The only React-owned moment is *inside* the render — once you call it, React drives reconciliation. Outside that, your code runs the show: you decide when to mount, what data to fetch, how to route.
+- **Next.js** is a framework wrapped around React. Next decides when to call your page components, when to render them on the server, when to hydrate them in the browser. You hand Next your `app/page.tsx`; Next runs it.
+
+Two ways to host the same React. That's the whole game.
+
+### What React deliberately doesn't ship
+
+<p class="beat__lede">React is intentionally small. Here's the list of things it doesn't ship — and the per-row "so what do I pick instead" answer.</p>
+
+| Concern | React ships | What you pick |
+|---|---|---|
+| **Routing** | Nothing | React Router, TanStack Router, Next's file-based router |
+| **Build / bundler** | Nothing | Vite (default these days), webpack, Parcel, Turbopack via Next |
+| **Dev server with HMR** | Nothing | Vite's dev server, Next's dev server |
+| **State management** | `useState` / `useReducer` for one component | Zustand, Redux, Jotai, TanStack Query, or "just `useState` + lift state up" |
+| **Styling** | Nothing | CSS Modules, Tailwind, styled-components, emotion, vanilla CSS |
+| **Data fetching** | Nothing | `fetch`, axios, TanStack Query, SWR, Apollo |
+| **Server rendering host** | `react-dom/server` (the engine) | Next, Remix, Astro, your own Node process |
+| **Form handling** | Nothing | React Hook Form, Formik, plain `useState` |
+| **Animations** | Nothing | Framer Motion, GSAP, CSS transitions |
+
+React owns one column: rendering. Everything else, you pick.
+
 ### Where else React runs
 
 <p class="beat__lede">The reconciler is host-agnostic. Different renderers, different hosts.</p>
@@ -39,14 +68,13 @@ The component itself is plain JavaScript that returns JSX, which Babel compiles 
 
 Same `useState`. Same component model. Same diffing. The renderer is pluggable; that's the design.
 
-### Why this proves React is a library
+### Why this matters
 
-<p class="beat__lede">A framework owns the host. A library can be dropped into any host. React is the latter.</p>
+<p class="beat__lede">"React is a library" isn't a slogan — it's a design constraint with three consequences you'll feel every day.</p>
 
-- This demo has no router, no build, no dev server, no state library, no framework. Just a browser and three script files.
-- The "minimum viable React app" is literally an HTML file. You could embed it in WordPress, a Rails view, an old jQuery app, an Electron shell. Same library.
-- Demo 6.5's SPA was a 90-line vanilla JS app. You could have written that *in React*, with the same script tags, and gotten the same SPA pattern with `useState` + a tiny router. The router is the missing piece; React is happy to compose with whatever you bring.
-- Next.js (Demo 6.6, next) is what happens when you stop bringing the missing pieces yourself and let a framework bring them for you. The React inside Next is the same React in this iframe.
+- **Composability.** Because React doesn't bring its own everything, you can compose it with whatever stack already exists. A React widget can live inside an old Rails app, a WordPress page, an existing webpack build, an Electron shell.
+- **Ecosystem flexibility.** Different teams pick different routers, different state libraries, different data layers, and the React component model still works in all of them. That's why your last React job and your next one will probably look completely different above the component layer.
+- **The trade-off.** A framework like Angular makes 80% of the decisions for you, which gets you to "first working app" faster. React's libraries-of-libraries approach forces you to decide more, which gets you customization at the cost of decision fatigue. Next.js (Demo 6.6) is React's "I'll make most of the decisions" mode — and that's the part of the day you're about to step into.
 
 ### Going deeper — when would you actually use script-tag React?
 
@@ -59,9 +87,10 @@ Same `useState`. Same component model. Same diffing. The renderer is pluggable; 
 
 ## Takeaways
 
-- **React is JS that the browser downloads.** Two files from unpkg.com is enough.
+- **A library: you call it. A framework: it calls you.** React passes the library test. Next.js doesn't.
+- **React owns rendering. Everything else you pick.** Routing, build, state, styling, data — separate decisions.
+- **React is JS that the browser downloads.** Two `<script>` tags from a CDN is enough. Same library powers this 30-line page and the Next.js Swiggy app.
 - **`react` is the reconciler. `react-dom` is the renderer.** They split for a reason — same reconciler, multiple renderers (server, native, 3D, …).
 - **JSX needs a compiler.** In this demo, Babel-standalone does it in-browser (slow, fine for a demo). In every real app, your bundler does it at build time.
-- **`createRoot(...).render(<App />)` is the React API surface.** Everything else (`useState`, JSX, components) is the language of React inside it.
-- **Same library in every host.** Same React powers this 30-line page and the Next.js Swiggy app you're about to dissect.
-- **Real apps use a bundler.** Script tags are for widgets and demos. The next two demos show what a real React app's tooling looks like.
+- **Composability is the payoff.** React works inside any host that can run JavaScript. That's why `<script>`-tag React is a real pattern, not a curiosity.
+- **Real apps use a bundler.** Script tags are for widgets and demos. Demos 6.5–6.6 show what a real React/Next app's tooling looks like.

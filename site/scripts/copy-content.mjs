@@ -19,17 +19,22 @@ const day3Src = path.join(repoRoot, "day_3");
 const contentDir = path.join(siteRoot, "content", "day_3");
 const liveDemosDir = path.join(siteRoot, "public", "live-demos");
 
+// Each entry maps a source markdown file (relative to ../day_3) to its
+// destination filename under site/content/day_3/. Most demos use the
+// pattern <id>/README.md -> <id>.md; demo_7_8_nextjs is the exception —
+// one source directory feeds three site content files (demo_7, 8, 8.5).
 const markdownDemos = [
-  "demo_1",
-  "demo_2",
-  "demo_2_5",
-  "demo_3",
-  "demo_4",
-  "demo_5",
-  "demo_6",
-  "demo_7_8_nextjs",
-  "demo_9",
-  "demo_10",
+  { src: "demo_1/README.md", dest: "demo_1.md" },
+  { src: "demo_2/README.md", dest: "demo_2.md" },
+  { src: "demo_2_5/README.md", dest: "demo_2_5.md" },
+  { src: "demo_3/README.md", dest: "demo_3.md" },
+  { src: "demo_4/README.md", dest: "demo_4.md" },
+  { src: "demo_5/README.md", dest: "demo_5.md" },
+  { src: "demo_6/README.md", dest: "demo_6.md" },
+  { src: "demo_6_5/README.md", dest: "demo_6_5.md" },
+  { src: "demo_9/README.md", dest: "demo_9.md" },
+  { src: "demo_10/README.md", dest: "demo_10.md" },
+  { src: "wrap/README.md", dest: "wrap.md" },
 ];
 
 async function copyFile(src, dest) {
@@ -59,12 +64,12 @@ async function main() {
 
   // 1. Copy each demo's README.md to site/content/day_3/<id>.md
   await fs.mkdir(contentDir, { recursive: true });
-  for (const id of markdownDemos) {
-    const src = path.join(day3Src, id, "README.md");
-    const dest = path.join(contentDir, `${id}.md`);
+  for (const { src: srcRel, dest: destName } of markdownDemos) {
+    const src = path.join(day3Src, srcRel);
+    const dest = path.join(contentDir, destName);
     try {
       await copyFile(src, dest);
-      console.log(`[copy-content] copied ${id}/README.md -> content/day_3/${id}.md`);
+      console.log(`[copy-content] copied ${srcRel} -> content/day_3/${destName}`);
     } catch (err) {
       console.warn(`[copy-content] WARN could not copy ${src}: ${err.message}`);
     }
@@ -81,7 +86,44 @@ async function main() {
     console.warn(`[copy-content] WARN verbal-segments.md: ${err.message}`);
   }
 
-  // 3. Recursively copy demo_5 and demo_6 into public/live-demos/, excluding
+  // 3. Stage per-demo source files (including Python servers) into
+  //    site/content/day_3/<id>/code/ so the demo pages can read them at build
+  //    time and render a "Source" section. Same Vercel caveat as below: when
+  //    source is missing, leave the committed snapshot in place.
+  const demoSourceFiles = {
+    demo_1: [
+      { name: "index.html", language: "html" },
+      { name: "style.css", language: "css" },
+      { name: "app.js", language: "javascript" },
+      { name: "server.py", language: "python" },
+    ],
+  };
+  for (const [id, files] of Object.entries(demoSourceFiles)) {
+    const src = path.join(day3Src, id);
+    const dest = path.join(contentDir, id, "code");
+    try {
+      await fs.access(src);
+    } catch {
+      console.log(
+        `[copy-content] ${id}/code: source missing — leaving committed snapshot in place`
+      );
+      continue;
+    }
+    await fs.rm(dest, { recursive: true, force: true });
+    await fs.mkdir(dest, { recursive: true });
+    for (const { name } of files) {
+      const srcFile = path.join(src, name);
+      const destFile = path.join(dest, name);
+      try {
+        await copyFile(srcFile, destFile);
+        console.log(`[copy-content] copied ${id}/${name} -> content/day_3/${id}/code/${name}`);
+      } catch (err) {
+        console.warn(`[copy-content] WARN ${id}/${name}: ${err.message}`);
+      }
+    }
+  }
+
+  // 4. Recursively copy demo_5 and demo_6 into public/live-demos/, excluding
   //    README.md and __pycache__ etc.
   //
   //    IMPORTANT: only delete-and-replace the destination if the source exists.
@@ -100,7 +142,9 @@ async function main() {
     "demo_4",
     "demo_5",
     "demo_6",
+    "demo_6_5",
     "demo_10",
+    "wrap",
   ];
   const skipNames = new Set([
     "README.md",

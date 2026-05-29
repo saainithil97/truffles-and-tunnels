@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Swiggy — SPA</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="bar">
+    <h1>Swiggy (SPA)</h1>
+    <nav class="bar">
+      <a href="?view=home" data-link>Home</a>
+      <a href="?view=cart" data-link>Cart</a>
+    </nav>
+  </header>
+  <main>
+    <p style="margin:0 0 8px 0;font-size:12px;color:#666;">Current URL (watch this update as you click):</p>
+    <span id="url-pill" class="url-pill">?view=home</span>
+    <div id="app" style="margin-top:16px;"></div>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

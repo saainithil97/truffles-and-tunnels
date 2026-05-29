@@ -1,23 +1,14 @@
-# Demo 2.5 — Your browser is holding your data
+# "Your browser is holding your data"
 
-Every site you use is quietly stashing things on your machine. Your Swiggy dark-mode preference, your half-finished checkout, the cookie that proves you're logged in — they all live in different drawers inside your browser, and each drawer has very different rules about who can see it and how long it sticks around. Open this demo, poke at the controls, and watch those drawers fill up in real time.
+Every site you use is quietly stashing things on your machine. Your Swiggy dark-mode preference, your half-finished checkout, the cookie that proves you're logged in — they all live in different drawers inside your browser, and each drawer has very different rules about who can see it and how long it sticks around.
 
 ## Setup
 
-Open **DevTools → Application**. Three panels are about to do all the talking:
+Open **DevTools → Application**. Three panels are about to do all the talking: **Cookies**, **Local Storage**, **Session Storage**.
 
-- **Cookies**
-- **Local Storage**
-- **Session Storage**
-
-In the iframe on the left, flip the **🌙 Dark mode** toggle. Watch `swiggy:theme` appear under Local Storage. Click **Next →** a couple of times in the Checkout card. Watch `swiggy:checkoutStep` appear under Session Storage.
-
-Now try a few experiments:
-
-- **Reload the iframe.** Both values survive. The page reads them on load.
-- **Open the demo URL in a new tab** (right-click the iframe → Open in new tab). Dark mode is still on (localStorage is shared across tabs). The checkout step resets to 1 (sessionStorage is per-tab).
-- **Close that new tab and reopen it.** Dark mode is *still* on. localStorage survives browser restarts.
-- For cookies, hop over to a real site you're logged into — `swiggy.com`, YouTube, GitHub — and look at the Cookies panel for that domain. Those values get attached to every request the browser makes to that domain. You never wrote code to send them.
+1. Click *inside* the iframe so DevTools targets it, not this page.
+2. Open **Local Storage** and **Session Storage** in the Application sidebar. Both should be empty until you touch the demo.
+3. Optional, for the cookies story: open any site you're logged into in another tab (`youtube.com`, `github.com`) and look at its **Cookies** panel. Every value there is being attached to every request that site makes.
 
 **Or run it locally:**
 
@@ -28,96 +19,117 @@ uvicorn server:app --host 127.0.0.1 --port 8000 --reload
 
 Then open `http://localhost:8000/`.
 
-## Concepts
+## Content
 
-**Three storage layers, three lifetimes.** Cookies live until they expire (or you wipe them). localStorage lives forever, across tabs and restarts. sessionStorage lives until the tab closes. Same browser, three completely different contracts.
+### Three drawers, three lifetimes
 
-**Cookies ride along on every HTTP request.** When your browser asks `swiggy.com` for anything — a page, an image, an API call — it automatically tacks every cookie for that domain onto the request headers. That's how the server knows it's still you. It's also why cookies are tiny (~4KB cap): you're paying that cost on every single request.
+<p class="beat__lede">Same browser, three completely different contracts. The choice between them is the whole game.</p>
 
-**localStorage and sessionStorage never touch the wire.** They're JavaScript-only stores. Nothing in them ever leaves the browser unless your code explicitly puts it in a `fetch()`. That's why you keep auth tokens out of them (the server can't see them anyway) and why they can be much bigger (~5–10MB).
+- **Cookies** — small (~4KB), and the browser automatically sends them to the server on every request to that domain.
+- **localStorage** — bigger (~5–10MB), shared across tabs, survives browser restarts. Never sent to the server.
+- **sessionStorage** — bigger (~5MB), scoped to one tab, dies when that tab closes. Never sent to the server.
 
-**Everything is per-origin.** `swiggy.com` cannot read `zomato.com`'s storage. The browser keys every drawer by origin (`scheme://host:port`). This is the foundation of web security — without it, any tab could read any other site's session.
+<figure class="beat__visual">
+<div class="storage-drawers">
+  <div class="storage-drawer">
+    <div class="storage-drawer__name">Cookies</div>
+    <div class="storage-drawer__cap">~4 KB · per domain</div>
+    <div class="storage-drawer__example">session=abc123<br/>lang=en-IN</div>
+    <div class="storage-drawer__life">Expires when told to (or you clear them)</div>
+    <div class="storage-drawer__wire storage-drawer__wire--out">→ sent on every request</div>
+  </div>
+  <div class="storage-drawer">
+    <div class="storage-drawer__name">localStorage</div>
+    <div class="storage-drawer__cap">~5–10 MB · per origin</div>
+    <div class="storage-drawer__example">swiggy:theme = "dark"</div>
+    <div class="storage-drawer__life">Forever — survives reload, new tab, restart</div>
+    <div class="storage-drawer__wire storage-drawer__wire--stay">⏺ stays in the browser</div>
+  </div>
+  <div class="storage-drawer">
+    <div class="storage-drawer__name">sessionStorage</div>
+    <div class="storage-drawer__cap">~5 MB · per tab</div>
+    <div class="storage-drawer__example">swiggy:checkoutStep = 2</div>
+    <div class="storage-drawer__life">Dies when the tab closes</div>
+    <div class="storage-drawer__wire storage-drawer__wire--stay">⏺ stays in the browser</div>
+  </div>
+</div>
+</figure>
 
-**Pick the right drawer for the job.** Auth → cookie (server needs it). UI preferences → localStorage (persists; only the browser cares). In-flight form/checkout state → sessionStorage (don't lose progress on refresh, don't leak it to other tabs).
+<p class="try-live"><strong>↻ Try it live:</strong> flip the dark-mode toggle, then click <strong>Next →</strong> a couple of times. Reload the iframe — both values survive. Now open the demo in a new tab: dark mode is still on (localStorage is shared), but the checkout step is back to 1 (sessionStorage is per-tab).</p>
 
-## Diagrams
+### Only cookies travel
 
-**The flow when you flip a toggle:**
+<p class="beat__lede">You never wrote code to send your login cookie. The browser did it for you — and it does it on every single request. localStorage and sessionStorage are the opposite: JavaScript-only, never on the wire.</p>
 
-```mermaid
-flowchart LR
-    U([You click 🌙]) --> JS[app.js handler]
-    JS -->|localStorage.setItem| LS[(Local Storage<br/>swiggy:theme = dark)]
-    LS -.survives reload, new tab, restart.-> B[Browser keeps it]
-    JS -.never sends.-> S[(Swiggy server)]
-    style LS fill:#fc8019,color:#fff,stroke:#a3a3a3
-    style S fill:#f5f5f5,stroke:#a3a3a3
+- When the browser asks `swiggy.com` for *anything* — a page, an image, an API call — it automatically tacks every cookie for that domain onto the request headers. That's how the server knows it's still you across requests. HTTP itself is stateless; cookies are the workaround.
+- The ~4 KB cap matters because you pay it on every request. A bloated cookie taxes every page load and every API call.
+- The server has no API to read your `localStorage`. Auth tokens in localStorage are still readable by any script on the page, and the server can't see them anyway — they'd have to be attached manually to each `fetch()`.
+
+```http
+GET /restaurants HTTP/1.1
+Host: swiggy.com
+Cookie: session=abc123; lang=en-IN     ← browser added this automatically
 ```
 
-Compare that with what a cookie does on a normal page load:
+### Everything is per-origin
 
-```mermaid
-sequenceDiagram
-    participant You as You
-    participant Browser
-    participant Server as swiggy.com
-    You->>Browser: visit swiggy.com
-    Browser->>Server: GET / (Cookie: session=abc123)
-    Note right of Browser: cookie attached<br/>automatically
-    Server-->>Browser: 200 OK (knows it's you)
-    Browser->>Server: GET /restaurants (Cookie: session=abc123)
-    Server-->>Browser: your personalised list
-```
+<p class="beat__lede">An origin is <code>scheme://host:port</code>. Every drawer is keyed by it.</p>
 
-**Three drawers, side by side:**
+- `https://swiggy.com` cannot read `https://zomato.com`'s storage. Different host → different drawer.
+- `http://swiggy.com` cannot read `https://swiggy.com`'s storage. Different scheme → different drawer.
+- `swiggy.com:3000` cannot read `swiggy.com:8000`'s storage. Different port → different drawer.
 
-<svg width="600" height="240" xmlns="http://www.w3.org/2000/svg" font-family="ui-sans-serif" font-size="12">
-  <rect width="600" height="240" fill="#ffffff"/>
+This is the **same-origin policy** — the foundation of web security. Without it, any tab could read any other site's session. We come back to it in **Demo 10**.
 
-  <!-- Cookie box -->
-  <rect x="20" y="40" width="170" height="140" rx="10" fill="#f5f5f5" stroke="#a3a3a3"/>
-  <text x="105" y="62" text-anchor="middle" font-weight="700" fill="#1a1a1a">Cookies</text>
-  <text x="105" y="82" text-anchor="middle" fill="#6b6b6b">~4KB</text>
-  <text x="105" y="100" text-anchor="middle" fill="#1a1a1a">session=abc123</text>
-  <text x="105" y="118" text-anchor="middle" fill="#1a1a1a">lang=en-IN</text>
-  <text x="105" y="150" text-anchor="middle" fill="#6b6b6b">expires when</text>
-  <text x="105" y="166" text-anchor="middle" fill="#6b6b6b">told to</text>
-  <!-- arrow to server -->
-  <line x1="190" y1="110" x2="240" y2="110" stroke="#fc8019" stroke-width="2"/>
-  <polygon points="240,110 232,106 232,114" fill="#fc8019"/>
-  <text x="215" y="102" text-anchor="middle" fill="#fc8019" font-weight="700">to server</text>
+### Pick the right drawer
 
-  <!-- Server pill -->
-  <rect x="245" y="92" width="60" height="36" rx="18" fill="#fc8019" stroke="#fc8019"/>
-  <text x="275" y="115" text-anchor="middle" fill="#ffffff" font-weight="700">server</text>
+<p class="beat__lede">The cheat sheet — match the data to the contract.</p>
 
-  <!-- localStorage box -->
-  <rect x="320" y="40" width="120" height="140" rx="10" fill="#f5f5f5" stroke="#a3a3a3"/>
-  <text x="380" y="62" text-anchor="middle" font-weight="700" fill="#1a1a1a">localStorage</text>
-  <text x="380" y="82" text-anchor="middle" fill="#6b6b6b">~5–10MB</text>
-  <text x="380" y="104" text-anchor="middle" fill="#1a1a1a">swiggy:theme</text>
-  <text x="380" y="120" text-anchor="middle" fill="#1a1a1a">= "dark"</text>
-  <text x="380" y="148" text-anchor="middle" fill="#6b6b6b">forever</text>
-  <text x="380" y="164" text-anchor="middle" fill="#6b6b6b">🔒 sealed</text>
+- **Auth tokens** → cookie (ideally `HttpOnly; Secure; SameSite=Lax`). The server needs it on every request, and `HttpOnly` keeps JavaScript from stealing it.
+- **UI preferences** (dark mode, language, "don't show this banner again") → localStorage. Persistent, cheap, only the browser cares.
+- **In-flight wizard state** (multi-step checkout, unsaved draft) → sessionStorage. Survives refresh, doesn't leak to other tabs.
+- **A 2 MB JSON blob you found yourself stuffing into a cookie** → stop. You wanted localStorage.
 
-  <!-- sessionStorage box -->
-  <rect x="460" y="40" width="120" height="140" rx="10" fill="#f5f5f5" stroke="#a3a3a3"/>
-  <text x="520" y="62" text-anchor="middle" font-weight="700" fill="#1a1a1a">sessionStorage</text>
-  <text x="520" y="82" text-anchor="middle" fill="#6b6b6b">~5MB</text>
-  <text x="520" y="104" text-anchor="middle" fill="#1a1a1a">swiggy:</text>
-  <text x="520" y="120" text-anchor="middle" fill="#1a1a1a">checkoutStep = 2</text>
-  <text x="520" y="148" text-anchor="middle" fill="#6b6b6b">dies with tab</text>
-  <text x="520" y="164" text-anchor="middle" fill="#6b6b6b">🔒 sealed</text>
+### There are more drawers
 
-  <!-- caption -->
-  <text x="300" y="220" text-anchor="middle" fill="#6b6b6b">Only the cookie box has an arrow leaving the browser.</text>
-</svg>
+<p class="beat__lede">Three is the headline. The real list is longer.</p>
+
+- **IndexedDB** — a real database in the browser. Async API, structured data, ~hundreds of MB. What you use when you need offline-capable apps or to cache large query results.
+- **Cache API** — what service workers use to store full HTTP responses for offline.
+- **OPFS** (Origin Private File System) — actual files on disk, scoped to the origin. New, increasingly used by things like SQLite-in-the-browser.
+
+The cookie / localStorage / sessionStorage trio is the entry point, not the whole story.
+
+### What else the browser gives you
+
+<p class="beat__lede">localStorage is one of about a dozen things the browser hands you for free. Before you reach for a library, check whether the platform already does it. It usually does.</p>
+
+The short list you'll meet in the homework or in your first job:
+
+- **fetch** — the modern way to make HTTP requests. `fetch('/api/restaurants').then(r => r.json())`. Reach for it any time you need to talk to a backend.
+- **navigator.geolocation** — how Swiggy knows your location the moment you open the app. The browser asks the user for permission and hands the page their coordinates.
+- **IntersectionObserver** — tells you when an element scrolls into the viewport. This is how a restaurant list lazy-loads images: don't download the picture until the card is about to be on screen.
+- **WebSocket** — a two-way pipe that stays open. Live order tracking, support chat, stock tickers — anything the server needs to push to the client the moment it happens, no refresh required.
+- **Notifications** — the "Your order is on the way" banner that pops even when the tab isn't focused. One API call.
+- **Service Worker** — a script that sits between your app and the network, caches everything, and serves the cached app when the user goes through a tunnel. This is what makes "offline mode" possible.
+- **Web Worker** — moves heavy computation (sorting 10,000 restaurants, parsing a giant CSV) off the main thread so the UI stays responsive instead of freezing. Without it, a one-second loop in JS is a one-second freeze in the page.
+- **Canvas / WebGL** — a pixel drawing surface. The delivery map, charts, dataviz, games.
+- **History API** — change the URL without reloading the page. The thing that powers single-page apps; **Demo 6.5** is built on this, and **Demo 6.6** shows how Next.js wraps it into one `<Link>` component.
+
+You don't need to learn all of these today. Bookmark this list and reach for it when you have a feature to build.
+
+### Anyone can edit any drawer
+
+<p class="beat__lede">You can change every value in DevTools right now. So can your users.</p>
+
+- Open Application → Local Storage and double-click any row. Set `swiggy:theme = "light"`. Reload. The page believed you.
+- Storage is **never** a source of truth for anything that matters. It's a hint.
+- The server must re-check anything sensitive — permissions, prices, ownership. Treat browser storage like form input from a stranger.
 
 ## Takeaways
 
-- **Auth tokens belong in cookies** (ideally `HttpOnly; Secure; SameSite`), because the server needs them on every request and JavaScript shouldn't be able to steal them.
-- **UI preferences belong in localStorage** — dark mode, language, "don't show this banner again." Persistent, no server round-trip, cheap to read.
-- **In-flight state belongs in sessionStorage** — a multi-step checkout, an unsaved draft, a wizard. Refresh is safe; leaking into other tabs is not.
-- **Never trust storage as a source of truth for anything sensitive.** A user can edit any of these from the Console. The server must re-check anything that matters.
-- **Watch the size.** Cookies are sent on every request — keep them tiny. If you find yourself stuffing JSON into a cookie, you wanted localStorage.
-- **Storage is per-origin.** Different subdomain, different port, different scheme = different drawer. Plan your origins before you plan your storage keys.
+- **Three drawers, three lifetimes.** Cookies until they expire; localStorage forever; sessionStorage until the tab closes.
+- **Only cookies travel.** localStorage and sessionStorage never touch the network unless your code explicitly puts them on it.
+- **Auth → cookie, UI prefs → localStorage, in-flight state → sessionStorage.** Match the data to the contract.
+- **Per-origin is the law.** Different scheme/host/port = different drawer. This is what stops every site from reading every other site.
+- **Storage is editable.** Trust nothing from the browser side without server re-validation.

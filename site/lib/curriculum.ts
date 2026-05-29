@@ -26,6 +26,11 @@ export type Demo = {
 
   // For kind === "nextjs-separate": env var that holds the deployed URL.
   iframeUrlEnvVar?: string;
+  // For kind === "nextjs-separate": optional path suffix appended to the env
+  // var's URL. Used when multiple site entries deep-link into different routes
+  // of the same deployment. If iframeEntries are also provided, each entry's
+  // `path` is treated as a suffix the same way.
+  iframePathSuffix?: string;
 
   // For runbook-only: a short "what you do here" hint shown in place of the iframe.
   runbookHint?: string;

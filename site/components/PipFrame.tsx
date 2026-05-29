@@ -1,24 +1,30 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { Demo } from "@/lib/curriculum";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
-// A draggable, resizable, floating frame around the live demo. Lives above the
-// page content so the presenter can park it wherever DevTools isn't.
+// A draggable, resizable, floating browser-window over the live demo.
 //
-// - Drag the title bar to move.
+// Layout (top→bottom):
+//   1. Chrome bar       — pulsing "live" indicator, then reload / open / close
+//   2. Address bar      — URL pill (and tabs strip when the demo has > 1 entry)
+//   3. Iframe body      — the actual demo, fills remaining space
+//   4. iframeNote       — optional tip strip
+//
+// - Drag the chrome bar to move.
 // - Drag the SE corner to resize.
-// - 4-corner snap buttons (TL/TR/BL/BR).
 // - Hide button collapses to a small "Show demo" pill at bottom-right.
 // - Position, size and visibility persist to localStorage per origin.
 
 type Box = { x: number; y: number; w: number; h: number };
 
-const MIN_W = 280;
-const MIN_H = 200;
+const MIN_W = 320;
+const MIN_H = 240;
 const DEFAULT_W = 480;
-const DEFAULT_H = 360;
+const DEFAULT_H = 380;
 const MARGIN = 16;
 
 const STORAGE_KEY = "tnt:pip-frame:v1";
@@ -26,12 +32,23 @@ const STORAGE_KEY = "tnt:pip-frame:v1";
 type Persisted = { box: Box; hidden: boolean };
 
 export function PipFrame({
-  title,
-  children,
+  item,
+  initialUrl,
+  entries: entriesProp,
 }: {
-  title: string;
-  children: React.ReactNode;
+  item: Demo;
+  initialUrl: string;
+  entries?: { label: string; path: string }[] | null;
 }) {
+  // When the page resolves entries to absolute URLs (e.g. nextjs-separate
+  // demos with iframePathSuffix), it passes them via entriesProp. Otherwise
+  // fall back to the raw item.iframeEntries (embedded demos with relative
+  // paths under /live-demos/).
+  const entries =
+    entriesProp ?? item.iframeEntries ?? [{ label: "Live demo", path: initialUrl }];
+  const [activePath, setActivePath] = useState<string>(initialUrl);
+  const [reloadKey, setReloadKey] = useState<number>(0);
+
   const [mounted, setMounted] = useState(false);
   const [box, setBox] = useState<Box>(() => ({
     x: 0,
@@ -46,7 +63,6 @@ export function PipFrame({
     setMounted(true);
     const saved = readPersisted();
     if (saved) {
-      // Clamp the saved box back inside the current viewport in case it shrank.
       setBox(clampToViewport(saved.box));
       setHidden(saved.hidden);
     } else {
@@ -59,7 +75,6 @@ export function PipFrame({
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  // Persist on changes (after mount).
   useEffect(() => {
     if (!mounted) return;
     writePersisted({ box, hidden });
@@ -87,7 +102,6 @@ export function PipFrame({
         }),
       );
     } else {
-      // resize: grow/shrink from SE corner
       const nextW = Math.max(MIN_W, d.startBox.w + dx);
       const nextH = Math.max(MIN_H, d.startBox.h + dy);
       setBox(
@@ -110,7 +124,6 @@ export function PipFrame({
 
   const startDrag = (mode: "move" | "resize") =>
     (e: React.PointerEvent) => {
-      // Only respond to the primary button.
       if (e.button !== 0) return;
       e.preventDefault();
       e.stopPropagation();
@@ -125,14 +138,7 @@ export function PipFrame({
       document.body.style.cursor = mode === "move" ? "grabbing" : "nwse-resize";
     };
 
-  const snapToCorner = (corner: "tl" | "tr" | "bl" | "br") => {
-    setBox((b) => snap(b, corner));
-  };
-
-  if (!mounted) {
-    // Avoid SSR/CSR mismatch (we use window in defaults).
-    return null;
-  }
+  if (!mounted) return null;
 
   if (hidden) {
     return (
@@ -151,10 +157,12 @@ export function PipFrame({
     );
   }
 
+  const reloadIframe = () => setReloadKey((k) => k + 1);
+
   return (
     <div
       role="dialog"
-      aria-label={title}
+      aria-label={`Live demo · ${item.shortTitle}`}
       className={cn(
         "fixed z-50 flex flex-col overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow-2xl ring-1 ring-black/10",
       )}
@@ -165,46 +173,83 @@ export function PipFrame({
         height: box.h,
       }}
     >
-      {/* Title bar — drag handle */}
+      {/* 1. Chrome bar — drag handle */}
       <div
         onPointerDown={startDrag("move")}
-        className="flex h-8 shrink-0 cursor-grab select-none items-center gap-2 border-b border-border bg-muted/60 px-2 active:cursor-grabbing"
+        className="flex h-9 shrink-0 cursor-grab select-none items-center gap-2.5 border-b border-border bg-muted/60 px-2.5 active:cursor-grabbing"
       >
-        <span aria-hidden className="text-muted-foreground">
-          <GripIcon />
-        </span>
-        <span className="truncate text-xs font-medium text-muted-foreground">
-          {title}
-        </span>
+        <div
+          className="flex shrink-0 items-center gap-1.5"
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <span aria-hidden className="pip-live-dot" />
+          <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground/80">
+            Live
+          </span>
+        </div>
 
-        {/* Snap buttons */}
-        <div className="ml-auto flex items-center gap-0.5 text-muted-foreground">
-          <CornerButton corner="tl" onClick={() => snapToCorner("tl")} />
-          <CornerButton corner="tr" onClick={() => snapToCorner("tr")} />
-          <CornerButton corner="bl" onClick={() => snapToCorner("bl")} />
-          <CornerButton corner="br" onClick={() => snapToCorner("br")} />
-          <button
-            type="button"
+        <div
+          className="ml-auto flex shrink-0 items-center gap-0.5"
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <ChromeButton
+            label="Reload demo"
+            onClick={reloadIframe}
+          >
+            <ReloadIcon />
+          </ChromeButton>
+          <ChromeButton
+            label="Open in new tab"
+            href={activePath}
+          >
+            <ExternalLinkIcon />
+          </ChromeButton>
+          <ChromeButton
+            label="Hide live demo"
             onClick={() => setHidden(true)}
-            aria-label="Hide live demo"
-            title="Hide"
-            className="ml-1 inline-flex size-5 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             <CloseIcon />
-          </button>
+          </ChromeButton>
         </div>
       </div>
 
-      {/* Frame body — the DemoFrame slot. min-h-0 so it can shrink. */}
-      <div className="relative flex min-h-0 flex-1">
-        {/* Wrap children in a layer that fills the available space. The
-            DemoFrame itself sets its own iframe height; we override it via
-            a flexbox so it stretches to the PIP body. */}
-        <div className="flex flex-1 flex-col [&>*]:flex-1 [&_iframe]:h-full">
-          {children}
+      {/* 2. Address bar (URL pill + tabs strip when multi-entry) */}
+      <div className="flex shrink-0 flex-col gap-1.5 border-b border-border bg-muted/30 px-2.5 py-1.5">
+        <div className="flex h-6 items-center gap-1.5 truncate rounded-md border border-border bg-background px-2 font-mono text-[11px] text-muted-foreground">
+          <LockIcon />
+          <span className="truncate">{formatUrl(activePath)}</span>
         </div>
+        {entries.length > 1 && (
+          <Tabs
+            value={activePath}
+            onValueChange={(v) => {
+              if (typeof v === "string") {
+                setActivePath(v);
+                reloadIframe();
+              }
+            }}
+          >
+            <TabsList className="h-7">
+              {entries.map((e) => (
+                <TabsTrigger key={e.path} value={e.path} className="text-xs">
+                  {e.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        )}
+      </div>
 
-        {/* Resize handle, SE corner */}
+      {/* 3. Iframe body */}
+      <div className="relative flex min-h-0 flex-1">
+        <iframe
+          key={`${activePath}::${reloadKey}`}
+          src={activePath}
+          className="block h-full w-full flex-1 bg-white"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+          title={item.title}
+        />
+
         <div
           onPointerDown={startDrag("resize")}
           className="absolute bottom-0 right-0 size-4 cursor-nwse-resize"
@@ -213,60 +258,112 @@ export function PipFrame({
           <ResizeIcon />
         </div>
       </div>
+
+      {/* 4. Optional note strip */}
+      {item.iframeNote && (
+        <div className="shrink-0 border-t border-border bg-muted px-3 py-1.5 text-[11px] text-muted-foreground">
+          💡 {item.iframeNote}
+        </div>
+      )}
     </div>
   );
 }
 
-function CornerButton({
-  corner,
+function ChromeButton({
+  label,
   onClick,
+  href,
+  children,
 }: {
-  corner: "tl" | "tr" | "bl" | "br";
-  onClick: () => void;
+  label: string;
+  onClick?: () => void;
+  href?: string;
+  children: React.ReactNode;
 }) {
+  const cls =
+    "inline-flex size-6 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground";
+  if (href) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noreferrer noopener"
+        aria-label={label}
+        title={label}
+        className={cls}
+      >
+        {children}
+      </a>
+    );
+  }
   return (
     <button
       type="button"
       onClick={onClick}
-      aria-label={`Snap to ${cornerLabel(corner)} corner`}
-      title={`Snap ${cornerLabel(corner)}`}
-      className="inline-flex size-5 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
+      aria-label={label}
+      title={label}
+      className={cls}
     >
-      <CornerGlyph corner={corner} />
+      {children}
     </button>
   );
 }
 
-function cornerLabel(c: "tl" | "tr" | "bl" | "br") {
-  return c === "tl" ? "top-left" : c === "tr" ? "top-right" : c === "bl" ? "bottom-left" : "bottom-right";
-}
-
-function CornerGlyph({ corner }: { corner: "tl" | "tr" | "bl" | "br" }) {
-  const cx = corner.includes("l") ? 4 : 12;
-  const cy = corner.startsWith("t") ? 4 : 12;
+function LockIcon() {
   return (
     <svg
-      width="16"
-      height="16"
+      width="10"
+      height="10"
       viewBox="0 0 16 16"
       fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
       aria-hidden
+      className="shrink-0 opacity-70"
     >
-      <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.2" />
-      <rect x={cx - 2} y={cy - 2} width="4" height="4" fill="currentColor" rx="1" />
+      <rect x="3.5" y="7" width="9" height="6" rx="1.2" />
+      <path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" strokeLinecap="round" />
     </svg>
   );
 }
 
-function GripIcon() {
+function ReloadIcon() {
   return (
-    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
-      <circle cx="5" cy="4" r="1" />
-      <circle cx="11" cy="4" r="1" />
-      <circle cx="5" cy="8" r="1" />
-      <circle cx="11" cy="8" r="1" />
-      <circle cx="5" cy="12" r="1" />
-      <circle cx="11" cy="12" r="1" />
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M3 12a9 9 0 0 1 15.5-6.3L21 8" />
+      <path d="M21 3v5h-5" />
+      <path d="M21 12a9 9 0 0 1-15.5 6.3L3 16" />
+      <path d="M3 21v-5h5" />
+    </svg>
+  );
+}
+
+function ExternalLinkIcon() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M15 3h6v6" />
+      <path d="M10 14 21 3" />
+      <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5" />
     </svg>
   );
 }
@@ -285,6 +382,19 @@ function ResizeIcon() {
       <path d="M14 6 6 14M14 10l-4 4" stroke="currentColor" strokeOpacity="0.5" strokeWidth="1.2" strokeLinecap="round" />
     </svg>
   );
+}
+
+function formatUrl(input: string): string {
+  // Resolve relative paths against the current origin so the pill reads like
+  // a real omnibox: "localhost:3000/live-demos/demo_1/index.html".
+  const origin = typeof window === "undefined" ? "" : window.location.origin;
+  const resolved = input.startsWith("/") ? `${origin}${input}` : input;
+  try {
+    const u = new URL(resolved);
+    return `${u.host}${u.pathname}${u.search}`;
+  } catch {
+    return input;
+  }
 }
 
 // ---- helpers ------------------------------------------------------------
@@ -308,18 +418,6 @@ function clampToViewport(b: Box): Box {
   const x = Math.min(Math.max(MARGIN, b.x), window.innerWidth - w - MARGIN);
   const y = Math.min(Math.max(MARGIN, b.y), window.innerHeight - h - MARGIN);
   return { x, y, w, h };
-}
-
-function snap(b: Box, corner: "tl" | "tr" | "bl" | "br"): Box {
-  if (typeof window === "undefined") return b;
-  const right = corner.endsWith("r");
-  const bottom = corner.startsWith("b");
-  return {
-    w: b.w,
-    h: b.h,
-    x: right ? Math.max(MARGIN, window.innerWidth - b.w - MARGIN) : MARGIN,
-    y: bottom ? Math.max(MARGIN, window.innerHeight - b.h - MARGIN) : MARGIN,
-  };
 }
 
 function readPersisted(): Persisted | null {

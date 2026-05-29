@@ -8,9 +8,8 @@ import {
   findDay3Item,
   type Demo,
 } from "@/lib/curriculum";
-import { parseMarkdown } from "@/lib/markdown";
+import { parseMarkdown, type Section } from "@/lib/markdown";
 import { Markdown } from "@/components/Markdown";
-import { DemoFrame } from "@/components/DemoFrame";
 import { PipFrame } from "@/components/PipFrame";
 import { SectionDeck } from "@/components/SectionDeck";
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,9 +38,17 @@ export default async function DemoPage({
   if (!item || slug === "verbal-segments") notFound();
 
   const markdown = readMarkdownSource(item.contentFile);
-  const { intro, sections } = parseMarkdown(markdown);
+  // We only render the H2 sections. Any leading hook paragraph in the README
+  // is intentionally dropped — the breadcrumb + H1 + Concepts deck is enough.
+  const { sections: parsedSections } = parseMarkdown(markdown);
+  const sourceSection = buildSourceSection(item);
+  const sections = sourceSection ? [...parsedSections, sourceSection] : parsedSections;
   const iframeUrl = resolveIframeUrl(item);
+  const resolvedEntries = resolveIframeEntries(item);
   const { prev, next } = neighborSlugs(slug);
+  // Breadcrumb shows just the demo number ("Demo 1", "Demo 2.5", "Demos 7 / 8 / 8.5"),
+  // and the H1 drops the leading "Demo N — " prefix so it doesn't say it twice.
+  const { crumbLabel, headline } = splitDemoTitle(item);
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -57,37 +64,27 @@ export default async function DemoPage({
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>{item.shortTitle}</BreadcrumbPage>
+            <BreadcrumbPage>{crumbLabel}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
 
-      {/* Title block */}
-      <header className="border-b border-border pb-5">
-        <div className="font-mono text-xs font-semibold uppercase tracking-wider text-primary">
-          Day 3 · {item.shortTitle}
-        </div>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-          {item.title}
+      {/* Title block — breadcrumb already says "Demo N", so the H1 carries just
+          the heading itself. Concepts is one scroll below, not three reps in. */}
+      <header>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+          {headline}
         </h1>
-        <p className="mt-3 max-w-3xl text-base text-muted-foreground">
-          {item.summary}
-        </p>
       </header>
 
-      {/* Intro paragraph(s) — always visible above the deck */}
-      {intro && (
-        <section className="mt-6">
-          <div className="markdown text-base">
-            <Markdown source={intro} />
-          </div>
-        </section>
+      {/* Inline "demo status" callout only when it's actually informative:
+          runbook-only demos (no iframe) and not-yet-deployed Next.js demos.
+          For embedded demos with a working iframe we drop the callout — the
+          floating PIP window self-announces. */}
+      {(item.kind === "runbook-only" ||
+        (item.kind === "nextjs-separate" && !iframeUrl)) && (
+        <DemoStatusCallout item={item} iframeUrl={iframeUrl} />
       )}
-
-      {/* Inline "demo status" callout for runbook-only and not-yet-deployed
-          demos. The PipFrame overlay only shows when there's something to
-          actually iframe. */}
-      <DemoStatusCallout item={item} iframeUrl={iframeUrl} />
 
       {/* Section deck — paginates Setup / Concepts / Diagrams / Takeaways. */}
       {sections.length > 0 && (
@@ -154,12 +151,60 @@ export default async function DemoPage({
       {/* Floating PIP iframe overlay. Only rendered when there's a real iframe
           to show; runbook-only and undeployed demos get the inline callout. */}
       {iframeUrl && (
-        <PipFrame title={`Live demo · ${item.shortTitle}`}>
-          <DemoFrame item={item} initialUrl={iframeUrl} />
-        </PipFrame>
+        <PipFrame
+          item={item}
+          initialUrl={iframeUrl}
+          entries={resolvedEntries}
+        />
       )}
     </div>
   );
+}
+
+// Split `shortTitle`/`title` into the demo-number label and the headline.
+//
+//   shortTitle "Demo 1 — The request lifecycle"     → crumbLabel "Demo 1"
+//   title      'Demo 1 — "What just happened?"'     → headline   '"What just happened?"'
+//   shortTitle "Demos 7 / 8 / 8.5 — Rendering …"    → crumbLabel "Demos 7 / 8 / 8.5"
+//
+// Falls back to the full strings if no " — " separator is found.
+function splitDemoTitle(item: Demo): { crumbLabel: string; headline: string } {
+  const sep = " — ";
+  const shortIdx = item.shortTitle.indexOf(sep);
+  const crumbLabel =
+    shortIdx === -1 ? item.shortTitle : item.shortTitle.slice(0, shortIdx);
+  const titleIdx = item.title.indexOf(sep);
+  const headline =
+    titleIdx === -1 ? item.title : item.title.slice(titleIdx + sep.length);
+  return { crumbLabel, headline };
+}
+
+// Reads the demo's source files (staged by copy-content.mjs into
+// content/day_3/<id>/code/) and returns a synthetic Section. The section
+// carries a structured `files` payload so SectionDeck can render it as a
+// tabbed code viewer — one tab per file — instead of stacking every file
+// into a long scrollable column. `body` becomes a short lead-in paragraph
+// shown above the tab strip. Returns null if the demo has no sourceFiles.
+function buildSourceSection(item: Demo): Section | null {
+  if (!item.sourceFiles?.length) return null;
+  const files = [];
+  for (const { name, language } of item.sourceFiles) {
+    const relPath = path.join("day_3", item.id, "code", name);
+    const abs = path.join(process.cwd(), "content", relPath);
+    let code: string;
+    try {
+      code = fs.readFileSync(abs, "utf8").replace(/\s+$/, "");
+    } catch {
+      code = `// Could not read content/${relPath}. Did the prebuild script run?`;
+    }
+    files.push({ name, language, code });
+  }
+  return {
+    id: "source",
+    heading: "Source",
+    body: "The demo's full source — exactly what the iframe runs. Each file is a separate request in the waterfall we just walked through. Click a tab to switch files.",
+    files,
+  };
 }
 
 function readMarkdownSource(relPath: string): string {
@@ -174,7 +219,35 @@ function readMarkdownSource(relPath: string): string {
 function resolveIframeUrl(item: Demo): string | null {
   if (item.kind === "embedded") return item.iframePath ?? null;
   if (item.kind === "nextjs-separate" && item.iframeUrlEnvVar) {
-    return process.env[item.iframeUrlEnvVar] ?? null;
+    const base = process.env[item.iframeUrlEnvVar];
+    if (!base) return null;
+    const suffix = item.iframePathSuffix ?? "";
+    return joinUrl(base, suffix);
+  }
+  return null;
+}
+
+// Joins a base URL and a path suffix, normalizing the slash boundary so
+// "https://foo.com/" + "/ssg" works as well as "https://foo.com" + "ssg".
+function joinUrl(base: string, suffix: string): string {
+  if (!suffix) return base;
+  const baseTrim = base.replace(/\/+$/, "");
+  const suffixTrim = suffix.startsWith("/") ? suffix : `/${suffix}`;
+  return `${baseTrim}${suffixTrim}`;
+}
+
+function resolveIframeEntries(
+  item: Demo,
+): { label: string; path: string }[] | null {
+  if (!item.iframeEntries?.length) return null;
+  if (item.kind === "embedded") return item.iframeEntries;
+  if (item.kind === "nextjs-separate" && item.iframeUrlEnvVar) {
+    const base = process.env[item.iframeUrlEnvVar];
+    if (!base) return null;
+    return item.iframeEntries.map((e) => ({
+      label: e.label,
+      path: joinUrl(base, e.path),
+    }));
   }
   return null;
 }

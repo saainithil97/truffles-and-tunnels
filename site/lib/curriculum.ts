@@ -319,6 +319,19 @@ export const day3Demos: Demo[] = [
     ],
   },
   {
+    id: "demo_6_8",
+    slug: "demo_6_8",
+    shortTitle: "Demo 6.8 — How Next works with React",
+    title: 'Demo 6.8 — "Next is a host; React is the engine"',
+    summary:
+      "The layered model: Next.js → React DOM → React. Where each layer runs (build, server, browser), what 'use client' really means at the boundary, and why every React skill still applies inside Next. The map you'll use through Demos 7, 8, and 8.5.",
+    readmeSourcePath: "day_3/demo_6_8/README.md",
+    contentFile: "day_3/demo_6_8.md",
+    kind: "runbook-only",
+    runbookHint:
+      "No iframe — this is a 5-minute reading between Demo 6.7 and Demo 7. The layered diagram in the runbook is the whole picture.",
+  },
+  {
     id: "demo_7",
     slug: "demo_7",
     shortTitle: "Demo 7 — SSG, SSR, CSR",
@@ -445,7 +458,7 @@ export const day3Parts: DayPart[] = [
     heading: "Part 3 — React and the modern frontend",
     demoSlugs: [
       "demo_6", "demo_6_2", "demo_6_3", "demo_6_5",
-      "demo_6_6", "demo_6_7", "verbal-segments",
+      "demo_6_6", "demo_6_7", "demo_6_8", "verbal-segments",
     ],
   },
   {

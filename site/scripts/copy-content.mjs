@@ -37,6 +37,7 @@ const markdownDemos = [
   { src: "demo_6_3/README.md", dest: "demo_6_3.md" },
   { src: "demo_6_6/README.md", dest: "demo_6_6.md" },
   { src: "demo_6_7/README.md", dest: "demo_6_7.md" },
+  { src: "demo_6_8/README.md", dest: "demo_6_8.md" },
   { src: "demo_7_8_nextjs/demo_7.md", dest: "demo_7.md" },
   { src: "demo_7_8_nextjs/demo_8.md", dest: "demo_8.md" },
   { src: "demo_7_8_nextjs/demo_8_5.md", dest: "demo_8_5.md" },

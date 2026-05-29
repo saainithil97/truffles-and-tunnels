@@ -65,6 +65,10 @@ stays on the course spine — the Swiggy restaurant card from Day 1.
   React + Next), real lodash size numbers (~70 KB vs ~2 KB on one import line),
   a mocked `next build` routes table, and `React.lazy` in five lines. Sets up
   why Demo 8's "0 KB JS" badge matters.
+- **[Demo 6.8 — "Next is a host; React is the engine"](demo_6_8/README.md)** —
+  the layered model. Next.js → React DOM → React. Where each layer runs (build,
+  server, browser), what `'use client'` does at the boundary, and why every
+  React skill still applies inside Next. The map for Demos 7, 8, and 8.5.
 - **[Verbal segments](verbal-segments.md)** — the spoken interludes: the Tooling
   Break (Node / npm / bundling), the Platform Tour (browser APIs), and CSS &
   Styling, plus the homework brief and the 60-second wrap-up recap.

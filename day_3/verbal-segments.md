@@ -14,6 +14,50 @@ Open `node_modules` once and you'll see 50,000 files for a basic app. Don't pani
 
 **Bundling.** That's its own demo — see **Demo 6.7 — "What a bundler actually does"** in Part 3 for the bundler story (tree shaking, code splitting, the `next build` route table, how plain React + Vite handles it, and why Demo 8's "0 KB JS" badge is a bundle story). The headline: a bundler walks your `import` graph, compiles JSX, splits per route, drops unused code, and produces the handful of files the browser actually loads.
 
+## Other browser APIs — the platform tour
+
+The browser is not just a rendering engine. It ships a large collection of built-in APIs — things your JavaScript can call without installing anything. Most workshops skip this list because there are too many to demo. So instead: one paragraph per API, one concrete use case, and a Swiggy example where it fits. Read this once, then bookmark it for the day you need one.
+
+- **`fetch`** — the modern way to make an HTTP request from JavaScript. `fetch('/api/restaurants').then(r => r.json())` is all you need. Reach for it whenever the page needs to talk to a backend *after* first load — loading more restaurants, submitting an order, refreshing a feed. It replaces the older `XMLHttpRequest`, which was verbose and callback-heavy.
+
+- **`IntersectionObserver`** — tells you when an element scrolls into the viewport. This is exactly how a 500-restaurant listing lazy-loads images: don't download the photo until the card is about to appear on screen. One observer, one callback, no scroll-event listeners, no layout thrashing.
+
+- **`ResizeObserver`** — tells you when an element changes size. Useful when a custom component needs to re-layout itself in response to its container shrinking — for example, a restaurant card that switches from a horizontal to a vertical layout at a certain width. Cleaner than polling or listening to `window.resize`.
+
+- **`history` (pushState / popstate)** — change the URL bar without reloading the page. `history.pushState({}, '', '/restaurants/meghana-foods')` rewrites the URL; the `popstate` event fires when the user hits Back. This is the foundation of every single-page app. **Demo 6.5** is built on it directly; **Demo 6.6** (Next.js) wraps it into a `<Link>` component so you never call it by hand.
+
+- **Web Workers** — move heavy computation off the main thread. If sorting 10,000 restaurant results by distance, parsing a large CSV, or running an image filter is making the UI freeze, hand the work to a Worker. It runs in a separate thread and posts results back when done. The page stays responsive.
+
+- **`requestAnimationFrame`** — the right way to run an animation loop. Instead of `setInterval(draw, 16)` — which fights the display refresh — `requestAnimationFrame` calls your function right before the browser paints the next frame. Animations are smooth; you never overdraw.
+
+- **`navigator.geolocation`** — how Swiggy knows your delivery address the moment you open the app. The browser prompts for permission, then hands your page a latitude and longitude. One API call; no GPS hardware to manage.
+
+- **WebSocket** — a two-way pipe that stays open between browser and server. Once connected, either side can push a message at any time. Live order tracking ("your rider is 2 minutes away"), support chat, live score updates — anything where waiting for a user action to trigger a request is too slow.
+
+- **Notifications** — the "Your order is on the way" banner that pops in the corner even when the tab is in the background. The browser asks permission once; after that your page can push a notification at any time.
+
+- **Service Worker** — a script that sits between your app and the network and intercepts every request. It can serve assets from a local cache when the user is offline, pre-cache routes in the background, and handle push notifications. This is the technology behind "install to home screen" and airline apps that work in airplane mode.
+
+- **Canvas / WebGL** — a pixel-drawing surface. The delivery map is Canvas (or a WebGL-accelerated map library built on Canvas). Charts, image filters, and browser games all live here.
+
+You don't learn these on Day 3. You bookmark them. When you have a feature to build, check this list before reaching for a library — the platform usually already does it.
+
+## Other libraries and frameworks — what else exists
+
+React won most of today's airtime, but it is one point on a spectrum. Here is a quick tour of the alternatives you will encounter on job boards, in open-source repos, and in team tech-stack discussions.
+
+**Vue** is often called the gentler React. The mental model is the same — declarative components, a virtual DOM, reactivity — but Vue packages each component as a single `.vue` file that holds the template, the script, and the styles together in one place. Many developers find the learning curve gentler and the docs better organised. Vue is widely used across China (Alibaba, Baidu) and many European product teams, and it shows up on almost every frontend job board.
+
+**Svelte** is not a runtime library — it is a *compiler*. You write components that look vaguely like HTML with extra syntax; the build step turns them into lean, hand-written-looking DOM mutations with no framework code shipped to the browser. There is no virtual DOM at runtime. The result is smaller bundles and often faster interactions for highly dynamic UIs. The New York Times and Spotify's ad-tech team use it in production.
+
+**Solid** looks like React at a glance — it uses JSX, and its API resembles hooks — but underneath it is fundamentally different. Instead of re-running components when state changes, Solid tracks state at the *signal* level: each piece of state is a fine-grained reactive primitive, and only the exact DOM nodes that depend on a signal update when it changes. Components run once. This makes Solid consistently faster than React for fine-grained updates. The community is smaller; the ecosystem is younger.
+
+**Angular** is Google's full framework — not a library. It ships with an HTTP client, a router, a forms system, dependency injection, and its own module system. Where React hands you building blocks and lets you assemble your own architecture, Angular hands you a complete, opinionated blueprint. It has been TypeScript-first since before TypeScript was cool. It is the dominant choice for large enterprise teams who want one answer to every question and a long support lifecycle.
+
+**htmx** takes a different philosophy entirely. There is no JavaScript framework — instead, you add attributes to your HTML (`hx-get="/restaurants"`, `hx-target="#results"`) and the library handles making the request and swapping the response into the page. The server renders HTML; htmx delivers it to the right place. It is popular with backend-heavy teams (Django, Rails, Laravel) who want richer interactions without committing to a full frontend framework.
+
+React won the workshop tour because it is what you will most likely see at work and what Next.js is built on. But the choice between these is mostly about team taste and what you are optimising for — bundle size, learning curve, server-rendering posture. None of them are objectively wrong.
+
 ## CSS and styling — the third leg
 
 You don't need to master CSS today. You need just enough to build the homework and to debug a layout when it goes sideways.
@@ -78,17 +122,23 @@ A reference implementation will be pushed to the Day-3 branch after the workshop
 
 ## 60-second recap
 
-The whole day in one breath. You type a URL. The browser makes a **request**, gets HTML back, parses it into the **DOM** (a tree of objects), applies CSS to style that tree, runs **layout** to figure out where every box goes, then **paints** pixels to the screen. **JavaScript** can mutate the DOM, but every change forces re-layout and re-paint — that's expensive, which is why **React** keeps a lightweight copy (the **virtual DOM**), diffs it against the previous version, and tells the real DOM only the minimal set of changes. Then *where* the HTML gets built: **SSG** builds it once at deploy, **SSR** builds it per request on the server, **CSR** builds it in the browser. **Next.js** mixes all three on the same site — server components for data, client components for interactivity. Your first load arrives server-rendered (fast and crawlable), then React **hydrates** it in the browser so it becomes interactive.
+The whole day in one breath. You type a URL. The browser makes a **request**, gets HTML back, parses it into the **DOM** (a tree of objects), applies CSS to style that tree, runs **layout** to figure out where every box goes, then **paints** pixels to the screen. **JavaScript** can mutate the DOM, but every change forces re-layout and re-paint — expensive in the small, ruinous in a loop. That's why **React** keeps a lightweight copy (the **virtual DOM**), diffs it, and tells the real DOM only the minimal set of changes. React is a *library*, not a framework — it ignores routing, data, build, and styling. That gap is what **single-page apps** improvise solutions for, and what **Next.js** packages up: file-based routing, a bundler, a dev server, `<Link>` navigation, plus SSG/SSR/CSR rendering strategies. Your first load arrives server-rendered (fast and crawlable), then React **hydrates** it in the browser so it becomes interactive.
 
 The quick-reference card:
 
-- **Demo 1 — Anatomy of a Page Load.** Network tab is your X-ray. HTML arrives first, then CSS, then JS, then images.
+- **Demo 1 — Network.** What changes between "I typed a URL" and "I see a card": HTML, CSS, JS, images — each its own request, in order.
 - **Demo 2 — The DOM is not the HTML.** HTML is the frozen text from the server. DOM is the live tree the browser is holding. JS only ever edits the DOM.
-- **Demo 3 — Where you put your `<script>` matters.** Blocking scripts in `<head>` freeze first paint. `defer` and bottom-of-body fix it.
-- **Demo 4 — How CSS actually applies.** Cascade, specificity, inheritance — the rules that decide which color wins.
-- **Demo 5 — Layout and paint.** Browsers do *layout* (positions and sizes) and then *paint* (pixels). Layout-changing CSS is expensive; transform and opacity are cheap.
-- **Demo 6 — The virtual DOM.** React's trick: diff a cheap JS object tree, only touch the real DOM at the leaves.
-- **Demo 7 — SSG, SSR, CSR.** Three places HTML can be built — at deploy, per request, or in the browser. Each has tradeoffs.
-- **Demo 8 — Next.js mixes all three.** Server components for data, client components for interactivity, hydration to glue them together.
-- **Demo 8.5 — Streaming and Suspense.** Send the fast parts first, stream the slow parts in. The user sees something *now*.
-- **Demo 9 — Lighthouse and Core Web Vitals.** LCP, INP, CLS — the three numbers Google ranks on. Measure your homework before you submit it.
+- **Demo 3 — Order matters.** Where you put a `<script>` decides whether the page is blank for two seconds. `defer` in `<head>` is the default you want.
+- **Demo 2.5 — Storage.** Three drawers: cookies (sent to the server every request), localStorage (forever, browser-only), sessionStorage (per tab, browser-only).
+- **Demo 4 — The DOM is expensive.** Layout/paint is slow if you touch it wrong. Batched writes are 50× faster than per-element ones.
+- **Demo 5 — Imperative tangles.** Vanilla JS stays clean until a PM piles on features. Then every handler edits five things and you lose track.
+- **Demo 6 — What React solves for.** JSX → virtual DOM → diff → minimal real-DOM update. The expensive stage gets batched, the imperative tangle goes away.
+- **Demo 6.3 — React is a library.** Two `<script>` tags from a CDN, one component, no build. React's whole job is keeping your DOM in sync with state — everything else (router, build, data, styling) is your problem.
+- **Demo 6.5 — What's an SPA, why.** One HTML shell + a JS router (`pushState`). Fast after first load, painful before it.
+- **Demo 6.7 — How a modern stack builds one.** Bundlers walk your `import` graph, drop unused code (tree shaking), split per route, and ship the handful of files the browser actually needs.
+- **Demo 6.6 — Why Next when React exists.** Next gives you file-based routing, a dev server, SSR, the bundler, and a `<Link>` component for SPA navigation — none of which React itself provides.
+- **Demo 7 — SSG, CSR, SSR.** Three places HTML can be built — at deploy, in the browser, or per request. Same code, three trade-offs.
+- **Demo 8 — Hydration.** A server-rendered grid + a client-rendered search box. The HTML arrives first; React boots on top to make it interactive.
+- **Demo 9 — Core Web Vitals.** LCP, INP, CLS — the three numbers Google ranks on. Measure your homework before you submit it.
+- **Demo 10 — Frontend security.** `innerHTML` lets attackers inject script tags into your page. CORS stops one origin reading another. Both are bedrock.
+- **Wrap — Swiggy DevTools audit.** Point DevTools at swiggy.com. Code-split chunks, lazy images, the production waterfall. Everything you learned today, visible in one real site.

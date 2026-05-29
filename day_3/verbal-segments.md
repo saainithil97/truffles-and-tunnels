@@ -133,9 +133,9 @@ The quick-reference card:
 - **Demo 4 — Pure JS hits a wall.** Three pains the language doesn't help with: state↔UI drift across surfaces, no standard composition vocabulary, the DOM punishes hot loops. Not language problems — missing-abstraction problems.
 - **Demo 5 — The shape of every library that fixes this.** React, Vue, Svelte, Solid all agree: describe state → UI, the library does the sync. Three mechanisms (virtual-tree diff, build-time compilation, signals), one destination — minimum real-DOM work. Components are the universal composition unit.
 - **Demo 6 — How the pieces actually plug in.** Library vs framework (a library is something you call; a framework is something that calls you). These libraries own one column — rendering — and leave routing, build, state, styling, data fetching to you. That flexibility is the win and the cost.
-- **Demo 6.5 — What's an SPA, why.** One HTML shell + a JS router (`pushState`). Fast after first load, painful before it.
-- **Demo 6.7 — How a modern stack builds one.** Bundlers walk your `import` graph, drop unused code (tree shaking), split per route, and ship the handful of files the browser actually needs.
-- **Demo 6.6 — Why Next when React exists.** Next gives you file-based routing, a dev server, SSR, the bundler, and a `<Link>` component for SPA navigation — none of which React itself provides.
+- **Demo 6.5 — What's an SPA, why.** One HTML shell + a JS router (`pushState`). Fast after first load, painful before it — empty for crawlers, blank on slow phones.
+- **Demo 6.6 — Intro to Next.js.** The framework option for React: file-based routing, free bundler, free dev server, free SSR, `<Link>` for SPA-feel nav without the SPA tax. One realisation of a class (Nuxt around Vue, SvelteKit around Svelte, SolidStart around Solid).
+- **Demo 6.7 — What a bundler actually does.** Open the hood on the bundler Next handed you. Walks your `import` graph, compiles JSX, drops unused code (tree shaking), splits per route, ships the handful of files the browser actually needs. Same engine in Vite, webpack, Turbopack.
 - **Demo 7 — SSG, CSR, SSR.** Three places HTML can be built — at deploy, in the browser, or per request. Same code, three trade-offs.
 - **Demo 8 — Hydration.** A server-rendered grid + a client-rendered search box. The HTML arrives first; React boots on top to make it interactive.
 - **Demo 9 — Core Web Vitals.** LCP, INP, CLS — the three numbers Google ranks on. Measure your homework before you submit it.

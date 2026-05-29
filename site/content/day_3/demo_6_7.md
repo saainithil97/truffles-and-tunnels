@@ -1,14 +1,14 @@
 # "What a bundler actually does"
 
-You just saw Next.js has a bundler. Plain React + Vite has one too. Demo 6.3's script-tag React has *none*. Three worlds — three different stories for how your code gets to the browser. The middle ground (React + Vite) is the version most production React apps live in, *not* Next. Worth understanding.
+Demo 6.6 just handed you Next.js as a complete package — router, dev server, deploy story, *and* a bundler. The bundler is the workhorse: it's the thing that turns your `import` statements into the files the browser actually loads. And it's not Next-specific. Plain React + Vite has one. Vue's stack has one. SvelteKit has one. Demo 6's script-tag React has *none* — and that's the version that doesn't scale past a widget. Let's open the hood on the engine inside every real frontend stack.
 
-This demo also unlocks something specific: **Demo 8's "🟢 Server (0 KB JS)" badge only makes sense if you know what bundling is.** That's why this beat is in Part 3, not Part 6 alongside Lighthouse.
+This demo also unlocks something specific: **Demo 8's "🟢 Server (0 KB JS)" badge only makes sense if you know what bundling is.** That's the other reason this beat is in Part 3, not Part 5 alongside Lighthouse.
 
 ## Setup
 
 The iframe is a static viewer. Read top to bottom:
 
-1. **The three worlds.** A side-by-side of script tag (Demo 6.3) vs React + Vite vs React + Next. Same React, three different bundler stories.
+1. **The three worlds.** A side-by-side of script tag (Demo 6) vs React + Vite vs React + Next. Same React, three different bundler stories.
 2. **Tree shaking.** Two `lodash` imports. One line difference. 35× size difference. The numbers are real (full lodash is ~70 KB minified; one function is ~2 KB).
 3. **Code splitting.** A mocked `next build` route table showing per-route chunk sizes. Look at `/hybrid` — bigger because of the client search box.
 4. **`React.lazy` in 5 lines.** How plain React opts into component-level splitting. Works in Vite, webpack, or Next.
@@ -50,7 +50,7 @@ That's the whole job. The output is what the browser actually loads.
 
 <p class="beat__lede">Bundlers are framing, not just optimization.</p>
 
-- **It's the difference between "React is a library" and "React in a real app."** Without a bundler, you're in the world of Demo 6.3 — perfect for widgets, useless for anything serious. With a bundler, you have the rest of npm.
+- **It's the difference between "React is a library" and "React in a real app."** Without a bundler, you're in the world of Demo 6's script-tag mode — perfect for widgets, useless for anything serious. With a bundler, you have the rest of npm.
 - **It explains Demo 8's badges.** "🟢 Server (0 KB JS)" only means something if you know what the bundle is. Server components are an aggressive form of code-splitting where the split happens at the runtime boundary, not at an `import` statement.
 - **Performance work in Demo 9 builds on this.** "Reduce LCP" usually means "reduce bundle size and reduce server work." If you don't know what's in the bundle, you can't reduce it.
 

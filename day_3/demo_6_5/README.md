@@ -40,63 +40,6 @@ That's the entire mechanism. Three browser APIs — `addEventListener('click')`,
 | **Feels fast?** | Slow on bad networks (full re-download) | Instant after first load |
 | **Cost of the first load** | Cheap (one small page) | Bigger (ship the whole app) |
 
-### Would a library make this easier?
-
-<p class="beat__lede">Most production SPAs aren't written this way — they reach for a UI library (React, Vue, Svelte, Solid…) and usually a router library on top. Here's the part of <code>app.js</code> that those libraries take off your plate.</p>
-
-- **The render() loop.** `app.js` rebuilds `<main>`'s `innerHTML` every time the route changes. A UI library lets you describe the UI as a function of state — `<View route={currentRoute} />` — and figures out what to actually change in the DOM. You stop writing DOM-update code.
-- **Re-attaching event handlers.** Every `innerHTML` swap blows away listeners; `app.js` would need event delegation to survive that. In a UI library, handlers (`onClick={...}`) are part of the component; the library re-attaches them after every update.
-- **Templating.** Each view in `app.js` is a function returning an HTML string. With a UI library, each view is a component you can reuse, compose, and pass props to. Boilerplate goes down; reuse goes up.
-- **Routing plumbing.** `pushState`, `popstate`, click interception — what you wrote here by hand. A router library (React Router, TanStack Router, vue-router, SvelteKit's router) wraps all of it in a component API: `<Link>`, `<Route>`, `<Outlet>`. Same browser APIs underneath.
-
-Concretely, the same three routes — home, restaurant, cart — in React:
-
-```jsx
-const { useState, useEffect } = React;
-const { createRoot } = ReactDOM;
-
-const getView = () =>
-  new URLSearchParams(location.search).get("view") || "home";
-
-const VIEWS = {
-  home: () => (
-    <ul className="restaurants">
-      <li><a href="?view=restaurant" data-link>Meghana Foods</a></li>
-      <li><a href="?view=restaurant" data-link>Truffles</a></li>
-      <li><a href="?view=restaurant" data-link>Burma Burma</a></li>
-    </ul>
-  ),
-  restaurant: () => <div className="detail"><h2>Meghana Foods</h2></div>,
-  cart: () => <div className="detail"><h2>Your cart</h2></div>,
-};
-
-function App() {
-  const [view, setView] = useState(getView);
-
-  useEffect(() => {
-    const onPop = () => setView(getView());
-    window.addEventListener("popstate", onPop);
-    return () => window.removeEventListener("popstate", onPop);
-  }, []);
-
-  const navigate = (e) => {
-    const a = e.target.closest("a[data-link]");
-    if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
-    e.preventDefault();
-    history.pushState({}, "", a.getAttribute("href"));
-    setView(getView());
-  };
-
-  return <main onClick={navigate}>{VIEWS[view]()}</main>;
-}
-
-createRoot(document.getElementById("app")).render(<App />);
-```
-
-What disappeared from `app.js`: the `render()` function (the library's diff replaces it) and the manual `popstate` listener (replaced by `useEffect`). What's still there: the click interceptor — until you add a router library, which would replace it with `<Link to="?view=cart">Cart</Link>`.
-
-So the answer to "do I need a library for this?" is no — you can build an SPA in vanilla, and Demo 6.5 just did. But each piece of `app.js` you'd rather not write or maintain has a library that handles it. And once you reach for a UI library + a router, the next obvious move is reaching for *one framework* that ships them together. That's Next.js (Demo 6.6).
-
 ### The dead end — and why we're about to revisit it
 
 <p class="beat__lede">An SPA's "first load is empty" problem is real. Google sees nothing. Slow phones see a blank screen while JS boots. Share a link, the preview is empty.</p>

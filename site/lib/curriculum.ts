@@ -248,7 +248,7 @@ export const day3Demos: Demo[] = [
     shortTitle: "Demo 6.6 — Intro to Next.js",
     title: 'Demo 6.6 — "The framework around React"',
     summary:
-      "You wrote 90 lines of router by hand in Demo 6.5. Next.js is what happens when you let a framework bring the router, the build, the dev server, and the production server — and just write components. Iframes the homepage of the Swiggy Next app the next three demos dissect.",
+      "Next.js is the framework option for React: file-based routing, a bundler, a dev server, an SSR host, and <Link>-style SPA navigation, all packaged. One realisation of the framework class — Nuxt does the same for Vue, SvelteKit for Svelte, SolidStart for Solid. The homepage of the Swiggy Next app that Demos 6.7, 7, and 8 dissect.",
     readmeSourcePath: "day_3/demo_6_6/README.md",
     contentFile: "day_3/demo_6_6.md",
     kind: "nextjs-separate",
@@ -263,7 +263,7 @@ export const day3Demos: Demo[] = [
     shortTitle: "Demo 6.7 — What a bundler actually does",
     title: 'Demo 6.7 — "Bundling, splitting, tree shaking"',
     summary:
-      "Three worlds for getting React to the browser: script tag (no bundler), React + Vite (you pick), React + Next (Turbopack picks for you). Real bundle-size numbers (full lodash vs named import), a mocked next build route table, and how React.lazy gives plain React code-splitting in five lines.",
+      "Demo 6.6 handed you Next as a complete package — including a bundler. This demo opens the bundler hood: the engine inside Next, inside Vite, inside every real frontend stack. Real lodash size numbers (~70 KB vs ~2 KB), tree shaking, route-level splitting, React.lazy in five lines.",
     readmeSourcePath: "day_3/demo_6_7/README.md",
     contentFile: "day_3/demo_6_7.md",
     kind: "embedded",
@@ -385,7 +385,7 @@ export const day3Parts: DayPart[] = [
   },
   {
     heading: "Part 3 — Single-Page Apps",
-    demoSlugs: ["demo_6_5", "demo_6_7", "demo_6_6"],
+    demoSlugs: ["demo_6_5", "demo_6_6", "demo_6_7"],
   },
   {
     heading: "Part 4 — Rendering strategies",

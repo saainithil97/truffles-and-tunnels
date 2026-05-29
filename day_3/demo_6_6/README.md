@@ -1,10 +1,10 @@
 # "Intro to Next.js"
 
-You just wrote a 90-line SPA router by hand (Demo 6.5). You just saw React running in a `<script>` tag with no build (Demo 6.3). Now the third option: take React and put it inside a *framework* that brings the build, the router, the dev server, the production server, the deployment, all of it. That's Next.js — and the next four demos all live inside one.
+You just wrote a 90-line SPA router by hand (Demo 6.5). In Demo 6 you saw React running in a `<script>` tag with no build. Now the third option: take React and put it inside a *framework* that brings the router, the build, the dev server, the production server, the deployment — all of it. That's Next.js, and the next three demos all live inside one.
 
 ## Setup
 
-The iframe is `/` of the Swiggy Next.js app that powers Demos 7, 8, and 8.5. Same deployment, same code, same Vercel project.
+The iframe is `/` of the Swiggy Next.js app that powers Demos 7 and 8. Same deployment, same code, same Vercel project.
 
 1. Click the four cards in the iframe. Each one is a `<Link>` to a different route. **No page reload.** That's Next's client-side router — what you wrote by hand in Demo 6.5, but free.
 2. Pop the iframe out (↗ button). The URL bar updates as you click. Copy any URL into a fresh tab — every one still works. (Try doing *that* with Demo 6.5's SPA — only the shell URL loads from a cold tab.)
@@ -29,10 +29,10 @@ day_3/demo_7_8_nextjs/
 │   ├── <span style="color:#7cffb8">hybrid/page.tsx</span>            <span style="color:#888">← /hybrid → Demo 8 — server shell + client island</span>
 │   ├── <span style="color:#7cffb8">restaurants/[id]/page.tsx</span>  <span style="color:#888">← /restaurants/{id} — dynamic route (Link nav below)</span>
 │   └── <span style="color:#7cffb8">api/restaurants/route.ts</span>   <span style="color:#888">← API endpoint, returns JSON</span>
-├── <span style="color:#fc8019">components/</span>                    <span style="color:#888">← reusable components (server + client)</span>
-│   ├── <span style="color:#7cffb8">RestaurantCard.tsx</span>         <span style="color:#888">← server component (zero JS to browser)</span>
-│   ├── <span style="color:#7cffb8">RestaurantSearch.tsx</span>       <span style="color:#888">← <em>'use client'</em> — has state, ships JS</span>
-│   └── <span style="color:#7cffb8">FavouriteButton.tsx</span>        <span style="color:#888">← <em>'use client'</em> — has onClick, ships JS</span>
+├── <span style="color:#fc8019">components/</span>                    <span style="color:#888">← reusable components</span>
+│   ├── <span style="color:#7cffb8">RestaurantCard.tsx</span>
+│   ├── <span style="color:#7cffb8">RestaurantSearch.tsx</span>
+│   └── <span style="color:#7cffb8">FavouriteButton.tsx</span>
 ├── <span style="color:#fc8019">lib/</span>
 │   └── <span style="color:#7cffb8">restaurants.ts</span>             <span style="color:#888">← data (server can read it directly; clients via fetch)</span>
 ├── <span style="color:#7cffb8">next.config.ts</span>                 <span style="color:#888">← Next-level config (rewrites, images, env, …)</span>
@@ -42,11 +42,10 @@ day_3/demo_7_8_nextjs/
 </pre>
 </figure>
 
-Three rules of thumb the file tree is telling you:
+Two rules the file tree is telling you:
 
-- **`app/` is the router.** A `page.tsx` at `app/foo/page.tsx` is the route `/foo`. A `page.tsx` at `app/restaurants/[id]/page.tsx` is the dynamic route `/restaurants/anything`. You don't register routes; you create files.
+- **`app/` *is* the router.** A `page.tsx` at `app/foo/page.tsx` is the route `/foo`. A `page.tsx` at `app/restaurants/[id]/page.tsx` is the dynamic route `/restaurants/anything`. You don't register routes; you create files. File-routing is Next's convention; SvelteKit does the same with `src/routes/`, Nuxt with `pages/`, SolidStart with `routes/`, Astro with `src/pages/`. The vocabulary is shared across the framework class.
 - **`layout.tsx` wraps everything below it.** The root `app/layout.tsx` wraps every page. A nested `app/dashboard/layout.tsx` would wrap only `/dashboard/*` pages. Persistent UI (sidebars, headers, providers) goes in a layout — it doesn't re-render when you navigate within its subtree.
-- **`'use client'` is a boundary, not a switch.** Top of file. Everything above it (parents, importers) is server-only and ships zero JS. Everything below it (this component + everything it imports) ships to the browser. Push the boundary down to keep bundles small.
 
 ### Compare and contrast — Demo 6.5 SPA (by hand) vs. Next.js
 
@@ -57,7 +56,7 @@ Three rules of thumb the file tree is telling you:
 | **Routing** | `pushState` + click handler, ~90 lines | File-based, free |
 | **Build / bundler** | None (script tag) | Turbopack, free |
 | **Dev server with HMR** | `python3 -m http.server` | `next dev` |
-| **First-paint HTML** | Empty shell | SSG / SSR — real content |
+| **First-paint HTML** | Empty shell | Real content (Demo 7) |
 | **Crawlers see** | Nothing | Everything |
 | **New "page"** | Add a view + register a route in `app.js` | Create a file under `app/` |
 | **Data fetching on server** | Impossible (no server) | Server component reads DB directly |
@@ -66,124 +65,46 @@ Three rules of thumb the file tree is telling you:
 | **Lines of "infrastructure" code you write** | ~150 LOC to start | One command (`npx create-next-app`) |
 | **Lock-in** | None | Significant — you adopt Next conventions |
 
-### Next gives you SPA navigation for free
+This is the framework trade from Demo 6, made concrete. The same trade exists for Nuxt (around Vue), SvelteKit (around Svelte), SolidStart (around Solid). Same shape, different ecosystem.
+
+### `<Link>` gives you SPA navigation without the SPA tax
 
 <p class="beat__lede">Click a restaurant card. The URL changes. No full reload. Copy that URL, paste into a fresh tab — the page still loads as a real document. <code>&lt;Link&gt;</code> is the SPA pattern from Demo 6.5, wrapped, with the SPA tax removed.</p>
 
 An SPA's only advantage over a real-document navigation is feel — clicks are instant after the first load. `<Link>` keeps that feel and brings back everything SPAs gave up.
 
-- **On render**, the Next.js router scans for `<Link>` elements in the viewport and prefetches their RSC payloads in the background. By the time you hover, the data might already be cached.
-- **On click**, the router calls `preventDefault()`, calls `history.pushState` (sound familiar?), and fetches the destination's RSC payload if it isn't already cached.
+- **On render**, the Next router scans for `<Link>` elements in the viewport and prefetches their data in the background. By the time you hover, the data might already be cached.
+- **On click**, the router calls `preventDefault()`, calls `history.pushState` (sound familiar?), and fetches the destination's payload if it isn't already cached.
 - **On payload arrival**, React reconciles the new route's tree against the current one and swaps only what changed. The shared layout (header, nav) stays mounted; only the part that differs gets re-rendered.
 
-That's the SPA pattern from Demo 6.5, except: the router is provided not hand-rolled; the 'payload' is a serialized React tree not a chunk of HTML; the destination URL is a real server-routable URL, so direct loads, share links, and crawlers all work.
+That's the SPA pattern from Demo 6.5, except: the router is provided, not hand-rolled; the destination URL is a real server-routable URL, so direct loads, share links, and crawlers all work.
 
-### The layered model — how Next and React fit together
-
-<figure class="beat__visual">
-<pre>
-┌─────────────────────────────────────────────────────────┐
-│ <strong>Next.js</strong> (the framework)                              │
-│   • file-based router (<code>app/foo/page.tsx</code> → <code>/foo</code>)         │
-│   • build (Turbopack)                                   │
-│   • dev server with HMR                                 │
-│   • production server (Node / Edge / Vercel Functions)  │
-│   • App Router conventions (<code>'use client'</code>, layouts, …)  │
-│   ┌─────────────────────────────────────────────────┐   │
-│   │ <strong>React DOM</strong> (the renderer)                     │   │
-│   │   • <code>react-dom/server</code> → HTML strings            │   │
-│   │   • <code>react-dom/client</code> → hydrate + update DOM    │   │
-│   │   ┌─────────────────────────────────────────┐   │   │
-│   │   │ <strong>React</strong> (the reconciler)               │   │   │
-│   │   │   • <code>createElement</code> / JSX                │   │   │
-│   │   │   • diffing                             │   │   │
-│   │   │   • hooks (<code>useState</code>, <code>useEffect</code>, …)    │   │   │
-│   │   └─────────────────────────────────────────┘   │   │
-│   └─────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────┘
-</pre>
-</figure>
-
-Three layers:
-
-- **React** is the reconciler. Pure logic — knows nothing about the browser. Given a tree of element objects, produces a diff against the previous tree. That's all `react` (the npm package) does.
-- **React DOM** is *a* renderer. Knows how to turn React's diff into DOM operations. Has two halves: `react-dom/client` (the one that runs in the browser, attaches event handlers, applies updates) and `react-dom/server` (the one that runs on the server, produces an HTML string from React elements). React Native is a different renderer for the same reconciler.
-- **Next.js** is a framework that *hosts* React DOM. It owns when and where the renderer runs, plus everything around it: routing, build, dev server, prod server, deploy.
-
-The arrow always points the same way. Next calls React DOM. React DOM calls React. React produces a diff. React DOM applies the diff. Next never "uses React" directly — it always goes through React DOM.
-
-#### What runs where
-
-<p class="beat__lede">Same React component, different moments. Same diffing, different renderer.</p>
-
-#### On `next build`
-
-For every **SSG** route (default), Next calls `react-dom/server.renderToString(<Page />)`. The output is an HTML file written to disk under `.next/`. That file is what the CDN serves when you visit the route. **React ran once, at build time, on the build server.**
-
-#### On every request to an **SSR** route
-
-Next calls `react-dom/server.renderToString(<Page />)` again — but live, this time, with whatever cookies / locale / user context the request brought. **React runs per request, on the production server.**
-
-#### On every request to **any** route
-
-The browser receives HTML (whether SSG-built or SSR-built or a CSR shell). Then Next ships a JavaScript bundle. `react-dom/client.hydrateRoot(<Page />)` runs in the browser, walks the same React tree the server walked, and attaches event handlers to the existing DOM nodes the server already painted. **React runs once on the browser to "wake up" the page.** This is hydration. The gap between paint and hydration finishing is the hydration gap — Demo 8's Slow 3G reveal.
-
-#### On every client-side navigation via `<Link>`
-
-Next's router intercepts the click, fetches a serialized React tree (an RSC payload) for the next route, hands it back to React for reconciliation, and React DOM swaps in only the changed sections. **No new server-rendered HTML document.** Same reconciler from Demo 6 — running in the browser, diffing two trees, producing minimal DOM updates.
-
-That's the whole "where does React run in a Next app" map. Build server, production server (for SSR), browser (for hydration, for client-side navigation, for `useEffect`).
-
-#### Server components vs. client components, in one paragraph
-
-<p class="beat__lede"><code>'use client'</code> is a Next-era directive that tells the build "below this point, ship React's <em>client</em> renderer and this component's JS to the browser."</p>
-
-- Above the boundary: components run **only** in `react-dom/server`. They produce HTML. They ship **zero JavaScript** to the browser. They can read databases, call APIs, hit the filesystem.
-- Below the boundary: components run in `react-dom/server` first (to produce the initial HTML) **and** in `react-dom/client` after (to hydrate and update). The boundary component plus everything it imports ships to the browser.
-- The boundary is not a switch — it's a tree split. Push it down. Tiny client leaves, big server trunks. That's the lesson Demo 8 makes visible with its badges.
-
-#### Every React skill still applies
-
-<p class="beat__lede">Every React concept still applies inside Next.</p>
-
-- Components are still functions of props.
-- State is still `useState`. Effects are still `useEffect`. Hooks behave the same way.
-- JSX still compiles to `React.createElement` (the bundler does it, not Babel-standalone — but the same compilation).
-- The component tree, reconciliation, and diffing from Demo 6.3 are happening on every render.
-- What changes is **where** they run (server for the initial render of server components; browser for everything after hydration) and **what wraps them** (Next's router, layouts, conventions).
-
-If you can build a React component in plain React (Demo 6.3), you can build one in Next. The framework adds where and when; it doesn't replace what.
+Vue's `<router-link>`, Svelte's progressive-enhancement `<a>`, Solid Start's `<A>` — all do the same job in their respective frameworks.
 
 ### What you trade for it
 
 <p class="beat__lede">Next gives you a lot. It also makes you eat its opinions.</p>
 
 - **File-based routing isn't optional.** If you want `/foo`, you put `page.tsx` at `app/foo/`. Don't like it? You don't use Next.
-- **Next-specific concepts.** `'use client'`, server components, the difference between `app/` and `pages/` (we use the new `app/` — the App Router), `generateStaticParams`, route handlers, middleware. None of these are React concepts — they're Next concepts. You spend the first week learning the new vocabulary.
-- **Tighter ecosystem coupling.** Next picks Turbopack as the bundler, picks React Server Components as a default, picks `<Image>` as the image story, picks edge runtime as an option. Some of these decisions you can override; most you'd rather not.
+- **Next-specific concepts.** `'use client'`, server components, route handlers, middleware. None of these are React concepts — they're Next concepts. You spend the first week learning the vocabulary.
+- **Tighter ecosystem coupling.** Next picks Turbopack as the bundler, picks React Server Components as a default, picks `<Image>` as the image story. Some you can override; most you'd rather not.
 - **Operational decisions.** A pure React + Vite app is a pile of static files — host it anywhere. A Next app needs Node (or Vercel's Functions/Edge runtimes) for anything beyond pure SSG. Hosting becomes a decision.
 
-This is the framework trade-off you read about in the previous demo.
+This is the framework trade you read about in Demo 6. Next is one realisation of it. Choose the framework that matches the rest of your stack: Next for React, Nuxt for Vue, SvelteKit for Svelte, SolidStart for Solid. Same packaging, different ecosystem.
 
 ### Forward-look
 
-Two more beats in Part 4 take this same app and dig in.
+Now you have the framework. Three demos peel back what's inside it.
 
+- **Demo 6.7** — the bundler Next handed you for free. Same engine you'd reach for in a non-Next React project (Vite). What it's actually doing to your code.
 - **Demo 7** — rendering strategies. The same Swiggy grid at `/ssg`, `/ssr`, `/csr`. View Source is the reveal.
 - **Demo 8** — server vs. client components. `/hybrid` shows a server-rendered grid hosting a client-rendered search box, with badges on each.
-
-You now have the framework (this demo), the layered model (above), and the navigation primitive (above). Demos 7 and 8 tour through what runs where, with this same app.
 
 ## Takeaways
 
 - **Next.js is the framework option for React.** Same React, hosted by a framework that brings build, router, dev server, prod server, and conventions.
-- **`app/` *is* your router.** Files become routes. `layout.tsx` wraps. `page.tsx` renders.
-- **`'use client'` is a boundary, not a switch.** Push it down. Tiny client leaves, big server trunks.
+- **`app/` *is* your router.** Files become routes. `layout.tsx` wraps. `page.tsx` renders. Nuxt, SvelteKit, SolidStart, Astro all share the file-routing idea.
 - **`<Link>` gives you SPA feel without the SPA tax.** Direct URLs work. Crawlers work. First paint isn't empty. Hover-prefetching is on by default.
 - **Layouts persist across navigations.** A `layout.tsx` doesn't re-render when child routes change.
-- **Next is a host. React is the engine.** Next calls React DOM. React DOM calls React. React produces a diff.
-- **Same React, different `when` and `where`.** Build server (SSG), prod server (SSR), browser (hydration + client nav + effects).
-- **`'use client'` decides which half a component is rendered with on the browser side.** Above: server-only, zero JS. Below: hydrated client, ships JS.
-- **Every React skill still applies.** Components, state, effects, JSX, hooks — all the same. Next adds where; it doesn't change what.
-- **The Demo 6.5 contrast is the lesson.** You wrote 90 lines of router; `<Link>` is free. You served a static shell; Next ships real HTML.
 - **The trade is opinions for velocity.** Next decides; you ship faster; you learn its vocabulary.
+- **Next is one realisation of the framework class.** Same job, different ecosystem — Nuxt (Vue), SvelteKit (Svelte), SolidStart (Solid), Astro (multi-framework).

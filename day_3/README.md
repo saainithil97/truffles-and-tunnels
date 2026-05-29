@@ -23,9 +23,9 @@ stays on the course spine — the Swiggy restaurant card from Day 1.
 
 ### Part 3 — Single-Page Apps
 
-- **[Demo 6.5 — What's an SPA, why](demo_6_5/README.md)** — one HTML shell + a tiny JS router (`pushState` + click interception + `popstate`).
-- **[Demo 6.7 — How a modern stack builds one](demo_6_7/README.md)** — bundlers, tree shaking, code splitting, `React.lazy`. Vite as the worked example.
-- **[Demo 6.6 — Why Next when React exists](demo_6_6/README.md)** — file-based routing, free dev server, free SSR, free bundler, free `<Link>` navigation.
+- **[Demo 6.5 — What's an SPA, why](demo_6_5/README.md)** — one HTML shell + a tiny JS router (`pushState` + click interception + `popstate`). And the dead end it leads to.
+- **[Demo 6.6 — Intro to Next.js](demo_6_6/README.md)** — the framework option for React: file-based routing, `<Link>` SPA-nav without the SPA tax, the framework trade. One realisation of a class (Nuxt, SvelteKit, SolidStart).
+- **[Demo 6.7 — What a bundler actually does](demo_6_7/README.md)** — open the bundler hood Next handed you. Same engine you'd reach for in plain React + Vite. Tree shaking, code splitting, `React.lazy`.
 
 ### Part 4 — Rendering strategies
 

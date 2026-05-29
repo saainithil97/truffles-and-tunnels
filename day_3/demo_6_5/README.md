@@ -11,7 +11,9 @@ Use the tab picker above the iframe to switch between **MPA (full reload)** and 
 3. Switch to **SPA**. Click around. After the first load, the Network tab is silent — every "page" is the same `index-spa.html` with new content swapped in.
 4. View Source on the SPA tab. Almost empty. The content lives only in the live DOM.
 
-## What an SPA actually is
+## Content
+
+### What an SPA actually is
 
 <p class="beat__lede">A single HTML document, plus JavaScript that swaps the page's contents when you "navigate."</p>
 
@@ -23,7 +25,7 @@ Use the tab picker above the iframe to switch between **MPA (full reload)** and 
 
 That's the entire mechanism. Three browser APIs — `addEventListener('click')`, `history.pushState`, `window.addEventListener('popstate')` — and a function that maps a URL to a chunk of HTML.
 
-## Compare and contrast
+### Compare and contrast
 
 <p class="beat__lede">Same app, two patterns. Watch DevTools while you click — the differences are not subtle.</p>
 
@@ -38,7 +40,7 @@ That's the entire mechanism. Three browser APIs — `addEventListener('click')`,
 | **Feels fast?** | Slow on bad networks (full re-download) | Instant after first load |
 | **Cost of the first load** | Cheap (one small page) | Bigger (ship the whole app) |
 
-## The dead end — and why we're about to revisit it
+### The dead end — and why we're about to revisit it
 
 <p class="beat__lede">An SPA's "first load is empty" problem is real. Google sees nothing. Slow phones see a blank screen while JS boots. Share a link, the preview is empty.</p>
 
@@ -48,7 +50,7 @@ That's the entire mechanism. Three browser APIs — `addEventListener('click')`,
 
 So Demo 6.5 is the thing the next four demos are answers to.
 
-## Going deeper — why click interception is tricky
+### Going deeper — why click interception is tricky
 
 <p class="beat__lede">The SPA's click handler can't just call <code>preventDefault</code> on every link. Real users do things you have to let the browser handle.</p>
 

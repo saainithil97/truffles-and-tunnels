@@ -40,6 +40,11 @@ stays on the course spine — the Swiggy restaurant card from Day 1.
   JSX, reconciliation. JSX → `createElement` → plain objects; the diff makes
   minimal real-DOM updates (shown via React DevTools + paint flashing on Demo
   5's app).
+- **[Demo 6.5 — "The page that never reloads"](demo_6_5/README.md)** — what an
+  SPA actually is. One HTML shell + a tiny JS router (`pushState` + click
+  interception + `popstate`). Side-by-side: a fake MPA where every click is a
+  full reload, vs the SPA where the Network tab goes silent after the first
+  load. The dead end that the next four demos are answers to.
 - **[Verbal segments](verbal-segments.md)** — the spoken interludes: the Tooling
   Break (Node / npm / bundling), the Platform Tour (browser APIs), and CSS &
   Styling, plus the homework brief and the 60-second wrap-up recap.
@@ -82,6 +87,9 @@ Then open `http://localhost:8000/`. Exceptions:
   site.
 - **Demos 5 & 6** are single HTML files with React vendored locally — just open
   them in the browser (no server).
+- **Demo 6.5** is two static folders (MPA + SPA). Open the HTML files directly
+  with a static server: `python3 -m http.server 8765` in `day_3/demo_6_5/`,
+  then visit `http://localhost:8765/index-mpa.html` or `index-spa.html`.
 - **Demos 7/8/8.5** are a Next.js app — `npm install` then `npm run build &&
   npm start` (Demo 7's frozen-SSG reveal needs the production build, not `dev`).
 - **Demo 9** is runbook-only (run Lighthouse against a real page).

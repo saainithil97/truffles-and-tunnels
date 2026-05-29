@@ -39,6 +39,13 @@ export type Demo = {
   // Files are staged into site/content/day_3/<id>/code/ by copy-content.mjs.
   // `language` is the fence info string used by rehype-highlight.
   sourceFiles?: { name: string; language: string }[];
+
+  // When set, the "Source" section reads its files from another demo's staged
+  // code dir (content/day_3/<sourceCodeFromDemo>/code/) instead of this demo's
+  // own. Used by runbook-only demos like demo_2 that don't ship their own code
+  // but are operating on another demo's page — showing the same source as a
+  // tab here is the reference the reader is mutating in DevTools.
+  sourceCodeFromDemo?: string;
 };
 
 export type DayPart = {
@@ -90,6 +97,15 @@ export const day3Demos: Demo[] = [
     kind: "runbook-only",
     runbookHint:
       "This one runs in the DevTools console — on Demo 1's page above, or any real site. Follow the runbook on the right.",
+    // Demo 2 has no source of its own — it operates on Demo 1's page. Showing
+    // those same files here lets the reader compare "the text the server sent"
+    // (this tab) against "the live DOM" (their Elements panel).
+    sourceFiles: [
+      { name: "index.html", language: "html" },
+      { name: "style.css", language: "css" },
+      { name: "app.js", language: "javascript" },
+    ],
+    sourceCodeFromDemo: "demo_1",
   },
   {
     id: "demo_2_5",
@@ -104,6 +120,12 @@ export const day3Demos: Demo[] = [
     iframePath: "/live-demos/demo_2_5/index.html",
     iframeNote:
       "Open DevTools → Application to watch Cookies and Storage update as you click.",
+    sourceFiles: [
+      { name: "index.html", language: "html" },
+      { name: "style.css", language: "css" },
+      { name: "app.js", language: "javascript" },
+      { name: "server.py", language: "python" },
+    ],
   },
   {
     id: "demo_3",
@@ -124,6 +146,13 @@ export const day3Demos: Demo[] = [
     ],
     iframeNote:
       "Throttle the iframe with DevTools → Network → Slow 3G, then load each version. Watch which one shows content first.",
+    sourceFiles: [
+      { name: "version-a.html", language: "html" },
+      { name: "version-b.html", language: "html" },
+      { name: "version-c.html", language: "html" },
+      { name: "slow.js", language: "javascript" },
+      { name: "server.py", language: "python" },
+    ],
   },
   {
     id: "demo_4",
@@ -131,13 +160,19 @@ export const day3Demos: Demo[] = [
     shortTitle: "Demo 4 — The expensive DOM",
     title: 'Demo 4 — "The expensive DOM"',
     summary:
-      "500 restaurant tiles. A per-element update loop thrashes layout; a batched update flies. The problem React was built to solve, timed live.",
+      "A scrollable Swiggy feed. One scroll handler thrashes layout per card; the other reads cached offsets. Toggle between them and feel the difference — the canary at the top freezes in slow mode and stays smooth in fast.",
     readmeSourcePath: "day_3/demo_4/README.md",
     contentFile: "day_3/demo_4.md",
     kind: "embedded",
     iframePath: "/live-demos/demo_4/index.html",
     iframeNote:
-      "Click 'Slow update' and 'Fast update' and read the timing in the badge. Try DevTools → Performance to see the layout/paint bars.",
+      "Scroll the iframe in Slow mode and watch the canary stutter. Hit Fast and scroll again — buttery. Try DevTools → Performance to see the purple Layout bars disappear.",
+    sourceFiles: [
+      { name: "index.html", language: "html" },
+      { name: "style.css", language: "css" },
+      { name: "app.js", language: "javascript" },
+      { name: "server.py", language: "python" },
+    ],
   },
   {
     id: "demo_5",
@@ -171,6 +206,19 @@ export const day3Demos: Demo[] = [
     iframePath: "/live-demos/demo_6/jsx-vs-compiled.html",
     iframeNote:
       "Edit the JSX on the left; watch the compiled createElement and the resulting tree update on the right.",
+  },
+  {
+    id: "demo_6_2",
+    slug: "demo_6_2",
+    shortTitle: "Demo 6.2 — Why React is a library",
+    title: 'Demo 6.2 — "Library, not framework"',
+    summary:
+      "React is a library. It does one thing — keep your DOM in sync with state — and deliberately omits everything else. That design constraint is why Next.js exists, why your homework picks its own router, and why every React job looks different above the component layer.",
+    readmeSourcePath: "day_3/demo_6_2/README.md",
+    contentFile: "day_3/demo_6_2.md",
+    kind: "runbook-only",
+    runbookHint:
+      "No iframe — this is a 5-minute framing read between Demo 6 and Demo 6.3. The runbook on the right is the reading itself.",
   },
   {
     id: "demo_6_5",
@@ -320,7 +368,7 @@ export const day3Parts: DayPart[] = [
   },
   {
     heading: "Part 3 — React and the modern frontend",
-    demoSlugs: ["demo_6", "demo_6_5", "verbal-segments"],
+    demoSlugs: ["demo_6", "demo_6_2", "demo_6_5", "verbal-segments"],
   },
   {
     heading: "Part 4 — Rendering strategies",

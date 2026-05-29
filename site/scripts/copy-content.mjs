@@ -32,6 +32,7 @@ const markdownDemos = [
   { src: "demo_5/README.md", dest: "demo_5.md" },
   { src: "demo_6/README.md", dest: "demo_6.md" },
   { src: "demo_6_5/README.md", dest: "demo_6_5.md" },
+  { src: "demo_6_2/README.md", dest: "demo_6_2.md" },
   { src: "demo_7_8_nextjs/demo_7.md", dest: "demo_7.md" },
   { src: "demo_7_8_nextjs/demo_8.md", dest: "demo_8.md" },
   { src: "demo_7_8_nextjs/demo_8_5.md", dest: "demo_8_5.md" },
@@ -95,6 +96,25 @@ async function main() {
   //    source is missing, leave the committed snapshot in place.
   const demoSourceFiles = {
     demo_1: [
+      { name: "index.html", language: "html" },
+      { name: "style.css", language: "css" },
+      { name: "app.js", language: "javascript" },
+      { name: "server.py", language: "python" },
+    ],
+    demo_2_5: [
+      { name: "index.html", language: "html" },
+      { name: "style.css", language: "css" },
+      { name: "app.js", language: "javascript" },
+      { name: "server.py", language: "python" },
+    ],
+    demo_3: [
+      { name: "version-a.html", language: "html" },
+      { name: "version-b.html", language: "html" },
+      { name: "version-c.html", language: "html" },
+      { name: "slow.js", language: "javascript" },
+      { name: "server.py", language: "python" },
+    ],
+    demo_4: [
       { name: "index.html", language: "html" },
       { name: "style.css", language: "css" },
       { name: "app.js", language: "javascript" },

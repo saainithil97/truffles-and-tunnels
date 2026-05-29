@@ -40,6 +40,11 @@ stays on the course spine — the Swiggy restaurant card from Day 1.
   JSX, reconciliation. JSX → `createElement` → plain objects; the diff makes
   minimal real-DOM updates (shown via React DevTools + paint flashing on Demo
   5's app).
+- **[Demo 6.2 — "Library, not framework"](demo_6_2/README.md)** — what React
+  *is*, not what it does. The inversion-of-control test (a library: you call it;
+  a framework: it calls you). The table of everything React deliberately omits
+  (routing, build, state, styling, data, server-rendering host) with the "what
+  do I pick instead" column. Sets up why Next exists.
 - **[Demo 6.5 — "The page that never reloads"](demo_6_5/README.md)** — what an
   SPA actually is. One HTML shell + a tiny JS router (`pushState` + click
   interception + `popstate`). Side-by-side: a fake MPA where every click is a

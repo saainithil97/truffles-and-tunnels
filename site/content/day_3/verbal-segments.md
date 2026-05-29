@@ -136,8 +136,8 @@ The quick-reference card:
 - **Demo 6.5 — What's an SPA, why.** One HTML shell + a JS router (`pushState`). Fast after first load, painful before it — empty for crawlers, blank on slow phones.
 - **Demo 6.6 — Intro to Next.js.** The framework option for React: file-based routing, free bundler, free dev server, free SSR, `<Link>` for SPA-feel nav without the SPA tax. One realisation of a class (Nuxt around Vue, SvelteKit around Svelte, SolidStart around Solid).
 - **Demo 6.7 — What a bundler actually does.** Open the hood on the bundler Next handed you. Walks your `import` graph, compiles JSX, drops unused code (tree shaking), splits per route, ships the handful of files the browser actually needs. Same engine in Vite, webpack, Turbopack.
-- **Demo 7 — SSG, CSR, SSR.** Three places HTML can be built — at deploy, in the browser, or per request. Same code, three trade-offs.
-- **Demo 8 — Hydration.** A server-rendered grid + a client-rendered search box. The HTML arrives first; React boots on top to make it interactive.
+- **Demo 7 — SSG, SSR, CSR in their habitats.** `/menu` is SSG because menus don't change per visitor. `/feed` is SSR because personalised feeds depend on who's asking. `/cart` is CSR because carts are private and interactive. Three answers to "where does the HTML come from?", each chosen by what the page is.
+- **Demo 8 — Server vs client components.** `/detail` is a server-rendered menu (zero JS) wrapped around two small client islands — a search input and per-item Add buttons. `'use client'` is a boundary; push it down to the leaves. Hydration is what wakes the page up after the HTML paints.
 - **Demo 9 — Core Web Vitals.** LCP, INP, CLS — the three numbers Google ranks on. Measure your homework before you submit it.
 - **Demo 10 — Frontend security.** `innerHTML` lets attackers inject script tags into your page. CORS stops one origin reading another. Both are bedrock.
 - **Wrap — Swiggy DevTools audit.** Point DevTools at swiggy.com. Code-split chunks, lazy images, the production waterfall. Everything you learned today, visible in one real site.

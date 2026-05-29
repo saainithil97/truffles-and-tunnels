@@ -29,8 +29,8 @@ stays on the course spine — the Swiggy restaurant card from Day 1.
 
 ### Part 4 — Rendering strategies
 
-- **[Demo 7 — SSG, CSR, SSR](demo_7_8_nextjs/demo_7.md)** — identical Swiggy grid at `/ssg`, `/csr`, `/ssr`. View Source is the reveal.
-- **[Demo 8 — Hydration: server vs client components](demo_7_8_nextjs/demo_8.md)** — server-rendered grid with a client-rendered search box.
+- **[Demo 7 — SSG, SSR, CSR in their rightful habitats](demo_7_8_nextjs/demo_7.md)** — `/menu` (SSG: a restaurant menu, frozen at build), `/feed` (SSR: personalised "near you" feed, per-request), `/cart` (CSR: private + interactive, empty shell). The strategy is chosen by what the page is, not arbitrarily.
+- **[Demo 8 — Server vs client components](demo_7_8_nextjs/demo_8.md)** — `/detail`: a server-rendered menu (zero JS) with two small client islands (search + Add-to-cart). Server trunk, client leaves; slow 3G makes the hydration gap visible.
 
 ### Part 5 — Perf, security, and the real world
 

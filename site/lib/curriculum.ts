@@ -279,21 +279,21 @@ export const day3Demos: Demo[] = [
     id: "demo_7",
     slug: "demo_7",
     shortTitle: "Demo 7 — SSG, SSR, CSR",
-    title: 'Demo 7 — "Same page, three rendering strategies"',
+    title: 'Demo 7 — "Three routes, three rendering strategies, each in its rightful habitat"',
     summary:
-      "The same Swiggy grid, served three ways: SSG (built at build time), SSR (built per request), CSR (built in the browser). View Source on each tells the whole story.",
+      "A menu (SSG — same for everyone, frozen at build), a personalised \"near you\" feed (SSR — fresh per request), and your cart (CSR — empty shell, browser fills it in). Each route is the canonical example for its strategy. View Source on each is the X-ray.",
     readmeSourcePath: "day_3/demo_7_8_nextjs/demo_7.md",
     contentFile: "day_3/demo_7.md",
     kind: "nextjs-separate",
     iframeUrlEnvVar: "NEXT_PUBLIC_DEMO_7_URL",
-    iframePathSuffix: "/ssg",
+    iframePathSuffix: "/menu",
     iframeEntries: [
-      { label: "SSG", path: "/ssg" },
-      { label: "SSR", path: "/ssr" },
-      { label: "CSR", path: "/csr" },
+      { label: "/menu (SSG)", path: "/menu" },
+      { label: "/feed (SSR)", path: "/feed" },
+      { label: "/cart (CSR)", path: "/cart" },
     ],
     iframeNote:
-      "Right-click → View Source on each route. Iframes hide View Source — click the ↗ button to pop the demo into its own tab first.",
+      "View Source on each route to feel the difference. Iframes hide View Source — click the ↗ button to pop the demo into its own tab first.",
   },
   {
     id: "demo_8",
@@ -301,12 +301,12 @@ export const day3Demos: Demo[] = [
     shortTitle: "Demo 8 — Server vs client components",
     title: 'Demo 8 — "The boundary, not the switch"',
     summary:
-      "A server-rendered grid with a client-rendered search box. Badges in the live demo mark which component is which. Slow 3G makes the hydration gap visible.",
+      "/detail — a restaurant detail page with a server-rendered menu (every dish in the HTML, zero JS) plus two small client islands: a search-within-menu input and per-item Add-to-cart buttons. Server trunk, client leaves. Slow 3G makes the hydration gap visible.",
     readmeSourcePath: "day_3/demo_7_8_nextjs/demo_8.md",
     contentFile: "day_3/demo_8.md",
     kind: "nextjs-separate",
     iframeUrlEnvVar: "NEXT_PUBLIC_DEMO_7_URL",
-    iframePathSuffix: "/hybrid",
+    iframePathSuffix: "/detail",
     iframeNote:
       "Throttle to Slow 3G, hard-refresh, and try typing into the search box. The hydration gap is the dead window between paint and interactivity.",
   },

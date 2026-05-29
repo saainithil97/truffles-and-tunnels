@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Error boundaries — Swiggy wrap</title>
+<style>
+  :root {
+    --swiggy: #fc8019;
+    --ink: #1c1c1c;
+    --muted: #686b78;
+    --rating: #1a8b3a;
+    --border: #e5e7eb;
+    --bad: #c0392b;
+    --bad-bg: #fdecea;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: #f4f4f5;
+    font-family: -apple-system, system-ui, "Segoe UI", sans-serif;
+    color: var(--ink);
+    padding: 20px 16px 40px;
+  }
+  header {
+    max-width: 1100px;
+    margin: 0 auto 18px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  header h1 { margin: 0; font-size: 1.15rem; font-weight: 700; }
+  header p { margin: 0; color: var(--muted); font-size: 0.88rem; flex: 1; min-width: 200px; }
+
+  .toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 12px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  .toggle__dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--muted);
+  }
+  .toggle--on .toggle__dot { background: var(--swiggy); }
+  .toggle__label--off { color: var(--muted); }
+  .toggle--on .toggle__label--off { display: none; }
+  .toggle__label--on { display: none; }
+  .toggle--on .toggle__label--on { display: inline; color: var(--swiggy); }
+
+  #root {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  @media (min-width: 760px) {
+    .grid { grid-template-columns: 1fr 1fr 1fr; }
+  }
+
+  .card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .card__img {
+    display: block;
+    width: 100%;
+    height: 130px;
+    object-fit: cover;
+    background: #eee;
+  }
+  .card__body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 6px; }
+  .card__name { margin: 0; font-size: 0.95rem; font-weight: 700; }
+  .card__meta { margin: 0; color: var(--muted); font-size: 0.8rem; }
+  .card__meta .rating { color: var(--rating); font-weight: 600; }
+  .card__actions { display: flex; gap: 8px; margin-top: 6px; }
+  .btn {
+    font: inherit;
+    font-weight: 600;
+    font-size: 0.78rem;
+    cursor: pointer;
+    border-radius: 8px;
+    padding: 6px 10px;
+    border: 1.5px solid var(--swiggy);
+    color: var(--swiggy);
+    background: #fff;
+  }
+  .btn:hover { background: var(--swiggy); color: #fff; }
+  .btn--danger { border-color: var(--bad); color: var(--bad); }
+  .btn--danger:hover { background: var(--bad); color: #fff; }
+
+  .fallback {
+    height: 100%;
+    background: var(--bad-bg);
+    border: 1px solid var(--bad);
+    border-radius: 12px;
+    padding: 18px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .fallback h3 { margin: 0; color: var(--bad); font-size: 0.92rem; }
+  .fallback p { margin: 0; color: var(--bad); font-size: 0.8rem; }
+  .fallback__code {
+    font-family: ui-monospace, SF Mono, Monaco, monospace;
+    font-size: 0.72rem;
+    background: #fff;
+    color: var(--bad);
+    border: 1px solid var(--bad);
+    border-radius: 6px;
+    padding: 4px 6px;
+  }
+  .fallback__retry {
+    font: inherit;
+    font-weight: 600;
+    font-size: 0.78rem;
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 6px 12px;
+    border: 1.5px solid var(--bad);
+    color: var(--bad);
+    background: #fff;
+  }
+
+  .crash {
+    margin: 30px 0;
+    padding: 24px;
+    background: #2b2b2b;
+    color: #fff;
+    border-radius: 10px;
+    font-family: ui-monospace, SF Mono, Monaco, monospace;
+    font-size: 0.82rem;
+    line-height: 1.45;
+  }
+  .crash strong { color: #ff8a5d; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Error boundaries</h1>
+  <p>Same crash. Toggle the boundary on or off and click the 💥 button on any card.</p>
+  <div id="toggle-mount"></div>
+</header>
+
+<div id="root"></div>
+
+<script src="vendor/react.development.js"></script>
+<script src="vendor/react-dom.development.js"></script>
+<script src="vendor/babel.min.js"></script>
+<script type="text/babel">
+const { useState, Component } = React;
+
+const RESTAURANTS = [
+  { id: 1, name: "Meghana Foods", meta: "★ 4.3 · 40 mins · ₹500" },
+  { id: 2, name: "Truffles", meta: "★ 4.4 · 35 mins · ₹600" },
+  { id: 3, name: "Pizza Bakery", meta: "★ 4.1 · 30 mins · ₹450" },
+];
+
+// ---- The error boundary (class — only class components can use componentDidCatch) ----
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+  componentDidCatch(error, info) {
+    // In a real app this would phone home to Sentry / Datadog / etc.
+    console.error("[ErrorBoundary] caught:", error.message);
+  }
+  reset = () => this.setState({ error: null });
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="fallback">
+          <h3>Something went wrong here.</h3>
+          <p>The rest of the page is fine. This card crashed —</p>
+          <code className="fallback__code">{this.state.error.message}</code>
+          <button className="fallback__retry" onClick={this.reset}>↻ Try again</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// ---- The card. Throws during render if `crashed` is true. ----
+function Card({ name, meta, onCrash }) {
+  const [crashed, setCrashed] = useState(false);
+  if (crashed) {
+    throw new Error(`Failed to render "${name}" — image CDN returned 503.`);
+  }
+  return (
+    <article className="card">
+      <img className="card__img" src="/live-demos/demo_1/meghana-biryani.jpg" alt="" />
+      <div className="card__body">
+        <h3 className="card__name">{name}</h3>
+        <p className="card__meta">{meta.replace("★", "")}<span className="rating"> ★ {meta.match(/\d+\.\d+/)?.[0]}</span></p>
+        <div className="card__actions">
+          <button className="btn">Add to cart</button>
+          <button className="btn btn--danger" onClick={() => { setCrashed(true); onCrash?.(); }}>
+            💥 Throw
+          </button>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+// ---- The top-level app ----
+function App() {
+  const [boundaryOn, setBoundaryOn] = useState(true);
+  // `crashSignal` is bumped after a crash so we can rebuild the tree if the
+  // boundary is OFF and the whole grid was killed.
+  const [crashSignal, setCrashSignal] = useState(0);
+
+  const cards = RESTAURANTS.map((r) => {
+    const card = <Card key={r.id} name={r.name} meta={r.meta} onCrash={() => setCrashSignal((n) => n + 1)} />;
+    return boundaryOn ? <ErrorBoundary key={r.id}>{card}</ErrorBoundary> : card;
+  });
+
+  return (
+    <>
+      <Toggle on={boundaryOn} onChange={setBoundaryOn} />
+      <div className="grid" key={crashSignal}>
+        {cards}
+      </div>
+      {!boundaryOn && (
+        <p style={{ color: "var(--muted)", fontSize: "0.82rem", marginTop: 16, textAlign: "center" }}>
+          Boundary off → next 💥 takes down the whole grid. Check the console.
+          <br/>
+          <button className="btn" style={{ marginTop: 10 }} onClick={() => setCrashSignal((n) => n + 1)}>
+            ↻ Rebuild grid
+          </button>
+        </p>
+      )}
+    </>
+  );
+}
+
+function Toggle({ on, onChange }) {
+  return (
+    <div
+      className={"toggle" + (on ? " toggle--on" : "")}
+      role="switch"
+      aria-checked={on}
+      tabIndex={0}
+      onClick={() => onChange(!on)}
+    >
+      <span className="toggle__dot" />
+      <span className="toggle__label--off">boundary OFF</span>
+      <span className="toggle__label--on">boundary ON</span>
+    </div>
+  );
+}
+
+// The toggle gets mounted up in the header for a cleaner layout.
+function Mount() {
+  return <App />;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<Mount />);
+</script>
+
+<script>
+// Move the toggle into the header on first render. The React app renders a
+// toggle at the top of #root; we relocate it for layout. (Tiny hack — keeps
+// the React code single-rooted.)
+const observer = new MutationObserver(() => {
+  const root = document.getElementById("root");
+  const toggle = root && root.querySelector(".toggle");
+  const mount = document.getElementById("toggle-mount");
+  if (toggle && mount && toggle.parentElement !== mount) {
+    mount.appendChild(toggle);
+  }
+});
+observer.observe(document.getElementById("root"), { childList: true, subtree: true });
+</script>
+
+</body>
+</html>

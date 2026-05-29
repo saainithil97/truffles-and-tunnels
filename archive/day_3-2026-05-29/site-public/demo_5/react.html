@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Swiggy cart — React</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 560px; margin: 0 auto; padding: 0 1rem 2rem; background: #fff7ed; color: #1f2937; }
+
+    /* DOM-write counter — same instrumentation as the vanilla files. Counts
+       every MutationRecord the browser fires inside #root. For React this is
+       only the surfaces React's diff actually touched. */
+    .domcounter { position: sticky; top: 0; z-index: 100; background: #1f2937; color: #fff; padding: .55rem .8rem; display: flex; gap: .9rem; align-items: center; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .78rem; margin: 0 -1rem 1rem; }
+    .domcounter__label { font-weight: 700; opacity: .85; }
+    .domcounter__metric strong { color: #fb923c; font-size: 1rem; padding: 0 .15rem; }
+    .domcounter__reset { margin-left: auto; background: #fb923c; color: #1f2937; border: 0; padding: .3rem .65rem; border-radius: 5px; font-weight: 700; cursor: pointer; font-size: .72rem; font-family: inherit; }
+    .domcounter__reset:hover { background: #f97316; }
+
+    .topbar { background: #fff7ed; padding: .9rem 0 .5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #fed7aa; margin-bottom: 1rem; }
+    .topbar h1 { font-size: 1.15rem; margin: 0; }
+    .badge { background: #fff; border: 1.5px solid #fb923c; color: #fb923c; padding: .25rem .7rem; border-radius: 999px; font-weight: 700; font-size: .85rem; }
+    .badge.is-empty { color: #9ca3af; border-color: #e5e7eb; }
+
+    .card { display: grid; grid-template-columns: 80px 1fr; gap: 1rem; align-items: center; padding: 1rem; background: #fff; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,.06); margin-bottom: .75rem; }
+    .emoji { font-size: 3rem; text-align: center; }
+    .name { font-weight: 700; font-size: 1.05rem; }
+    .price { color: #6b7280; font-size: .95rem; margin-top: .15rem; }
+    .actions { margin-top: .6rem; }
+    .add { background: #fb923c; color: #fff; border: 0; padding: .5rem 1rem; font-weight: 700; font-size: .9rem; border-radius: 8px; cursor: pointer; }
+    .add:hover { background: #f97316; }
+    .qty { display: inline-flex; align-items: center; gap: .8rem; border: 1.5px solid #fb923c; border-radius: 8px; padding: .15rem .3rem; background: #fff; }
+    .qty button { background: transparent; border: 0; color: #fb923c; font-size: 1.2rem; font-weight: 700; width: 28px; height: 28px; cursor: pointer; }
+    .qty button:hover { color: #f97316; }
+    .qty span { font-weight: 700; min-width: 1rem; text-align: center; }
+
+    .freebanner { margin-top: 1rem; padding: .8rem 1rem; border-radius: 10px; font-size: .9rem; font-weight: 600; text-align: center; background: #fef3c7; color: #92400e; }
+    .freebanner.is-unlocked { background: #d1fae5; color: #065f46; }
+
+    .subtotal { margin-top: 1rem; padding: 1rem; background: #fff; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,.06); display: flex; justify-content: space-between; font-weight: 700; }
+    .subtotal .label { color: #6b7280; font-weight: 500; }
+  </style>
+
+  <script src="vendor/react.development.js"></script>
+  <script src="vendor/react-dom.development.js"></script>
+  <script src="vendor/babel.min.js"></script>
+</head>
+<body>
+  <!-- Same counter UI as the vanilla files. Sibling to #root so its own
+       updates don't recurse into the observer. -->
+  <div class="domcounter">
+    <span class="domcounter__label">DOM writes —</span>
+    <span class="domcounter__metric">last click: <strong id="lastWrites">0</strong></span>
+    <span class="domcounter__metric">total: <strong id="totalWrites">0</strong></span>
+    <button id="resetWrites" class="domcounter__reset" type="button">Reset</button>
+  </div>
+
+  <div id="root"></div>
+
+  <script>
+    // The observer is plain JS, not JSX. Watches #root and counts every
+    // MutationRecord React's commit phase causes. Set up BEFORE the React
+    // render so it sees the initial paint too — but the counter UI starts
+    // at 0 and only updates from the next mutation onward, so the very
+    // first paint isn't counted (we initialise the textContent above).
+    //
+    // (If we ran observer.observe() AFTER createRoot.render(), we'd miss
+    // any deferred work from the initial render. Observing first is safe.)
+    (function () {
+      const lastEl  = document.getElementById("lastWrites");
+      const totalEl = document.getElementById("totalWrites");
+      let total = 0;
+      // Skip the very first batch — that's React's initial paint into an
+      // empty #root, which would otherwise count as ~13 mutations and
+      // confuse the comparison with vanilla.
+      let initialDone = false;
+      const obs = new MutationObserver((records) => {
+        if (!initialDone) { initialDone = true; return; }
+        const n = records.length;
+        lastEl.textContent = n;
+        total += n;
+        totalEl.textContent = total;
+      });
+      obs.observe(document.getElementById("root"), {
+        attributes: true, characterData: true, childList: true, subtree: true,
+      });
+      document.getElementById("resetWrites").addEventListener("click", () => {
+        total = 0;
+        lastEl.textContent = "0";
+        totalEl.textContent = "0";
+      });
+    })();
+  </script>
+
+  <script type="text/babel">
+    // The whole cart, declarative. One state object, three derived values
+    // (totalQty, subtotal, unlocked). The JSX is a pure function of those —
+    // no event handler ever pokes a DOM node.
+
+    const { useState } = React;
+
+    const DISHES = [
+      { id: "meghana",  name: "Meghana Biryani",   price: 260, emoji: "🍛" },
+      { id: "truffles", name: "Truffles American", price: 420, emoji: "🍔" },
+      { id: "glens",    name: "Glen's Cake Slice", price: 180, emoji: "🍰" },
+    ];
+    const FREE_DELIVERY_AT = 499;
+
+    // The one component that knows about a single dish. Used three times
+    // below. The same UI surface that vanilla-full hand-rolls (Add ↔ qty
+    // controls) lives here once, with a name.
+    function DishCard({ dish, qty, onChange }) {
+      return (
+        <div className="card">
+          <div className="emoji">{dish.emoji}</div>
+          <div>
+            <div className="name">{dish.name}</div>
+            <div className="price">₹{dish.price}</div>
+            <div className="actions">
+              {qty === 0 ? (
+                <button className="add" onClick={() => onChange(1)}>Add to cart</button>
+              ) : (
+                <div className="qty">
+                  <button onClick={() => onChange(qty - 1)} aria-label="decrease">−</button>
+                  <span>{qty}</span>
+                  <button onClick={() => onChange(qty + 1)} aria-label="increase">+</button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function App() {
+      // The only state in the whole app.
+      const [cart, setCart] = useState({ meghana: 0, truffles: 0, glens: 0 });
+
+      // Derived values — recomputed on every render, never stored.
+      const totalQty = DISHES.reduce((s, d) => s + cart[d.id], 0);
+      const subtotal = DISHES.reduce((s, d) => s + cart[d.id] * d.price, 0);
+      const isEmpty  = totalQty === 0;
+      const unlocked = subtotal >= FREE_DELIVERY_AT;
+
+      // The one mutation surface — every +/-/Add for every card goes
+      // through this. No render() to remember to call.
+      const setQty = (id, qty) =>
+        setCart(c => ({ ...c, [id]: Math.max(0, qty) }));
+
+      return (
+        <>
+          <header className="topbar">
+            <h1>🛵 Swiggy — cart</h1>
+            <span className={"badge" + (isEmpty ? " is-empty" : "")}>
+              🛒 {totalQty} items
+            </span>
+          </header>
+
+          <main>
+            {DISHES.map(d =>
+              <DishCard
+                key={d.id}
+                dish={d}
+                qty={cart[d.id]}
+                onChange={qty => setQty(d.id, qty)}
+              />
+            )}
+          </main>
+
+          {!isEmpty && (
+            <div className={"freebanner" + (unlocked ? " is-unlocked" : "")}>
+              {unlocked
+                ? "🎉 Free delivery unlocked!"
+                : `Add ₹${FREE_DELIVERY_AT - subtotal} more for free delivery`}
+            </div>
+          )}
+
+          {!isEmpty && (
+            <div className="subtotal">
+              <span className="label">Subtotal</span>
+              <span>₹{subtotal}</span>
+            </div>
+          )}
+        </>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>

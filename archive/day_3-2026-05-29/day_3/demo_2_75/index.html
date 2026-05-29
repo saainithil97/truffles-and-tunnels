@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>One thread, one mood</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Sticky topbar with two main-thread health indicators:
+       - The canary spinner is driven by requestAnimationFrame. When the main
+         thread is hogged by a synchronous task, rAF can't fire — spinner freezes.
+       - The clock is driven by setInterval(50ms). When the main thread is
+         hogged, intervals back up — clock freezes, then leaps when the queue
+         drains. Together they make "the thread is blocked" visceral. -->
+  <header class="topbar">
+    <div class="topbar__row">
+      <span class="canary" id="canary" aria-label="rAF canary"></span>
+      <span class="topbar__title">🛵 Main thread</span>
+      <span class="clock" id="clock">00:00.000</span>
+    </div>
+    <p class="topbar__hint">
+      Spinner = rAF (60×/sec). Clock = setInterval (20×/sec). Both run on the
+      main thread. Watch what happens when a scenario blocks it.
+    </p>
+  </header>
+
+  <main class="scenarios">
+    <button class="scenario" type="button" data-scenario="block">
+      <span class="scenario__num">①</span>
+      <span class="scenario__body">
+        <span class="scenario__title">Block the thread for 1 second</span>
+        <span class="scenario__hint">A <code>while</code> loop runs synchronously. Spinner and clock freeze. Then catch up in one jerk.</span>
+      </span>
+    </button>
+    <button class="scenario" type="button" data-scenario="setTimeoutZero">
+      <span class="scenario__num">②</span>
+      <span class="scenario__body">
+        <span class="scenario__title">setTimeout(fn, 0), then block 1 second</span>
+        <span class="scenario__hint">Schedule a timer for "now," then run a 1 s sync loop. The timer fires <em>after</em> the loop.</span>
+      </span>
+    </button>
+    <button class="scenario" type="button" data-scenario="microVsMacro">
+      <span class="scenario__num">③</span>
+      <span class="scenario__body">
+        <span class="scenario__title">Promise vs setTimeout(0)</span>
+        <span class="scenario__hint">Queue a setTimeout first, then a Promise. The Promise still runs first.</span>
+      </span>
+    </button>
+    <button class="scenario" type="button" data-scenario="rafDuringBlock">
+      <span class="scenario__num">④</span>
+      <span class="scenario__body">
+        <span class="scenario__title">requestAnimationFrame during a block</span>
+        <span class="scenario__hint">Request an animation frame, then block 1 s. The frame fires only after the block.</span>
+      </span>
+    </button>
+  </main>
+
+  <section class="log">
+    <header class="log__header">
+      <h2 class="log__title">Event log</h2>
+      <button id="clear-log" class="log__clear" type="button">Clear</button>
+    </header>
+    <ol id="log-list" class="log__list">
+      <li class="log__item log__item--hint">Click a scenario above. Each event below shows what ran, in what order, with a millisecond timestamp.</li>
+    </ol>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>

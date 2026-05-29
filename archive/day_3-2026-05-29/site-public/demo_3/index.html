@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Demo 3 — Render blocking</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 640px;
+      margin: 3rem auto; padding: 0 1rem; color: #222; line-height: 1.55; }
+    h1 { margin-bottom: 0.25rem; }
+    a { color: #cc5200; font-weight: 600; }
+    li { margin: 0.6rem 0; }
+    code { background: #f0f0f0; padding: 1px 5px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Demo 3 — Why order matters</h1>
+  <p>Same page, three ways. They differ only in where the
+    <code>&lt;script&gt;</code> tag sits. Turn on <strong>Slow 3G</strong>
+    (DevTools → Network → throttling) and load each:</p>
+  <ul>
+    <li><a href="version-a.html">Version A</a> — blocking script in
+      <code>&lt;head&gt;</code>. Page stays blank until the script loads and runs.</li>
+    <li><a href="version-b.html">Version B</a> — <code>&lt;head&gt;</code> script
+      with <code>defer</code>. Renders immediately; the script runs after parsing.</li>
+    <li><a href="version-c.html">Version C</a> — plain script at the end of
+      <code>&lt;body&gt;</code>. Renders first, then freezes while the script runs.</li>
+  </ul>
+  <p>Open the Console to see <code>slow.js</code> log when it starts and finishes.</p>
+</body>
+</html>

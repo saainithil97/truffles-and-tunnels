@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Three loading strategies — Swiggy wrap</title>
+<style>
+  :root {
+    --swiggy: #fc8019;
+    --ink: #1c1c1c;
+    --muted: #686b78;
+    --rating: #1a8b3a;
+    --skel: #e6e7eb;
+    --skel-shimmer: #f4f5f7;
+    --border: #e5e7eb;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: #f4f4f5;
+    font-family: -apple-system, system-ui, "Segoe UI", sans-serif;
+    color: var(--ink);
+    padding: 20px 16px 40px;
+  }
+  header {
+    max-width: 1100px;
+    margin: 0 auto 18px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  header h1 { margin: 0; font-size: 1.15rem; font-weight: 700; }
+  header p { margin: 0; color: var(--muted); font-size: 0.88rem; flex: 1; min-width: 200px; }
+  #reload-all {
+    font: inherit;
+    font-weight: 600;
+    background: var(--swiggy);
+    color: #fff;
+    border: 0;
+    border-radius: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+  }
+  #reload-all:hover { filter: brightness(1.05); }
+
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  @media (min-width: 760px) {
+    main { grid-template-columns: 1fr 1fr 1fr; }
+  }
+
+  .strategy {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .strategy h2 {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 700;
+  }
+  .strategy__caption {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--muted);
+    min-height: 2.2em;
+  }
+  .strategy__timer {
+    font-family: ui-monospace, SF Mono, Monaco, monospace;
+    font-size: 0.72rem;
+    color: var(--swiggy);
+    font-weight: 600;
+  }
+
+  .card-slot {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #fafafa;
+    min-height: 320px;
+  }
+  .card-slot > * { position: absolute; inset: 0; }
+  .hidden { display: none !important; }
+
+  /* ---- The real card ---- */
+  .card {
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+  }
+  .card__img {
+    display: block;
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    background: #eee;
+  }
+  .card__body { padding: 12px 14px 14px; }
+  .card__name { margin: 0 0 4px; font-size: 1rem; font-weight: 700; }
+  .card__cuisines { margin: 0 0 6px; color: var(--muted); font-size: 0.82rem; }
+  .card__meta { margin: 0 0 10px; color: var(--muted); font-size: 0.82rem; }
+  .card__meta .rating { color: var(--rating); font-weight: 600; }
+  .card__like {
+    font: inherit;
+    font-weight: 600;
+    font-size: 0.82rem;
+    cursor: pointer;
+    border: 1.5px solid var(--swiggy);
+    color: var(--swiggy);
+    background: #fff;
+    border-radius: 8px;
+    padding: 6px 12px;
+  }
+
+  /* ---- Strategy 1: Spinner ---- */
+  .state-spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  .spinner {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 3px solid var(--border);
+    border-top-color: var(--swiggy);
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---- Strategy 2: Skeleton ---- */
+  .skeleton-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    padding: 0;
+  }
+  .skel { background: var(--skel); border-radius: 4px; position: relative; overflow: hidden; }
+  .skel::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, var(--skel-shimmer), transparent);
+    animation: shimmer 1.4s linear infinite;
+  }
+  @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+  .skel-img { height: 160px; border-radius: 0; }
+  .skel-body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 8px; }
+  .skel-name { height: 14px; width: 60%; }
+  .skel-cuisines { height: 10px; width: 45%; }
+  .skel-meta { height: 10px; width: 55%; margin-bottom: 6px; }
+  .skel-btn { height: 28px; width: 80px; border-radius: 8px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Three loading strategies</h1>
+  <p>Same 2-second "data fetch." Watch all three at once.</p>
+  <button id="reload-all" type="button">↻ Reload all</button>
+</header>
+
+<main>
+  <!-- Strategy 1: Spinner -->
+  <section class="strategy" data-strategy="spinner">
+    <h2>1. Spinner</h2>
+    <p class="strategy__caption">"Something's happening." But what? Where? When?</p>
+    <div class="card-slot">
+      <div class="state-spinner state-loading" id="spinner-loading">
+        <div class="spinner"></div>
+      </div>
+      <div class="state-ready hidden" id="spinner-ready"></div>
+    </div>
+    <span class="strategy__timer" data-timer="spinner">…</span>
+  </section>
+
+  <!-- Strategy 2: Skeleton -->
+  <section class="strategy" data-strategy="skeleton">
+    <h2>2. Skeleton</h2>
+    <p class="strategy__caption">Same wait. But the eye sees the layout instantly.</p>
+    <div class="card-slot">
+      <div class="skeleton-card state-loading" id="skeleton-loading">
+        <div class="skel skel-img"></div>
+        <div class="skel-body">
+          <div class="skel skel-name"></div>
+          <div class="skel skel-cuisines"></div>
+          <div class="skel skel-meta"></div>
+          <div class="skel skel-btn"></div>
+        </div>
+      </div>
+      <div class="state-ready hidden" id="skeleton-ready"></div>
+    </div>
+    <span class="strategy__timer" data-timer="skeleton">…</span>
+  </section>
+
+  <!-- Strategy 3: Instant (e.g. SSG / cached) -->
+  <section class="strategy" data-strategy="instant">
+    <h2>3. Instant (SSG / cached)</h2>
+    <p class="strategy__caption">The page already had the answer. No fetch on this load.</p>
+    <div class="card-slot">
+      <div class="state-ready" id="instant-ready"></div>
+    </div>
+    <span class="strategy__timer" data-timer="instant">…</span>
+  </section>
+</main>
+
+<script>
+(function () {
+  const FETCH_MS = 2000;
+
+  const CARD_HTML = `
+    <article class="card">
+      <img class="card__img" src="/live-demos/demo_1/meghana-biryani.jpg" alt="Meghana Foods biryani" />
+      <div class="card__body">
+        <h3 class="card__name">Meghana Foods</h3>
+        <p class="card__cuisines">Biryani, Andhra</p>
+        <p class="card__meta"><span class="rating">★ 4.3</span> · 40 mins · ₹500 for two</p>
+        <button class="card__like" type="button">🤍 Like</button>
+      </div>
+    </article>
+  `;
+
+  function paintCard(slotId) {
+    document.getElementById(slotId).innerHTML = CARD_HTML;
+  }
+
+  function setTimer(strategy, ms) {
+    const el = document.querySelector(`[data-timer="${strategy}"]`);
+    if (el) el.textContent = ms === 0 ? "0 ms (no fetch)" : `+${ms} ms — card visible`;
+  }
+
+  function reloadColumn(strategy) {
+    if (strategy === "instant") {
+      // Has the answer already — paint immediately.
+      paintCard("instant-ready");
+      setTimer("instant", 0);
+      return;
+    }
+    // Show the loading state.
+    const loadingEl = document.getElementById(`${strategy}-loading`);
+    const readyEl = document.getElementById(`${strategy}-ready`);
+    loadingEl.classList.remove("hidden");
+    readyEl.classList.add("hidden");
+    readyEl.innerHTML = "";
+    setTimer(strategy, "…");
+    const started = performance.now();
+    // Simulate the data fetch — same delay for both columns.
+    setTimeout(() => {
+      paintCard(`${strategy}-ready`);
+      loadingEl.classList.add("hidden");
+      readyEl.classList.remove("hidden");
+      const elapsed = Math.round(performance.now() - started);
+      setTimer(strategy, elapsed);
+    }, FETCH_MS);
+  }
+
+  function reloadAll() {
+    reloadColumn("spinner");
+    reloadColumn("skeleton");
+    reloadColumn("instant");
+  }
+
+  document.getElementById("reload-all").addEventListener("click", reloadAll);
+  reloadAll();
+})();
+</script>
+
+</body>
+</html>

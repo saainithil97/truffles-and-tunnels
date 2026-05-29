@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Meghana Foods — Reviews</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="card">
+      <header class="head">
+        <div class="poster" aria-hidden="true">🍗</div>
+        <div>
+          <h1>Meghana Foods</h1>
+          <p class="meta">Biryani • Andhra • ⭐ 4.4 • 25 min</p>
+        </div>
+      </header>
+
+      <section class="reviews">
+        <h2>Customer reviews</h2>
+
+        <form id="review-form" autocomplete="off">
+          <label for="review-input">Leave a review</label>
+          <input
+            id="review-input"
+            name="review"
+            type="text"
+            placeholder="How was the biryani?"
+          />
+
+          <fieldset class="mode">
+            <legend>Render mode</legend>
+            <label>
+              <input type="radio" name="mode" value="unsafe" checked />
+              ☠️ UNSAFE — <code>innerHTML</code>
+            </label>
+            <label>
+              <input type="radio" name="mode" value="safe" />
+              ✅ SAFE — <code>textContent</code>
+            </label>
+          </fieldset>
+
+          <button type="submit">Post review</button>
+        </form>
+
+        <!-- New reviews are injected here, newest first. -->
+        <ul id="review-feed" class="feed"></ul>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

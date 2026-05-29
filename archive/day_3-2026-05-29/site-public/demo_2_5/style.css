@@ -1,0 +1,166 @@
+:root {
+  --swiggy: #fc8019;
+  --bg: #f7f7f7;
+  --surface: #ffffff;
+  --text: #1a1a1a;
+  --muted: #6b6b6b;
+  --border: #e4e4e4;
+}
+
+html[data-theme="dark"] {
+  --bg: #16181c;
+  --surface: #20242b;
+  --text: #f1f1f1;
+  --muted: #9aa0a8;
+  --border: #333a44;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.topbar {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, var(--swiggy), #ffb066);
+  color: #fff;
+}
+
+.logo {
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.tagline {
+  font-size: 0.95rem;
+  opacity: 0.95;
+}
+
+.page {
+  max-width: 460px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+h1,
+h2 {
+  margin: 0 0 0.25rem;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0 0 1rem;
+}
+
+code {
+  background: rgba(252, 128, 25, 0.12);
+  color: var(--swiggy);
+  padding: 0.05rem 0.35rem;
+  border-radius: 5px;
+  font-size: 0.85em;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin: 1rem 0 0;
+}
+
+/* Dark-mode toggle */
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.05rem;
+  cursor: pointer;
+}
+
+.toggle input {
+  width: 1.2rem;
+  height: 1.2rem;
+  accent-color: var(--swiggy);
+  cursor: pointer;
+}
+
+/* Checkout steps */
+.steps {
+  list-style: none;
+  display: flex;
+  gap: 0.5rem;
+  padding: 0;
+  margin: 0 0 1rem;
+}
+
+.steps li {
+  flex: 1;
+  text-align: center;
+  padding: 0.6rem 0.3rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.steps li.active {
+  border-color: var(--swiggy);
+  color: var(--swiggy);
+  font-weight: 700;
+  background: rgba(252, 128, 25, 0.08);
+}
+
+.steps li.done {
+  opacity: 0.55;
+}
+
+.step-label {
+  font-weight: 600;
+  margin: 0 0 1rem;
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+button {
+  flex: 1;
+  padding: 0.7rem 1rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+button.primary {
+  background: var(--swiggy);
+  border-color: var(--swiggy);
+  color: #fff;
+  font-weight: 700;
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

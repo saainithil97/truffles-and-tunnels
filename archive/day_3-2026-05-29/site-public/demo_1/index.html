@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Meghana Foods — Swiggy</title>
+
+  <!-- Request #5: the Google Font stylesheet (cross-origin, fonts.googleapis.com).
+       It will, in turn, trigger Request #6: the actual font file from
+       fonts.gstatic.com. One request that causes another. -->
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" />
+
+  <!-- Request #2: our own stylesheet. Render-blocking — on Slow 3G the text
+       shows in a plain system font until this arrives, then snaps into style. -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="card">
+    <!-- Request #4: the heavy image — the last thing to fill in on Slow 3G. -->
+    <img class="card__img" src="meghana-biryani.jpg"
+         alt="Meghana Foods biryani" width="600" height="400" />
+    <div class="card__body">
+      <h1 class="card__name">Meghana Foods</h1>
+      <p class="card__cuisines">Biryani, Andhra</p>
+      <p class="card__meta">
+        <span class="rating">★ 4.3</span> · 40 mins · ₹500 for two
+      </p>
+      <button id="like" class="like" type="button">
+        🤍 Like <span id="like-count">0</span>
+      </button>
+    </div>
+  </main>
+
+  <!-- Request #3: the behavior. Until this lands, the Like button does nothing. -->
+  <script src="app.js" defer></script>
+</body>
+</html>

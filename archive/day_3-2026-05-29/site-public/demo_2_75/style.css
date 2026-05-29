@@ -1,0 +1,238 @@
+/* Demo 2.75 — "One thread, one mood"
+ *
+ * Four-button event-loop sandbox with two main-thread health indicators
+ * (canary spinner via rAF, clock via setInterval) and an ordered event log.
+ * Style intentionally echoes Demo 4 so students recognize the canary motif.
+ */
+
+:root {
+  --bg: #fafafa;
+  --card: #ffffff;
+  --text: #1c1c1c;
+  --muted: #686b78;
+  --line: #e7e7eb;
+  --primary: #fc8019;
+  --good: #2bb673;
+  --bad: #d32f2f;
+  --shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.45;
+}
+
+/* ---- Sticky topbar with health indicators ----------------------------- */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--line);
+  padding: 0.7rem 0.9rem;
+}
+.topbar__row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+.topbar__title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  flex: 1;
+}
+.topbar__hint {
+  margin: 0.45rem 0 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+/* Canary spinner. JS rotates by 6° on every rAF tick. When the main thread
+ * is blocked, rAF can't fire — visible freeze mid-rotation. Same conic-gradient
+ * notch trick as Demo 4 so students recognize the motif. */
+.canary {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    var(--good) 0deg,
+    var(--good) 270deg,
+    transparent 270deg,
+    transparent 360deg
+  );
+  transform: rotate(0deg);
+  flex-shrink: 0;
+}
+
+/* Clock. setInterval(50ms) updates this. When the main thread is blocked,
+ * the interval queue backs up; clock freezes then leaps. */
+.clock {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+  color: var(--text);
+  background: #f1f1f3;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-weight: 600;
+  min-width: 110px;
+  text-align: center;
+}
+
+/* ---- Scenario buttons ------------------------------------------------- */
+.scenarios {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.9rem;
+  max-width: 640px;
+  margin: 0 auto;
+}
+.scenario {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  gap: 0.7rem;
+  align-items: center;
+  text-align: left;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.7rem 0.85rem;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--text);
+  transition: border-color 0.1s, background 0.1s;
+}
+.scenario:hover {
+  border-color: var(--primary);
+  background: #fff3e3;
+}
+.scenario:active {
+  background: #ffe7c8;
+}
+.scenario__num {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--primary);
+  text-align: center;
+}
+.scenario__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+.scenario__title {
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+.scenario__hint {
+  font-size: 0.78rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.scenario__hint code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background: #f1f1f3;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.78rem;
+}
+
+/* ---- Event log -------------------------------------------------------- */
+.log {
+  max-width: 640px;
+  margin: 0 auto 1.5rem;
+  padding: 0 0.9rem;
+}
+.log__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+.log__title {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+.log__clear {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.log__clear:hover {
+  background: #f1f1f3;
+}
+.log__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  background: #0f1115;
+  color: #e7e7eb;
+  border-radius: 10px;
+  max-height: 320px;
+  overflow-y: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+}
+.log__item {
+  padding: 0.32rem 0.7rem;
+  border-bottom: 1px solid #1c2027;
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 0.6rem;
+  align-items: baseline;
+}
+.log__item:last-child {
+  border-bottom: 0;
+}
+.log__item--hint {
+  color: #8b8e96;
+  font-style: italic;
+  grid-template-columns: 1fr;
+}
+.log__ts {
+  color: #6b9fff;
+  text-align: right;
+}
+/* Distinct colors for the different queue types so the order is readable
+ * at a glance. */
+.log__item--scenario .log__msg {
+  color: #fc8019;
+  font-weight: 700;
+}
+.log__item--sync .log__msg {
+  color: #e7e7eb;
+}
+.log__item--timer .log__msg {
+  color: #ffcf6b;
+}
+.log__item--promise .log__msg {
+  color: #6bd1a0;
+}
+.log__item--raf .log__msg {
+  color: #c89bff;
+}
+.log__item--divider {
+  background: #1c2027;
+  grid-template-columns: 1fr;
+  color: #586374;
+  text-align: center;
+  padding: 0.2rem 0.7rem;
+  font-size: 0.7rem;
+}

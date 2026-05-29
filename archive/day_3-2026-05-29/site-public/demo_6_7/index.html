@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>What a bundler actually does</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>What a bundler actually does</h1>
+  <p class="lede">
+    Bundling, code splitting, tree shaking — three things that are <strong>not</strong> React.
+    They're what bundlers do. Bundle size is the lever most modern web perf work pulls on.
+  </p>
+
+  <!-- 1. Three worlds: script tag vs Vite vs Next -->
+  <section>
+    <h2>The three worlds — same React, three hosts</h2>
+    <div class="three-cols">
+      <div class="col-cell"><div class="head">Script tag (Demo 6.3)</div></div>
+      <div class="col-cell"><div class="head">React + Vite/webpack</div></div>
+      <div class="col-cell"><div class="head">React + Next</div></div>
+
+      <div class="col-cell row"><span class="label">Bundler</span><br/>None</div>
+      <div class="col-cell row"><span class="label">Bundler</span><br/>You pick (Vite default)</div>
+      <div class="col-cell row"><span class="label">Bundler</span><br/>Turbopack, picked for you</div>
+
+      <div class="col-cell row"><span class="label">Tree shaking</span><br/>Doesn't apply (everything global)</div>
+      <div class="col-cell row"><span class="label">Tree shaking</span><br/>Automatic (ES modules)</div>
+      <div class="col-cell row"><span class="label">Tree shaking</span><br/>Automatic</div>
+
+      <div class="col-cell row"><span class="label">Code splitting</span><br/>No</div>
+      <div class="col-cell row"><span class="label">Code splitting</span><br/>Manual via React.lazy() + dynamic import()</div>
+      <div class="col-cell row"><span class="label">Code splitting</span><br/>Automatic per route + still React.lazy()</div>
+
+      <div class="col-cell row"><span class="label">import statements</span><br/>Not supported</div>
+      <div class="col-cell row"><span class="label">import statements</span><br/>First class</div>
+      <div class="col-cell row"><span class="label">import statements</span><br/>First class</div>
+
+      <div class="col-cell row"><span class="label">npm packages</span><br/>Only via UMD CDN</div>
+      <div class="col-cell row"><span class="label">npm packages</span><br/>First class</div>
+      <div class="col-cell row"><span class="label">npm packages</span><br/>First class</div>
+
+      <div class="col-cell row"><span class="label">Bundle size visibility</span><br/>View Source</div>
+      <div class="col-cell row"><span class="label">Bundle size visibility</span><br/>Vite/webpack build report</div>
+      <div class="col-cell row"><span class="label">Bundle size visibility</span><br/><code>next build</code> route table</div>
+
+      <div class="col-cell row"><span class="label">When to use</span><br/>Demos, tiny apps, embeds</div>
+      <div class="col-cell row"><span class="label">When to use</span><br/>React app behind a custom backend / static host</div>
+      <div class="col-cell row"><span class="label">When to use</span><br/>Production apps, SSR/SSG</div>
+    </div>
+  </section>
+
+  <!-- 2. Tree shaking made physical -->
+  <section>
+    <h2>Tree shaking, made physical — same logic, 35× size difference</h2>
+    <div class="cols">
+      <div class="col">
+        <div class="label">Full import (no tree shaking benefit)</div>
+        <pre>import _ from 'lodash';
+
+_.map([1, 2, 3], x =&gt; x * 2);</pre>
+        <div class="size-bar">
+          <div class="size-bar__fill size-bar__fill--big">
+            <span class="size-bar__label">~70 KB shipped</span>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="label">Named import (only what you use)</div>
+        <pre>import map from 'lodash/map';
+
+map([1, 2, 3], x =&gt; x * 2);</pre>
+        <div class="size-bar">
+          <div class="size-bar__fill size-bar__fill--small">
+            <span class="size-bar__label" style="left:24px;justify-content:flex-start;">~2 KB</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="callout">
+      Same behaviour. One line of difference. The bundler walks the import graph from your entry
+      point; if you never reference <code>_.shuffle</code>, <code>_.debounce</code>, or the other
+      297 lodash functions, it drops them. That's tree shaking. It works because ES modules are
+      statically analyzable — the bundler can prove what you do and don't use.
+    </div>
+  </section>
+
+  <!-- 3. Code splitting — mock Next routes table -->
+  <section>
+    <h2>Code splitting — Next's per-route output (from <code>next build</code>)</h2>
+    <table class="routes-table">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Route</th>
+          <th class="num">Size</th>
+          <th class="num">First Load JS</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="marker">○</td><td class="route">/</td>                   <td class="num">142 B</td>  <td class="num">89.1 kB</td></tr>
+        <tr><td class="marker">●</td><td class="route">/ssg</td>                <td class="num">186 B</td>  <td class="num">89.2 kB</td></tr>
+        <tr><td class="marker">●</td><td class="route">/ssr</td>                <td class="num">186 B</td>  <td class="num">89.2 kB</td></tr>
+        <tr><td class="marker">○</td><td class="route">/csr</td>                <td class="num">812 B</td>  <td class="num">93.8 kB</td></tr>
+        <tr><td class="marker">○</td><td class="route">/hybrid</td>             <td class="num num--big">3.4 kB</td><td class="num num--big">94.6 kB</td></tr>
+        <tr><td class="marker">●</td><td class="route">/restaurants/[id]</td>   <td class="num">1.2 kB</td>  <td class="num">92.4 kB</td></tr>
+        <tr><td class="marker">ƒ</td><td class="route">/api/restaurants</td>    <td class="num">0 B</td>    <td class="num">0 B</td></tr>
+      </tbody>
+    </table>
+    <div class="callout">
+      <strong>Look at <code>/hybrid</code>.</strong> 3.4 kB vs the other routes' few hundred bytes,
+      because the client search box ships JS while everything around it is server-only. The
+      <code>'use client'</code> boundary <em>is</em> the code-splitting boundary. The server-only
+      routes are tiny — they paid nothing for being React. That's the point of Demo 8's badges.
+      <br/><br/>
+      ○ static · ● SSG (with <code>generateStaticParams</code>) · ƒ server function. Markers from
+      real <code>next build</code> output.
+    </div>
+  </section>
+
+  <!-- 4. React.lazy code split for plain React -->
+  <section>
+    <h2>Code splitting in plain React — <code>React.lazy()</code>, five lines</h2>
+    <pre style="background:#1c1c1c;color:#eee;padding:12px 14px;border-radius:6px;font-size:12px;font-family:ui-monospace,Menlo,monospace;margin:0;overflow-x:auto;">const Heavy = React.lazy(() =&gt; import('./Heavy'));
+
+function App() {
+  return (
+    &lt;Suspense fallback={&lt;Spinner /&gt;}&gt;
+      &lt;Heavy /&gt;
+    &lt;/Suspense&gt;
+  );
+}</pre>
+    <div class="callout">
+      <code>React.lazy</code> is React's <em>only</em> bundler-aware API. The dynamic
+      <code>import()</code> tells your bundler "this module is a separate chunk; fetch it later."
+      The bundler does the actual splitting. React provides the runtime primitive (Suspense)
+      to render a fallback while it loads. Same code works with Vite, webpack, or Next.
+    </div>
+  </section>
+</body>
+</html>

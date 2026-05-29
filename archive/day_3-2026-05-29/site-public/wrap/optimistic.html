@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Optimistic updates — Swiggy wrap</title>
+<style>
+  :root {
+    --swiggy: #fc8019;
+    --ink: #1c1c1c;
+    --muted: #686b78;
+    --rating: #1a8b3a;
+    --border: #e5e7eb;
+    --good: #0a7d2a;
+    --bad: #c0392b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: #f4f4f5;
+    font-family: -apple-system, system-ui, "Segoe UI", sans-serif;
+    color: var(--ink);
+    padding: 20px 16px 40px;
+  }
+  header {
+    max-width: 980px;
+    margin: 0 auto 18px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  header h1 { margin: 0; font-size: 1.15rem; font-weight: 700; }
+  header p { margin: 0; color: var(--muted); font-size: 0.88rem; flex: 1; min-width: 200px; }
+  .controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+  .controls label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+
+  main {
+    max-width: 980px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  @media (min-width: 720px) {
+    main { grid-template-columns: 1fr 1fr; }
+  }
+
+  .strategy {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .strategy h2 { margin: 0; font-size: 0.95rem; font-weight: 700; }
+  .strategy__caption { margin: 0; font-size: 0.8rem; color: var(--muted); min-height: 2.4em; }
+
+  .card {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .card__img {
+    display: block;
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    background: #eee;
+  }
+  .card__body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 8px; }
+  .card__name { margin: 0; font-size: 1rem; font-weight: 700; }
+  .card__meta { margin: 0; color: var(--muted); font-size: 0.82rem; }
+  .card__meta .rating { color: var(--rating); font-weight: 600; }
+
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 4px;
+  }
+  .cart {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    font-weight: 600;
+  }
+  .cart__count {
+    font-family: ui-monospace, SF Mono, Monaco, monospace;
+    font-size: 1.1rem;
+  }
+  .cart__label {
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .btn {
+    font: inherit;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    border: 1.5px solid var(--swiggy);
+    color: var(--swiggy);
+    background: #fff;
+    border-radius: 8px;
+    padding: 7px 14px;
+    transition: opacity 0.15s;
+  }
+  .btn:hover { background: var(--swiggy); color: #fff; }
+  .btn:disabled { opacity: 0.55; cursor: progress; }
+  .btn--ghost { border-color: var(--border); color: var(--muted); }
+  .btn--ghost:hover { background: #f7f7f8; color: var(--ink); }
+
+  .status {
+    font-family: ui-monospace, SF Mono, Monaco, monospace;
+    font-size: 0.72rem;
+    min-height: 1.2em;
+    margin: 0;
+  }
+  .status--good { color: var(--good); }
+  .status--bad { color: var(--bad); }
+  .status--neutral { color: var(--muted); }
+
+  .log {
+    margin: 0;
+    padding: 6px 0 0;
+    font-family: ui-monospace, SF Mono, Monaco, monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    list-style: none;
+    max-height: 120px;
+    overflow-y: auto;
+    border-top: 1px dashed var(--border);
+  }
+  .log li { padding: 2px 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Optimistic updates</h1>
+  <p>Same "Add to cart." One waits for the server. The other lies for 500&nbsp;ms.</p>
+  <div class="controls">
+    <label><input type="checkbox" id="force-fail" /> force fail next</label>
+    <button class="btn btn--ghost" id="reset" type="button">↻ Reset</button>
+  </div>
+</header>
+
+<main>
+  <!-- Pessimistic -->
+  <section class="strategy">
+    <h2>1. Pessimistic — wait for the server</h2>
+    <p class="strategy__caption">Click. Button disables. 500&nbsp;ms of "Sending…" until the server says yes.</p>
+
+    <div class="card">
+      <img class="card__img" src="/live-demos/demo_1/meghana-biryani.jpg" alt="Meghana Foods biryani" />
+      <div class="card__body">
+        <h3 class="card__name">Meghana Foods · Chicken Biryani</h3>
+        <p class="card__meta"><span class="rating">★ 4.3</span> · ₹350</p>
+        <div class="row">
+          <span class="cart">
+            <span class="cart__count" id="pess-count">0</span>
+            <span class="cart__label">in cart</span>
+          </span>
+          <button class="btn" id="pess-btn" type="button">Add to cart</button>
+        </div>
+        <p class="status status--neutral" id="pess-status">&nbsp;</p>
+      </div>
+    </div>
+    <ul class="log" id="pess-log"></ul>
+  </section>
+
+  <!-- Optimistic -->
+  <section class="strategy">
+    <h2>2. Optimistic — believe the click</h2>
+    <p class="strategy__caption">Click. Cart updates instantly. Server confirms in the background — or rolls back.</p>
+
+    <div class="card">
+      <img class="card__img" src="/live-demos/demo_1/meghana-biryani.jpg" alt="Meghana Foods biryani" />
+      <div class="card__body">
+        <h3 class="card__name">Meghana Foods · Chicken Biryani</h3>
+        <p class="card__meta"><span class="rating">★ 4.3</span> · ₹350</p>
+        <div class="row">
+          <span class="cart">
+            <span class="cart__count" id="opt-count">0</span>
+            <span class="cart__label">in cart</span>
+          </span>
+          <button class="btn" id="opt-btn" type="button">Add to cart</button>
+        </div>
+        <p class="status status--neutral" id="opt-status">&nbsp;</p>
+      </div>
+    </div>
+    <ul class="log" id="opt-log"></ul>
+  </section>
+</main>
+
+<script>
+(function () {
+  const SERVER_MS = 500;
+  const FAIL_RATE = 0.3; // random fail rate when "force fail" is off
+
+  const forceFailEl = document.getElementById("force-fail");
+
+  function shouldFail() {
+    if (forceFailEl.checked) {
+      forceFailEl.checked = false; // one-shot
+      return true;
+    }
+    return Math.random() < FAIL_RATE;
+  }
+
+  // Simulated server: resolves with the result after SERVER_MS.
+  function fakeServer() {
+    return new Promise((resolve) => {
+      setTimeout(() => resolve({ ok: !shouldFail() }), SERVER_MS);
+    });
+  }
+
+  function log(listId, msg, kind) {
+    const li = document.createElement("li");
+    const t = new Date();
+    const stamp = `${String(t.getSeconds()).padStart(2, "0")}.${String(t.getMilliseconds()).padStart(3, "0")}s`;
+    li.textContent = `[${stamp}] ${msg}`;
+    if (kind === "good") li.style.color = "var(--good)";
+    if (kind === "bad") li.style.color = "var(--bad)";
+    document.getElementById(listId).prepend(li);
+  }
+
+  // ---- Pessimistic ----
+  let pessCount = 0;
+  const pessCountEl = document.getElementById("pess-count");
+  const pessBtn = document.getElementById("pess-btn");
+  const pessStatus = document.getElementById("pess-status");
+
+  pessBtn.addEventListener("click", async () => {
+    pessBtn.disabled = true;
+    pessBtn.textContent = "Sending…";
+    pessStatus.textContent = "waiting for server…";
+    pessStatus.className = "status status--neutral";
+    log("pess-log", "→ POST /cart/add", "neutral");
+
+    const { ok } = await fakeServer();
+    if (ok) {
+      pessCount += 1;
+      pessCountEl.textContent = String(pessCount);
+      pessStatus.textContent = "✓ added";
+      pessStatus.className = "status status--good";
+      log("pess-log", "← 200 OK · cart updated", "good");
+    } else {
+      pessStatus.textContent = "✗ sold out — try again";
+      pessStatus.className = "status status--bad";
+      log("pess-log", "← 409 sold out · cart unchanged", "bad");
+    }
+    pessBtn.disabled = false;
+    pessBtn.textContent = "Add to cart";
+  });
+
+  // ---- Optimistic ----
+  let optCount = 0;
+  const optCountEl = document.getElementById("opt-count");
+  const optBtn = document.getElementById("opt-btn");
+  const optStatus = document.getElementById("opt-status");
+
+  optBtn.addEventListener("click", async () => {
+    // 1. Optimistic local update — instant feedback.
+    optCount += 1;
+    optCountEl.textContent = String(optCount);
+    optStatus.textContent = "✓ added (syncing…)";
+    optStatus.className = "status status--neutral";
+    log("opt-log", `→ POST /cart/add · UI = ${optCount}`, "neutral");
+
+    // 2. Send to the server in the background.
+    const { ok } = await fakeServer();
+    if (ok) {
+      optStatus.textContent = "✓ confirmed";
+      optStatus.className = "status status--good";
+      log("opt-log", "← 200 OK · server agrees", "good");
+    } else {
+      // 3. Rollback — server rejected.
+      optCount -= 1;
+      optCountEl.textContent = String(optCount);
+      optStatus.textContent = "✗ sold out — rolled back";
+      optStatus.className = "status status--bad";
+      log("opt-log", `← 409 sold out · UI rolled back to ${optCount}`, "bad");
+    }
+  });
+
+  // ---- Reset ----
+  document.getElementById("reset").addEventListener("click", () => {
+    pessCount = 0; pessCountEl.textContent = "0"; pessStatus.textContent = " "; pessStatus.className = "status status--neutral";
+    optCount = 0; optCountEl.textContent = "0"; optStatus.textContent = " "; optStatus.className = "status status--neutral";
+    document.getElementById("pess-log").innerHTML = "";
+    document.getElementById("opt-log").innerHTML = "";
+  });
+})();
+</script>
+
+</body>
+</html>

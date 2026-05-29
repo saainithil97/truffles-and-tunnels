@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Swiggy cart — vanilla, full</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 560px; margin: 0 auto; padding: 0 1rem 2rem; background: #fff7ed; color: #1f2937; }
+
+    /* DOM-write counter — watches the observed root and reports every
+       mutation. Sticky on top so you can see it while you click. */
+    .domcounter { position: sticky; top: 0; z-index: 100; background: #1f2937; color: #fff; padding: .55rem .8rem; display: flex; gap: .9rem; align-items: center; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .78rem; margin: 0 -1rem 1rem; }
+    .domcounter__label { font-weight: 700; opacity: .85; }
+    .domcounter__metric strong { color: #fb923c; font-size: 1rem; padding: 0 .15rem; }
+    .domcounter__reset { margin-left: auto; background: #fb923c; color: #1f2937; border: 0; padding: .3rem .65rem; border-radius: 5px; font-weight: 700; cursor: pointer; font-size: .72rem; font-family: inherit; }
+    .domcounter__reset:hover { background: #f97316; }
+
+    /* Topbar — sticky was removed because the counter is now sticky on top
+       and stacking two sticky elements at top:0 fights for the same slot. */
+    .topbar { background: #fff7ed; padding: .9rem 0 .5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #fed7aa; margin-bottom: 1rem; }
+    .topbar h1 { font-size: 1.15rem; margin: 0; }
+    .badge { background: #fff; border: 1.5px solid #fb923c; color: #fb923c; padding: .25rem .7rem; border-radius: 999px; font-weight: 700; font-size: .85rem; }
+    .badge.is-empty { color: #9ca3af; border-color: #e5e7eb; }
+
+    /* Cards (copy-pasted three times — that's the point). */
+    .card { display: grid; grid-template-columns: 80px 1fr; gap: 1rem; align-items: center; padding: 1rem; background: #fff; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,.06); margin-bottom: .75rem; }
+    .emoji { font-size: 3rem; text-align: center; }
+    .name { font-weight: 700; font-size: 1.05rem; }
+    .price { color: #6b7280; font-size: .95rem; margin-top: .15rem; }
+    .actions { margin-top: .6rem; }
+    .add { background: #fb923c; color: #fff; border: 0; padding: .5rem 1rem; font-weight: 700; font-size: .9rem; border-radius: 8px; cursor: pointer; }
+    .add:hover { background: #f97316; }
+    .qty { display: inline-flex; align-items: center; gap: .8rem; border: 1.5px solid #fb923c; border-radius: 8px; padding: .15rem .3rem; background: #fff; }
+    .qty button { background: transparent; border: 0; color: #fb923c; font-size: 1.2rem; font-weight: 700; width: 28px; height: 28px; cursor: pointer; }
+    .qty button:hover { color: #f97316; }
+    .qty span { font-weight: 700; min-width: 1rem; text-align: center; }
+    .hidden { display: none; }
+
+    /* Free-delivery banner — sometimes a nudge, sometimes a celebration. */
+    .freebanner { margin-top: 1rem; padding: .8rem 1rem; border-radius: 10px; font-size: .9rem; font-weight: 600; text-align: center; background: #fef3c7; color: #92400e; }
+    .freebanner.is-unlocked { background: #d1fae5; color: #065f46; }
+    .freebanner.is-hidden { display: none; }
+
+    /* Subtotal — only visible once the cart isn't empty. */
+    .subtotal { margin-top: 1rem; padding: 1rem; background: #fff; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,.06); display: flex; justify-content: space-between; font-weight: 700; }
+    .subtotal .label { color: #6b7280; font-weight: 500; }
+    .subtotal.is-hidden { display: none; }
+  </style>
+</head>
+<body>
+  <!-- DOM-write counter. Sibling to #observed so its own updates don't
+       feed back into the observer. The number you see is literal: every
+       MutationRecord the browser fires inside #observed gets counted. -->
+  <div class="domcounter">
+    <span class="domcounter__label">DOM writes —</span>
+    <span class="domcounter__metric">last click: <strong id="lastWrites">0</strong></span>
+    <span class="domcounter__metric">total: <strong id="totalWrites">0</strong></span>
+    <button id="resetWrites" class="domcounter__reset" type="button">Reset</button>
+  </div>
+
+  <!-- Everything below is what the observer watches. -->
+  <div id="observed">
+
+  <!-- Topbar — the badge has to update on every cart change. -->
+  <header class="topbar">
+    <h1>🛵 Swiggy — cart</h1>
+    <span id="badge" class="badge is-empty">🛒 <span id="badgeCount">0</span> items</span>
+  </header>
+
+  <!-- Three menu cards — same markup, copy-pasted three times. That'll
+       matter in the React tab. -->
+  <main id="menu">
+    <div class="card" data-id="meghana">
+      <div class="emoji">🍛</div>
+      <div>
+        <div class="name">Meghana Biryani</div>
+        <div class="price">₹260</div>
+        <div class="actions">
+          <button class="add">Add to cart</button>
+          <div class="qty hidden">
+            <button class="minus" type="button" aria-label="decrease">−</button>
+            <span class="qtyNum">0</span>
+            <button class="plus" type="button" aria-label="increase">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card" data-id="truffles">
+      <div class="emoji">🍔</div>
+      <div>
+        <div class="name">Truffles American</div>
+        <div class="price">₹420</div>
+        <div class="actions">
+          <button class="add">Add to cart</button>
+          <div class="qty hidden">
+            <button class="minus" type="button" aria-label="decrease">−</button>
+            <span class="qtyNum">0</span>
+            <button class="plus" type="button" aria-label="increase">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card" data-id="glens">
+      <div class="emoji">🍰</div>
+      <div>
+        <div class="name">Glen's Cake Slice</div>
+        <div class="price">₹180</div>
+        <div class="actions">
+          <button class="add">Add to cart</button>
+          <div class="qty hidden">
+            <button class="minus" type="button" aria-label="decrease">−</button>
+            <span class="qtyNum">0</span>
+            <button class="plus" type="button" aria-label="increase">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Two global pieces of UI that also depend on the cart. -->
+  <div id="freebanner" class="freebanner">Add ₹499 more for free delivery</div>
+  <div id="subtotal" class="subtotal is-hidden">
+    <span class="label">Subtotal</span>
+    <span>₹<span id="subtotalNum">0</span></span>
+  </div>
+
+  </div><!-- /#observed -->
+
+  <script>
+    // Three dishes, one shared cart object. Five pieces of UI to keep in
+    // sync on every click: this card's button block, this card's qty
+    // number, the topbar badge, the subtotal row, and the free-delivery
+    // banner. Watch how every click handler has to remember to fire ALL
+    // of them.
+
+    const DISHES = [
+      { id: "meghana",  price: 260 },
+      { id: "truffles", price: 420 },
+      { id: "glens",    price: 180 },
+    ];
+    const FREE_DELIVERY_AT = 499;
+
+    const cart = { meghana: 0, truffles: 0, glens: 0 };
+
+    // ---- per-card refs ---------------------------------------------------
+    // Walked once and cached; we'll need to poke each by id later.
+    const cardRefs = {};
+    for (const d of DISHES) {
+      const card = document.querySelector(`.card[data-id="${d.id}"]`);
+      cardRefs[d.id] = {
+        add:    card.querySelector(".add"),
+        qtyBox: card.querySelector(".qty"),
+        qtyNum: card.querySelector(".qtyNum"),
+        plus:   card.querySelector(".plus"),
+        minus:  card.querySelector(".minus"),
+      };
+    }
+
+    // ---- global refs ----------------------------------------------------
+    const badge       = document.getElementById("badge");
+    const badgeCount  = document.getElementById("badgeCount");
+    const subtotalBox = document.getElementById("subtotal");
+    const subtotalNum = document.getElementById("subtotalNum");
+    const freebanner  = document.getElementById("freebanner");
+
+    // The one function that has to keep FIVE pieces of UI in sync by hand.
+    function renderAll() {
+      // (1) per-card UI — for each dish, toggle button vs qty controls and
+      //     update the qty number. Three cards × two surfaces = six writes.
+      for (const d of DISHES) {
+        const qty = cart[d.id];
+        const refs = cardRefs[d.id];
+        if (qty === 0) {
+          refs.add.classList.remove("hidden");
+          refs.qtyBox.classList.add("hidden");
+        } else {
+          refs.add.classList.add("hidden");
+          refs.qtyBox.classList.remove("hidden");
+          refs.qtyNum.textContent = qty;
+        }
+      }
+
+      // (2) topbar badge — total items across the whole cart.
+      const totalQty = DISHES.reduce((s, d) => s + cart[d.id], 0);
+      badgeCount.textContent = totalQty;
+      // …and remember to toggle the "empty" styling. Easy to forget.
+      if (totalQty === 0) badge.classList.add("is-empty");
+      else                badge.classList.remove("is-empty");
+
+      // (3) subtotal — money sum across the whole cart.
+      const subtotal = DISHES.reduce((s, d) => s + cart[d.id] * d.price, 0);
+      subtotalNum.textContent = subtotal;
+      if (totalQty === 0) subtotalBox.classList.add("is-hidden");
+      else                subtotalBox.classList.remove("is-hidden");
+
+      // (4) free-delivery banner — copy AND style depend on the subtotal.
+      //     Three branches: empty cart (hide), under threshold (nudge),
+      //     over threshold (celebrate). Forget any branch and the user
+      //     sees stale text.
+      if (totalQty === 0) {
+        freebanner.classList.add("is-hidden");
+      } else if (subtotal >= FREE_DELIVERY_AT) {
+        freebanner.classList.remove("is-hidden");
+        freebanner.classList.add("is-unlocked");
+        freebanner.textContent = "🎉 Free delivery unlocked!";
+      } else {
+        freebanner.classList.remove("is-hidden");
+        freebanner.classList.remove("is-unlocked");
+        freebanner.textContent = `Add ₹${FREE_DELIVERY_AT - subtotal} more for free delivery`;
+      }
+    }
+
+    // ---- wire up every card --------------------------------------------
+    // Each Add/+/− on each card has to remember to re-call renderAll. Miss
+    // one and that card's UI quietly diverges from the rest of the page.
+    for (const d of DISHES) {
+      const refs = cardRefs[d.id];
+      refs.add.addEventListener("click",   () => { cart[d.id] = 1;                       renderAll(); });
+      refs.plus.addEventListener("click",  () => { cart[d.id] += 1;                      renderAll(); });
+      refs.minus.addEventListener("click", () => { cart[d.id] = Math.max(0, cart[d.id]-1); renderAll(); });
+    }
+
+    renderAll();   // initial paint
+
+    // ---- DOM-write counter ---------------------------------------------
+    // MutationObserver fires once per microtask drain with all the
+    // MutationRecords accumulated during the most recent batch. Each
+    // record = one DOM write. Counting record-batches gives a per-click
+    // number that matches "how many times did your code poke the DOM".
+    //
+    // Cleared after the initial paint so the first render doesn't pollute
+    // the count — students should see clean numbers from their first click.
+    const lastWritesEl  = document.getElementById("lastWrites");
+    const totalWritesEl = document.getElementById("totalWrites");
+    let totalWrites = 0;
+    const observer = new MutationObserver((records) => {
+      const n = records.length;
+      lastWritesEl.textContent = n;
+      totalWrites += n;
+      totalWritesEl.textContent = totalWrites;
+    });
+    observer.observe(document.getElementById("observed"), {
+      attributes: true, characterData: true, childList: true, subtree: true,
+    });
+    document.getElementById("resetWrites").addEventListener("click", () => {
+      totalWrites = 0;
+      lastWritesEl.textContent = "0";
+      totalWritesEl.textContent = "0";
+    });
+  </script>
+</body>
+</html>

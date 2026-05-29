@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>React in a script tag — Swiggy card</title>
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Script #1: React itself. ~6 KB minified.
+       This is the same library that ships in big Next.js apps. -->
+  <script
+    crossorigin
+    src="https://unpkg.com/react@19.2.4/umd/react.production.min.js"
+  ></script>
+
+  <!-- Script #2: React DOM. ~140 KB minified.
+       The renderer — knows how to put React's virtual DOM into a real
+       browser DOM. (There are other renderers: react-dom/server for HTML,
+       React Native for native, react-three-fiber for WebGL.) -->
+  <script
+    crossorigin
+    src="https://unpkg.com/react-dom@19.2.4/umd/react-dom.production.min.js"
+  ></script>
+
+  <!-- Script #3: Babel standalone. ~3 MB unminified — you would NEVER ship
+       this to production. It's here so we can write JSX directly in this
+       file instead of writing React.createElement by hand. In a real app
+       a bundler compiles JSX at build time and Babel never ships. -->
+  <script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
+</head>
+<body>
+  <p class="lede">
+    <strong>View Source.</strong> Three script tags. One component. No build, no
+    bundler, no framework. This is React.
+  </p>
+
+  <div id="root"></div>
+
+  <noscript>This demo needs JavaScript — React is JS, after all.</noscript>
+
+  <!-- Our React app. type="text/babel" tells Babel-standalone to compile
+       this block before running it. -->
+  <script type="text/babel">
+    const { useState } = React;
+    const { createRoot } = ReactDOM;
+
+    function RestaurantCard() {
+      const [likes, setLikes] = useState(0);
+      const liked = likes > 0;
+      return (
+        <article className="card">
+          <div className="card__img" aria-hidden="true">🍛</div>
+          <div className="card__body">
+            <h1 className="card__name">Meghana Foods</h1>
+            <p className="card__cuisines">Biryani, Andhra</p>
+            <p className="card__meta">
+              <span className="rating">★ 4.3</span> · 40 mins · ₹500 for two
+            </p>
+            <button
+              type="button"
+              className={liked ? "like like--liked" : "like"}
+              onClick={() => setLikes(likes + 1)}
+            >
+              {liked ? "❤️ Liked" : "🤍 Like"} {likes}
+            </button>
+          </div>
+        </article>
+      );
+    }
+
+    const root = createRoot(document.getElementById("root"));
+    root.render(<RestaurantCard />);
+  </script>
+</body>
+</html>

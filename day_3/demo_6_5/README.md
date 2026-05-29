@@ -40,14 +40,14 @@ That's the entire mechanism. Three browser APIs — `addEventListener('click')`,
 | **Feels fast?** | Slow on bad networks (full re-download) | Instant after first load |
 | **Cost of the first load** | Cheap (one small page) | Bigger (ship the whole app) |
 
-### How React helps you build this
+### Would a library make this easier?
 
-<p class="beat__lede">The 90 lines of <code>app.js</code> you just read do two painful things by hand: swap DOM on state changes, and re-attach event handlers after every swap. Skip those, and the SPA becomes ~30 lines of React.</p>
+<p class="beat__lede">Most production SPAs aren't written this way — they reach for a UI library (React, Vue, Svelte, Solid…) and usually a router library on top. Here's the part of <code>app.js</code> that those libraries take off your plate.</p>
 
-- **State → UI is automatic.** `app.js` rebuilds `<main>`'s `innerHTML` on every nav. React would let you write `<View route={currentRoute} />` and diff — only the parts that actually changed touch the DOM. Same reconciler from Demo 6, doing the manual work you wrote out by hand here.
-- **Components instead of template strings.** Each view in `app.js` is a function returning an HTML string. In React, each view is a component: typed props, composition, reuse.
-- **Event handlers come along for free.** Every `innerHTML` swap in `app.js` blows away listeners; you have to re-attach with event delegation. In React, JSX handlers (`onClick={...}`) travel with the markup; React wires them after every render.
-- **Routing is a library, not hand-rolled.** React Router, TanStack Router, etc. wrap `pushState` + `popstate` in a component API: `<Link>` (intercepts clicks), `<Route>` (renders for a path), `<Outlet>` (where the child route goes). Same browser APIs underneath; much nicer ergonomics.
+- **The render() loop.** `app.js` rebuilds `<main>`'s `innerHTML` every time the route changes. A UI library lets you describe the UI as a function of state — `<View route={currentRoute} />` — and figures out what to actually change in the DOM. You stop writing DOM-update code.
+- **Re-attaching event handlers.** Every `innerHTML` swap blows away listeners; `app.js` would need event delegation to survive that. In a UI library, handlers (`onClick={...}`) are part of the component; the library re-attaches them after every update.
+- **Templating.** Each view in `app.js` is a function returning an HTML string. With a UI library, each view is a component you can reuse, compose, and pass props to. Boilerplate goes down; reuse goes up.
+- **Routing plumbing.** `pushState`, `popstate`, click interception — what you wrote here by hand. A router library (React Router, TanStack Router, vue-router, SvelteKit's router) wraps all of it in a component API: `<Link>`, `<Route>`, `<Outlet>`. Same browser APIs underneath.
 
 Concretely, the same three routes — home, restaurant, cart — in React:
 
@@ -93,9 +93,9 @@ function App() {
 createRoot(document.getElementById("app")).render(<App />);
 ```
 
-The `render()` function from `app.js` is gone — React's diff replaces it. The manual `popstate` listener is now a `useEffect` with cleanup. The click interceptor is still there (because we didn't pull in a router library); the moment you add React Router, even that disappears, replaced with `<Link to="?view=cart">Cart</Link>`.
+What disappeared from `app.js`: the `render()` function (the library's diff replaces it) and the manual `popstate` listener (replaced by `useEffect`). What's still there: the click interceptor — until you add a router library, which would replace it with `<Link to="?view=cart">Cart</Link>`.
 
-That's React's contribution to "SPAs are tolerable to build" — DOM updates, event re-binding, route → view mapping all become declarative. The browser APIs underneath haven't changed; React just gives you a saner way to express them. And once you reach for React + a router, the next obvious move is reaching for *one framework* that ships them together. That's Next.js (Demo 6.6).
+So the answer to "do I need a library for this?" is no — you can build an SPA in vanilla, and Demo 6.5 just did. But each piece of `app.js` you'd rather not write or maintain has a library that handles it. And once you reach for a UI library + a router, the next obvious move is reaching for *one framework* that ships them together. That's Next.js (Demo 6.6).
 
 ### The dead end — and why we're about to revisit it
 
